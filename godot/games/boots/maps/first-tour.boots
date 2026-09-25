@@ -1,0 +1,64 @@
+; Muddy Boots campaign. Designed for Second Credit. Licence CC BY-SA 4.0.
+; Format: see godot/games/boots/engine/boots_map.gd
+
+[mission]
+name=Boots On The Ground
+goals=kill
+grenades=2
+rockets=0
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+TT......T.........,,,.......TT
+T..P......T...E......E.......T
+T..........,,,...............T
+T....TT........TT......E.....T
+T....TT.....~~~~~~.......T...T
+T..........~~~~~~~~~.........T
+T.....,,....~~~~~~~..........T
+T.........................E..T
+T...E.....TT.......#.........T
+T.........TT.......##........T
+T..............E.............T
+TT...........,,,.........E..TT
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+[mission]
+name=Huts In The Hills
+goals=kill,destroy
+grenades=4
+rockets=0
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+T.P.....,,.........T.............T
+T..........T...........E.........T
+T....G.........~~~.......H.......T
+T.........,,..~~~~~..............T
+T..TT.........~~~~~.....E........T
+T..TT...E......~~~..........#....T
+T.........................###....T
+T.....#........TT.....E..........T
+T.....##.......TT................T
+T...........E.........,,,.....E..T
+T.......H.............,,,........T
+T.........................T......T
+T..,,......E.........G...........T
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+
+[mission]
+name=Bring Them Home
+goals=kill,destroy,rescue
+grenades=3
+rockets=2
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+T.P...........T.........E...........T
+T.X.....,,,.........................T
+T.........---~~~~~~~~~~~---.........T
+T....E....---~~~~~~~~~~~---....E....T
+T.........---~~~~~~~~~~~---.........T
+T..T.....................R......h...T
+T..T....E.........#..........H......T
+T.............M...##................T
+T....,,,..........#......E......E...T
+T.............................TT....T
+T....H.....E..........h.........T...T
+T.....................,,,...........T
+T..G...........M.......E........M...T
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
