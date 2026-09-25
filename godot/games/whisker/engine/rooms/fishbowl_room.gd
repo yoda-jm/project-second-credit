@@ -22,9 +22,9 @@ func setup(e: WhiskerEngine) -> void:
 	add(Rect2(13.0, 0, 2.4, 2.4), "dresser")
 	walls.append(BOWL.grow_individual(0.1, 0, 0.1, 0))  # the glass
 	entry = Vector2(1.0, 6.0)
-	goal = 3
+	goal = 3 + (1 if e.rng.randf() < 0.4 else 0)
 	for i in goal:
-		fish.append({"pos": BOWL.position + Vector2(1.0 + i * 1.8, 1.0 + (i % 2) * 1.6),
+		fish.append({"pos": BOWL.position + Vector2(0.8 + i * 1.4 + e.rng.randf_range(-0.3, 0.3), 1.0 + (i % 2) * 1.6 + e.rng.randf_range(-0.3, 0.3)),
 			"vel": Vector2(FISH_SPEED * (1 if i % 2 == 0 else -1), e.rng.randf_range(-0.6, 0.6))})
 	for i in mini(1 + (e.level - 1) / 2, 2):
 		eels.append({"pos": BOWL.position + Vector2(3.0, 0.8 + i * 2.2), "phase": e.rng.randf() * TAU, "dir": 1 if i == 0 else -1})

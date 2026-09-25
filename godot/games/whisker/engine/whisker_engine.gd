@@ -91,14 +91,21 @@ func _build_alley() -> void:
 		_alley_platforms.append({"rect": Rect2(0, LINE_Y[i] - 0.05, W, 0.05), "kind": "line", "line": i,
 			"vel": Vector2(LINE_SPEED[i], 0)})
 	windows.clear()
-	var kinds := [RoomKind.FISHBOWL, RoomKind.MICE, RoomKind.BIRDCAGE, RoomKind.DOGBOWLS]
-	var i := 0
+	# which room is behind which window changes from game to game
+	var kinds: Array = []
+	for i in WINDOW_X.size() * WINDOW_Y.size():
+		kinds.append([RoomKind.FISHBOWL, RoomKind.MICE, RoomKind.BIRDCAGE, RoomKind.DOGBOWLS][i % 4])
+	for i in range(kinds.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp = kinds[i]
+		kinds[i] = kinds[j]
+		kinds[j] = tmp
+	var k := 0
 	for row in WINDOW_Y.size():
 		for col in WINDOW_X.size():
 			var r := Rect2(WINDOW_X[col] - WINDOW_SIZE.x * 0.5, WINDOW_Y[row], WINDOW_SIZE.x, WINDOW_SIZE.y)
-			windows.append({"col": col, "row": row, "rect": r, "open": false, "t": rng.randf_range(0.5, 6.0),
-				"room": kinds[(i * 7 + row) % kinds.size()]})
-			i += 1
+			windows.append({"col": col, "row": row, "rect": r, "open": false, "t": rng.randf_range(0.5, 6.0), "room": kinds[k]})
+			k += 1
 
 
 func _respawn() -> void:

@@ -23,7 +23,7 @@ func setup(e: WhiskerEngine) -> void:
 		# neighbours sit about 3 m apart and drift in and out of reach (a 2 m climb carries about 2.4 m)
 		var x0: float = [5.0, 7.8, 5.2, 8.2, 5.6, 8.0][i]
 		var h := {"rect": Rect2(x0 - 0.9, ys[i] - 0.3, 1.8, 0.3), "vel": Vector2.ZERO, "kind": "heart",
-			"x0": x0, "amp": 1.4 + 0.15 * i, "phase": i * 1.3, "speed": 0.8 + 0.08 * e.level}
+			"x0": x0, "amp": 1.4 + 0.15 * i, "phase": i * 1.3 + e.rng.randf_range(-0.4, 0.4), "speed": 0.8 + 0.08 * e.level + e.rng.randf_range(-0.08, 0.08)}
 		hearts.append(h)
 		platforms.append(h)
 	platforms.append({"rect": Rect2(6.6, TOP_Y - 0.4, 2.8, 0.4), "kind": "top"})

@@ -9,6 +9,7 @@ const BIRD_SPEED := 3.2
 var cage_down := false
 var cage_y := CAGE.position.y  ## falls when knocked
 var bird := {"pos": CAGE.get_center(), "t": 0.0, "free": false}
+var _path := Vector4(0.9, 2.3, 1.4, 3.1)  ## the bird's flight pattern (varies from visit to visit)
 
 
 func setup(e: WhiskerEngine) -> void:
@@ -20,6 +21,8 @@ func setup(e: WhiskerEngine) -> void:
 	add(Rect2(14.2, 0, 1.6, 2.4), "dresser")
 	entry = Vector2(1.0, 6.0)
 	goal = 1
+	_path = Vector4(e.rng.randf_range(0.7, 1.1), e.rng.randf_range(1.8, 2.8), e.rng.randf_range(1.1, 1.7), e.rng.randf_range(2.5, 3.5))
+	bird["t"] = e.rng.randf_range(0.0, 10.0)
 
 
 func tick(e: WhiskerEngine, dt: float) -> void:
@@ -36,7 +39,7 @@ func tick(e: WhiskerEngine, dt: float) -> void:
 	if bird["free"]:
 		bird["t"] += dt * (1.0 + 0.1 * (e.level - 1))
 		var t: float = bird["t"]
-		var target := Vector2(8.0 + sin(t * 0.9) * 6.5 + sin(t * 2.3) * 0.8, 4.2 + sin(t * 1.4) * 2.8 + cos(t * 3.1) * 0.5)
+		var target := Vector2(8.0 + sin(t * _path.x) * 6.5 + sin(t * _path.y) * 0.8, 4.2 + sin(t * _path.z) * 2.8 + cos(t * _path.w) * 0.5)
 		bird["pos"] = (bird["pos"] as Vector2).move_toward(target, BIRD_SPEED * 2.0 * dt)
 		if c.grow(0.2).has_point(bird["pos"]) and status == 0:
 			catch_one(e, "bird", bird["pos"], 400)

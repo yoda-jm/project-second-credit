@@ -64,8 +64,7 @@ func _build_world() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.25
+	Look.sky_ambient(env, Color(0.5, 0.62, 0.8), 0.25)
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.9
 	env.tonemap_white = 6.0
@@ -108,7 +107,7 @@ func _build_world() -> void:
 	plane.subdivide_depth = 90
 	sea.mesh = plane
 	var wm := ShaderMaterial.new()
-	wm.shader = load("res://games/bastion/shaders/water.gdshader")
+	wm.shader = load("res://core/art/shaders/water.gdshader")
 	_sea_mat = wm
 	wm.set_shader_parameter("normal_map", load("res://core/art/textures/water/normal.png"))
 	sea.material_override = wm
@@ -119,7 +118,7 @@ func _build_world() -> void:
 	var tile := BoxMesh.new()
 	tile.size = Vector3(1.0, LAND_H + 0.3, 1.0)
 	var lm := ShaderMaterial.new()
-	lm.shader = load("res://games/bastion/shaders/land.gdshader")
+	lm.shader = load("res://core/art/shaders/land.gdshader")
 	for t in [["grass", "grass"], ["lush", "grass_lush"], ["sand", "beach_sand"], ["rock", "rock"]]:
 		lm.set_shader_parameter(t[0] + "_albedo", load(Pbr.ROOT + t[1] + "/albedo.jpg"))
 		lm.set_shader_parameter(t[0] + "_normal", load(Pbr.ROOT + t[1] + "/normal.jpg"))

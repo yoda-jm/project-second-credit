@@ -20,7 +20,7 @@ func setup(e: WhiskerEngine) -> void:
 	add(Rect2(0.3, 0, 1.6, 1.4), "stool")
 	add(Rect2(14.2, 0, 1.5, 2.8), "shelf")
 	entry = Vector2(1.0, 6.0)
-	goal = 5
+	goal = e.rng.randi_range(4, 6)
 
 
 func tick(e: WhiskerEngine, dt: float) -> void:

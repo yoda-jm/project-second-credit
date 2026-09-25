@@ -135,12 +135,13 @@ func test_fishbowl_catching_all_fish_wins_the_room() -> void:
 	var r := e.room as FishbowlRoom
 	r.eels.clear()
 	var before := e.score
-	for i in 3:
+	var n := r.fish.size()
+	for i in n:
 		e.cat.pos = r.fish[0]["pos"] - Vector2(0, 0.3)
 		_run(e, E.TICK * 2)
 	assert_int(e.rooms_won).is_equal(1)
 	assert_int(e.phase).is_equal(E.Phase.ALLEY)
-	assert_int(e.score).is_greater(before + 3 * 150)
+	assert_int(e.score).is_greater(before + n * 150)
 
 
 func test_fishbowl_running_out_of_air_costs_a_life() -> void:

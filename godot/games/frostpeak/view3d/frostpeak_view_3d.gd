@@ -152,8 +152,7 @@ func _build_world() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.7
+	Look.sky_ambient(env, Color(0.65, 0.72, 0.85), 0.7)
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.85
 	env.tonemap_white = 6.0
@@ -162,9 +161,7 @@ func _build_world() -> void:
 	env.glow_hdr_threshold = 1.2
 	env.ssao_enabled = true
 	env.ssr_enabled = true  # the ice reflects the floodlights and the skaters
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.85, 0.9, 0.97)
-	env.fog_density = 0.0009
+	Look.fog(env, Color(0.85, 0.9, 0.97), 0.0009)
 	env.fog_aerial_perspective = 0.4
 	env.adjustment_enabled = true
 	env.adjustment_saturation = 1.15

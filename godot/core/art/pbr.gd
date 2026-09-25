@@ -34,3 +34,15 @@ static func material(name: String, tint: Color = Color.WHITE, scale: float = 1.0
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	_cache[key] = m
 	return m
+
+
+## The same material mapped in the object's own space: for props that move, spin or squash (a world mapping would
+## make the texture slide across them).
+static func local(name: String, tint: Color = Color.WHITE, scale: float = 1.0, metallic: float = 0.0,
+		roughness_scale: float = 1.0) -> StandardMaterial3D:
+	var key := "local|%s|%s|%s|%s|%s" % [name, tint, scale, metallic, roughness_scale]
+	if not _cache.has(key):
+		var m := material(name, tint, scale, metallic, roughness_scale).duplicate() as StandardMaterial3D
+		m.uv1_world_triplanar = false
+		_cache[key] = m
+	return _cache[key]

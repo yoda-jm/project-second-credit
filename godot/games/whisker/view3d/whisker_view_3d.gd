@@ -30,6 +30,8 @@ var _washing: Array[Dictionary] = []  ## {node, line, x}
 var _shoes := {}  ## index -> node (rebuilt each frame from the engine list)
 var _shoe_pool: Array[Node3D] = []
 var _room_things := {}  ## per-room entity nodes
+var _sets := {}  ## room kind -> {node, things}, built once
+var _warm := 0  ## frames drawn since the start (the prebuilt rooms hide after the first few)
 var _cat_z := Z_STREET
 var _time := 0.0
 var _shake := 0.0
@@ -46,6 +48,7 @@ func _ready() -> void:
 	add_child(_fx)
 	add_child(_alley)
 	_build_alley()
+	_prebuild_rooms()
 	game.started.connect(_on_started)
 	if game.engine:
 		_on_started(game.engine)
@@ -124,8 +127,8 @@ func _scene(name: String) -> Node3D:
 
 static func _dress(node: Node) -> void:
 	var swap := {
-		"wood": Pbr.material("planks", Color(0.75, 0.55, 0.38), 2.0),
-		"metal": Pbr.material("metal", Color(0.6, 0.62, 0.66), 2.0, 0.8, 0.6),
+		"wood": Pbr.local("planks", Color(0.75, 0.55, 0.38), 0.9),
+		"metal": Pbr.local("metal", Color(0.6, 0.62, 0.66), 1.2, 0.8, 0.6),
 	}
 	for mi in node.find_children("*", "MeshInstance3D", true, false):
 		var m := mi as MeshInstance3D
@@ -147,8 +150,8 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, mat: Material) -> MeshIns
 
 
 func _build_alley() -> void:
-	var cobbles := Pbr.material("stone_bricks", Color(0.45, 0.45, 0.5), 1.2)
-	var brick := Pbr.material("stone_bricks", Color(0.75, 0.42, 0.33), 0.9)
+	var cobbles := Pbr.material("stone_bricks", Color(0.45, 0.45, 0.5), 0.6)
+	var brick := Pbr.material("stone_bricks", Color(0.75, 0.42, 0.33), 0.45)
 	var dark_wall := Pbr.material("dark_rock", Color(0.3, 0.3, 0.36), 1.0)
 	# street, building, the neighbours' walls and a skyline
 	_box(_alley, Vector3(E.W * 0.5, -0.25, -1.0), Vector3(E.W + 30, 0.5, 9.0), cobbles)
@@ -283,15 +286,75 @@ func _glow_mat() -> StandardMaterial3D:
 
 # ------------------------------------------------------------------ rooms
 
+## Room sets are built once (from a template room of each kind) and reused: building one on the way in made the
+## game stall. At start they are all drawn once behind the building, so their shaders compile during the loading
+## screen, then hidden.
+func _prebuild_rooms() -> void:
+	var dummy := WhiskerEngine.new(1)
+	for kind in 5:
+		var r: WhiskerRoom = [FishbowlRoom, MiceRoom, BirdcageRoom, DogbowlsRoom, HeartsRoom][kind].new()
+		r.kind = kind
+		r.setup(dummy)
+		var set := _build_room_set(r)
+		set["node"].position = Vector3(0, 0, -60)  # behind the building: drawn (and compiled) but unseen
+		_sets[kind] = set
+		r.cleanup(dummy)
+
+
 func _enter_room_set(e: WhiskerEngine) -> void:
 	_leave_room_set()
 	_alley.visible = false
-	_room_set = Node3D.new()
-	add_child(_room_set)
 	var r := e.room
+	var set: Dictionary = _sets[r.kind]
+	_room_set = set["node"]
+	_room_things = set["things"]
+	_room_set.position = Vector3.ZERO
+	_room_set.visible = true
+	_reset_room_things(r)
+	_env.ambient_light_color = Color(0.55, 0.5, 0.45)
+	_moon.visible = false
+
+
+func _reset_room_things(r: WhiskerRoom) -> void:
+	var t := _room_things
+	match r.kind:
+		E.RoomKind.FISHBOWL:
+			var fr := r as FishbowlRoom
+			for pool in ["fish", "eels"]:
+				var need: int = fr.fish.size() if pool == "fish" else fr.eels.size()
+				while t[pool].size() < need:
+					var n := _scene("goldfish" if pool == "fish" else "eel")
+					n.scale = Vector3.ONE * (1.6 if pool == "fish" else 1.3)
+					_room_set.add_child(n)
+					t[pool].append(n)
+				for i in t[pool].size():
+					t[pool][i].visible = i < need
+		E.RoomKind.MICE:
+			for n in t["mice"].values():
+				n.queue_free()
+			t["mice"].clear()
+		E.RoomKind.BIRDCAGE:
+			(t["chain"] as Node3D).visible = true
+			(t["bird"] as Node3D).visible = true
+		E.RoomKind.HEARTS:
+			for a in t["arrows"]:
+				a.visible = false
+	(t["broom"] as Node3D).visible = false
+
+
+func _build_room_set(r: WhiskerRoom) -> Dictionary:
+	var saved_set := _room_set
+	var saved_things := _room_things
+	_room_set = Node3D.new()
+	_room_things = {}
+	add_child(_room_set)
 	var wallpaper: Color = [Color(0.45, 0.62, 0.7), Color(0.75, 0.62, 0.45), Color(0.62, 0.5, 0.7),
 		Color(0.55, 0.68, 0.5), Color(0.35, 0.18, 0.35)][r.kind]
-	var paper := Pbr.material("planks", wallpaper, 0.8)
+	var paper := ShaderMaterial.new()
+	paper.shader = load("res://games/whisker/shaders/wallpaper.gdshader")
+	paper.set_shader_parameter("base", wallpaper)
+	paper.set_shader_parameter("stripe", wallpaper.lightened(0.18))
+	paper.set_shader_parameter("motif", wallpaper.darkened(0.3))
 	_box(_room_set, Vector3(8, 7.0, -1.2), Vector3(18, 15, 0.3), paper)
 	_box(_room_set, Vector3(8, -0.25, 0), Vector3(18, 0.5, 3.0), Pbr.material("planks", Color(0.7, 0.5, 0.35), 1.2))
 	_box(_room_set, Vector3(8, 0.15, -1.0), Vector3(18, 0.3, 0.08), Pbr.material("planks", Color(0.9, 0.88, 0.8), 2.0))
@@ -446,8 +509,10 @@ func _enter_room_set(e: WhiskerEngine) -> void:
 	broom.visible = false
 	_room_set.add_child(broom)
 	_room_things["broom"] = broom
-	_env.ambient_light_color = Color(0.55, 0.5, 0.45)
-	_moon.visible = false
+	var out := {"node": _room_set, "things": _room_things}
+	_room_set = saved_set
+	_room_things = saved_things
+	return out
 
 
 func _natural_size(name: String) -> Vector2:
@@ -464,9 +529,9 @@ func _natural_size(name: String) -> Vector2:
 
 func _leave_room_set() -> void:
 	if _room_set:
-		_room_set.queue_free()
+		_room_set.visible = false
 		_room_set = null
-	_room_things.clear()
+	_room_things = {}
 	_alley.visible = true
 	_env.ambient_light_color = Color(0.3, 0.35, 0.55)
 	_moon.visible = true
@@ -528,6 +593,12 @@ func _v(p: Vector2, z: float) -> Vector3:
 # ------------------------------------------------------------------ per frame
 
 func _process(delta: float) -> void:
+	_warm += 1
+	if _warm == 3:  # the loading screen has drawn them: park the prebuilt rooms out of sight
+		for set in _sets.values():
+			if set["node"] != _room_set:
+				set["node"].visible = false
+				set["node"].position = Vector3.ZERO
 	var e := game.engine
 	if e == null:
 		return
@@ -542,7 +613,7 @@ func _process(delta: float) -> void:
 	_shake = maxf(0.0, _shake - delta * 2.0)
 	var base := _room_cam(e) if _room_set else _cam_alley
 	var s := _shake * _shake * (0.3 if Settings.camera_shake else 0.0)
-	var sway := Vector3(sin(_time * 0.2) * 0.25, sin(_time * 0.15) * 0.12, 0)
+	var sway := Vector3(sin(_time * 0.2) * 0.05, sin(_time * 0.15) * 0.03, 0)  # barely: fine textures shimmer when the view moves
 	_camera.transform = Transform3D(base.basis, base.origin + sway + Vector3(sin(_time * 60.0), sin(_time * 53.0), 0) * s)
 
 
