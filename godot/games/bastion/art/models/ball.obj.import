@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b4dcop25grj2v"
+path="res://.godot/imported/ball.obj-91724ceddad4e2a6ccb88dcdb178810f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/ball.obj-91724ceddad4e2a6ccb88dcdb178810f.mesh"]
+
+source_file="res://games/bastion/art/models/ball.obj"
+dest_files=["res://.godot/imported/ball.obj-91724ceddad4e2a6ccb88dcdb178810f.mesh", "res://.godot/imported/ball.obj-91724ceddad4e2a6ccb88dcdb178810f.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

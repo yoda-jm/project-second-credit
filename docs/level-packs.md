@@ -42,6 +42,21 @@ Where packs load from:
 - the user folder `user://packs/` (Godot's per-user data dir)
 - a pack path given on the command line
 
+## Campaigns and mods (shared by every game)
+
+Several games need more than a list of levels: an ordered **campaign** with a storyline, and **mods** that
+players can load or make. This is one shared system in the core, not a per-game feature:
+
+- A pack can declare a campaign: ordered levels, story text or cutscene cards between them, unlock rules,
+  and optional per-level settings (starting lives, time, briefing). Packs stay data only.
+- Each game gets an **original campaign with its own story**, using everything the remake can do, in the
+  spirit of the original's campaign: Cannon Fodder above all (missions, phases, recruits, Boot Hill), but
+  also multi-level runs for Glimmerdeep (a descent through themed caverns) and Bastion Coast (a coastline to
+  hold, island by island).
+- Where a game has original levels or community mods (BDCFF caves, Open Fodder campaigns), the same system
+  loads them from the player's files, next to ours.
+- Level editors write packs in the same format, so a player's campaign can be shared like ours.
+
 ## Downloading known collections
 
 The game menu will offer to download well-known community collections (for example GDash's cave sets or the

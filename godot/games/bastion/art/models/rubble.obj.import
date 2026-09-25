@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b3lk1uvcao48l"
+path="res://.godot/imported/rubble.obj-7a8a6fe0a6662ad8953b7ff7b2b338dc.mesh"
+
+[deps]
+
+files=["res://.godot/imported/rubble.obj-7a8a6fe0a6662ad8953b7ff7b2b338dc.mesh"]
+
+source_file="res://games/bastion/art/models/rubble.obj"
+dest_files=["res://.godot/imported/rubble.obj-7a8a6fe0a6662ad8953b7ff7b2b338dc.mesh", "res://.godot/imported/rubble.obj-7a8a6fe0a6662ad8953b7ff7b2b338dc.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
