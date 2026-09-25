@@ -1,5 +1,6 @@
 #!/bin/bash
 # Runs a scene for a number of frames and saves PNG screenshots, so an agent can look at the result.
+# Audio is always muted (Dummy driver), so background captures never play through the speakers.
 # Usage: tools/capture.sh [-s res://scene.tscn] [-f frames] [-e every] [-r WxH] [-o outdir] [--gpu]
 #   -s  scene to run (default: the project's main scene)
 #   -f  frames to run at a fixed 60 fps (default 60, i.e. one second)
@@ -30,7 +31,7 @@ out=${out:-$here/../captures/$(date +%Y%m%d-%H%M%S)}
 mkdir -p "$out"; out=$(cd "$out" && pwd)
 log=$(mktemp); trap 'rm -f "$log"' EXIT
 
-cmd=("$GODOT" --path "$here/../godot" --fixed-fps 60 --resolution "$res")
+cmd=("$GODOT" --path "$here/../godot" --audio-driver Dummy --fixed-fps 60 --resolution "$res")
 user=(res://tools/capture/capture.tscn -- --demo --frames="$frames" --every="$every" --out="$out")
 [ -n "$scene" ] && user+=(--scene="$scene")
 rc=0

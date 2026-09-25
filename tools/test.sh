@@ -12,9 +12,9 @@ args=("$@"); [ ${#args[@]} -eq 0 ] && args=(-a res://tests -a res://games)
 
 tool=(-s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd)
 if command -v Xvfb >/dev/null; then
-  with_xvfb "$GODOT" --path . --rendering-method gl_compatibility "${tool[@]}" "${args[@]}"
+  with_xvfb "$GODOT" --path . --audio-driver Dummy --rendering-method gl_compatibility "${tool[@]}" "${args[@]}"
 else
-  "$GODOT" --headless --path . "${tool[@]}" "${args[@]}" --ignoreHeadlessMode
+  "$GODOT" --headless --audio-driver Dummy --path . "${tool[@]}" "${args[@]}" --ignoreHeadlessMode
 fi
 code=$?
 "$GODOT" --headless --path . --quiet -s res://addons/gdUnit4/bin/GdUnitCopyLog.gd "${args[@]}" >/dev/null 2>&1
