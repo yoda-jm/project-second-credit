@@ -26,6 +26,11 @@ var _time := 0.0
 var _shake := 0.0
 var _cam_base := Vector3.ZERO
 var _cam_look := Vector3.ZERO
+var _cam_dist_battle := 30.0
+var _cam_dist_place := 30.0
+var _top := 0.0  ## 0 battle framing, 1 placement framing (eased)
+var _top_lin := 0.0
+var _top_goal := 0.0
 var _land_dirty := true
 var _decor := {}  ## prop name -> MultiMeshInstance3D
 var _sea_mat: ShaderMaterial
@@ -282,9 +287,19 @@ func _shore_mask(e: BastionEngine) -> ImageTexture:
 	return ImageTexture.create_from_image(img)
 
 
-## Pulls the camera back along its viewing direction until the whole map is on screen.
+## Two framings of the whole map: angled for the battle, steeper (closer to top-down) for placing cannons and
+## walls, where seeing every cell clearly matters more. Each is pulled back until the map fits the screen.
+const BATTLE_DIR := Vector3(0, 21, 17)
+const PLACE_DIR := Vector3(0, 30, 8)
+
+
 func _fit_camera(e: BastionEngine) -> void:
-	var dir := Vector3(0, 21, 17).normalized()
+	_cam_dist_battle = _fit_distance(e, BATTLE_DIR.normalized())
+	_cam_dist_place = _fit_distance(e, PLACE_DIR.normalized())
+	_cam_base = _cam_look + BATTLE_DIR.normalized() * _cam_dist_battle
+
+
+func _fit_distance(e: BastionEngine, dir: Vector3) -> float:
 	var corners := [Vector3(-0.5, 0, -0.5), Vector3(e.map.w - 0.5, 0, -0.5), Vector3(-0.5, 0, e.map.h - 0.5),
 		Vector3(e.map.w - 0.5, 0, e.map.h - 0.5)]
 	var dist := 12.0
@@ -301,7 +316,18 @@ func _fit_camera(e: BastionEngine) -> void:
 		if ok:
 			break
 		dist += 0.5
-	_cam_base = _cam_look + dir * dist
+	return dist
+
+
+## The camera swings along an arc between the two framings (0 battle, 1 placement), easing in and out.
+func _update_camera_arc(e: BastionEngine, delta: float) -> void:
+	var placing := e.phase in [BastionEngine.Phase.CHOOSE, BastionEngine.Phase.CANNONS, BastionEngine.Phase.BUILD]
+	_top_goal = 1.0 if placing else 0.0
+	_top_lin = move_toward(_top_lin, _top_goal, delta / 1.4)
+	var k := smoothstep(0.0, 1.0, _top_lin)
+	var dir := BATTLE_DIR.normalized().slerp(PLACE_DIR.normalized(), k)
+	_cam_base = _cam_look + dir * lerpf(_cam_dist_battle, _cam_dist_place, k)
+	_top = k
 
 
 ## Map cell under a screen position (null when off the board).
@@ -393,9 +419,10 @@ func _process(delta: float) -> void:
 		_castles[c].scale = Vector3.ONE * (1.08 if home else 1.0)
 		for mi in _castles[c].find_children("*", "MeshInstance3D", true, false):
 			(mi as MeshInstance3D).transparency = 0.0 if enclosed or e.phase == BastionEngine.Phase.CHOOSE else 0.2
-	# camera: a slow drift around the board, a little shake on impacts
+	# camera: steeper while placing, a slow drift around the board (calmer while placing), shake on impacts
+	_update_camera_arc(e, delta)
 	_shake = maxf(0.0, _shake - delta * 1.5)
-	var drift := Vector3(sin(_time * 0.05) * 1.5, 0, cos(_time * 0.04) * 0.8)
+	var drift := Vector3(sin(_time * 0.05) * 1.5, 0, cos(_time * 0.04) * 0.8) * (1.0 - 0.7 * _top)
 	var jitter := Vector3(sin(_time * 61.0), sin(_time * 53.0), 0) * _shake * _shake * (0.6 if Settings.camera_shake else 0.0)
 	_camera.position = _cam_base + drift + jitter
 	_camera.look_at(_cam_look + drift * 0.3)

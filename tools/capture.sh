@@ -17,7 +17,9 @@ source "$here/xvfb.sh"
 GODOT=${GODOT_BIN:-$here/../.tools/bin/godot}
 scene="" frames=60 every="" res=1920x1080 out="" gpu=0
 # local default (git-ignored): .tools/capture.conf may set CAPTURE_GPU=1; the environment wins
+env_gpu=${CAPTURE_GPU-unset}
 [ -f "$here/../.tools/capture.conf" ] && source "$here/../.tools/capture.conf"
+[ "$env_gpu" != unset ] && CAPTURE_GPU=$env_gpu
 [ "${CAPTURE_GPU:-0}" = 1 ] && gpu=1
 while [ $# -gt 0 ]; do
   case $1 in
