@@ -1,0 +1,55 @@
+; Second Credit, game 1: free caves. Licence CC BY-SA 4.0 (see LICENSES/). Designed for this project.
+[BDCFF]
+Version=0.5
+[game]
+Name=First Light
+Author=Second Credit
+Description=Free caves made for Second Credit.
+Levels=5
+[cave]
+Name=First Light
+Description=A gentle first cave: dig, collect, and mind the boulders.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=12 13 14 15 16
+CaveTime=150 140 130 120 110
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=21
+Colors=Black Black Orange Brown White
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP........r.....d.......r......r.......W
+W.....r...r...........d.......rr...d...W
+W..d..r.......rrr.................r....W
+W.........d...rdr......wwwwwww.........W
+W....rr........r.......w  Q  w....d....W
+W....rd................w     w.........W
+W..........wwwwwww.....wwwwwww....r....W
+W...d......w     w..........r.....r....W
+W..........w  C  w.......d..r..........W
+W....r.....w     w..........d.....d....W
+W....r.....wwwwwww....rrr..............W
+W..r.r..d.............rdr....r.........W
+W.........r.....d......r.....r....wwwwwW
+W....d....r...........................wW
+W.........r.....wwwwwww......d.......XwW
+W..rr...........w  o  w...............wW
+W..dr...........w     w....r......d...wW
+W...............wwwwwww....r..........wW
+W.......d.............d........r.......W
+W..........r...........................W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[replay]
+Level=1
+RandomSeed=0
+Player=DemoBot
+Score=256
+Success=true
+Movements=.21 r6 d2 r d5 r u r u r u2 r3 u r u2 r11 d7 r3 d r2 d r7 u r u4 l u r u2 d10 l2 d2 r d3 u2 r3
+[/replay]
+[/cave]
+[/game]
+[/BDCFF]

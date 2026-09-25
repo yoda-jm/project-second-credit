@@ -140,6 +140,8 @@ func store_rc(x: int, y: int, element: int, object_id: int = 0) -> void:
 
 ## Element at (x, y), with the cave's border wrapping (perfect or line-shifting), like GDash's map(x, y).
 func get_cell(x: int, y: int) -> int:
+	if x >= 0 and x < w and y >= 0 and y < h:
+		return map[y * w + x]
 	if lineshift:
 		if x < 0:
 			x += 5 * w
@@ -154,6 +156,9 @@ func get_cell(x: int, y: int) -> int:
 
 
 func set_cell(x: int, y: int, element: int) -> void:
+	if x >= 0 and x < w and y >= 0 and y < h:
+		map[y * w + x] = element
+		return
 	if lineshift:
 		if x < 0:
 			x += 5 * w
