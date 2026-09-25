@@ -66,3 +66,15 @@ func test_games_loaded_by_the_loading_screen_stop_when_paused() -> void:
 	get_tree().paused = false
 	LoadingScreen.target = ""
 	screen.queue_free()
+
+
+func test_styles_filter_the_cards() -> void:
+	var runner := scene_runner("res://core/ui/launcher.tscn")
+	await runner.simulate_frames(5, 30)
+	var launcher = runner.scene()
+	launcher._set_style("Sports")
+	var vis: Array = launcher._visible_games()
+	assert_int(vis.size()).is_equal(1)
+	assert_str(GameRegistry.GAMES[launcher._selected]["style"]).is_equal("Sports")
+	launcher._set_style("")
+	assert_int(launcher._visible_games().size()).is_equal(GameRegistry.GAMES.size())

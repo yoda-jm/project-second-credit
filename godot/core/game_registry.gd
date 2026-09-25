@@ -5,6 +5,7 @@ extends RefCounted
 const GAMES: Array[Dictionary] = [
 	{
 		"id": "glimmerdeep",
+		"style": "Puzzle",
 		"title": "Glimmerdeep",
 		"tagline": "Dig deep, grab the gems, mind the boulders.",
 		"inspired_by": "Boulder Dash (1984)",
@@ -17,6 +18,7 @@ const GAMES: Array[Dictionary] = [
 	},
 	{
 		"id": "bastion",
+		"style": "Strategy",
 		"title": "Bastion Coast",
 		"tagline": "Build walls, aim cannons, hold the coast.",
 		"inspired_by": "Rampart (1990)",
@@ -29,6 +31,7 @@ const GAMES: Array[Dictionary] = [
 	},
 	{
 		"id": "fruitburrow",
+		"style": "Arcade",
 		"title": "Fruitburrow",
 		"tagline": "Dig the garden, pick the fruit, drop the apples.",
 		"inspired_by": "Fruity Frank (1984)",
@@ -42,6 +45,7 @@ const GAMES: Array[Dictionary] = [
 	},
 	{
 		"id": "whisker",
+		"style": "Platform",
 		"title": "Whisker Alley",
 		"tagline": "Moonlit fences, open windows and a cat with nine lives.",
 		"inspired_by": "Alley Cat (1984)",
@@ -55,6 +59,7 @@ const GAMES: Array[Dictionary] = [
 	},
 	{
 		"id": "frostpeak",
+		"style": "Sports",
 		"title": "Frostpeak Games",
 		"tagline": "Ice, snow and a medal ceremony. Up to four players.",
 		"inspired_by": "Winter Games (1985)",
@@ -68,6 +73,7 @@ const GAMES: Array[Dictionary] = [
 	},
 	{
 		"id": "boots",
+		"style": "Action",
 		"title": "Muddy Boots",
 		"tagline": "A squad, a jungle and a long way home.",
 		"inspired_by": "Cannon Fodder (1993)",
@@ -81,6 +87,7 @@ const GAMES: Array[Dictionary] = [
 	},
 	{
 		"id": "game7",
+		"style": "Fighting",
 		"title": "Game 7",
 		"tagline": "Two brothers, one street, fists first.",
 		"inspired_by": "Double Dragon (1987)",
@@ -90,6 +97,15 @@ const GAMES: Array[Dictionary] = [
 		"props": [["res://core/art/props/cone.obj", "cone", 0.55], ["res://core/art/props/gear.obj", "steel", 0.45]],
 	},
 ]
+
+
+## The styles in collection order (for the launcher's filter).
+static func styles() -> Array[String]:
+	var out: Array[String] = []
+	for g in GAMES:
+		if not out.has(g.get("style", "")):
+			out.append(g.get("style", ""))
+	return out
 
 
 static func find(id: String) -> Dictionary:

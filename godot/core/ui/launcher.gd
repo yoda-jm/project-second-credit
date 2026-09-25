@@ -28,6 +28,8 @@ var _time := 0.0
 var _seeds: Array[Vector4] = []
 var _launching := false
 var _arrows: Array[Button] = []
+var _style := ""  ## "" shows every game; otherwise only the games of that style
+var _chips: Array[Button] = []
 var _hovered_card := -1
 const CARD_ROW_X := 395.0  ## places the selected card in the middle of the card window
 
@@ -295,6 +297,23 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	hint.position = Vector2(116, 1010)
 	_ui.add_child(hint)
 
+	# style chips: browse the collection by kind of game
+	var chip_row := HBoxContainer.new()
+	chip_row.position = Vector2(620, 488)
+	chip_row.add_theme_constant_override("separation", 12)
+	_ui.add_child(chip_row)
+	for st in [""] + GameRegistry.styles():
+		var chip := Button.new()
+		chip.text = "ALL GAMES" if st == "" else st.to_upper()
+		chip.focus_mode = Control.FOCUS_NONE
+		chip.add_theme_font_override("font", _font())
+		chip.add_theme_font_size_override("font_size", 20)
+		chip.pressed.connect(_set_style.bind(st))
+		chip.set_meta("style", st)
+		chip_row.add_child(chip)
+		_chips.append(chip)
+	_style_chips()
+
 	# the cards slide inside a clipped window between the two arrows
 	var window := Control.new()
 	window.clip_contents = true
@@ -323,7 +342,7 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		arrow.mouse_entered.connect(func(): arrow.queue_redraw(); _play("ui_move"))
 		arrow.mouse_exited.connect(arrow.queue_redraw)
 		arrow.pressed.connect(func():
-			_select_game(_selected + side)
+			_step(side)
 			var tw := create_tween()
 			tw.tween_property(arrow, "scale", Vector2.ONE * 0.85, 0.06)
 			tw.tween_property(arrow, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_BACK))
@@ -393,7 +412,9 @@ func _make_card(g: Dictionary, index: int) -> Control:
 func _draw_arrow(b: Button, side: int) -> void:
 	var c := b.size * 0.5
 	var hover := b.is_hovered()
-	var can := (_selected + side) >= 0 and (_selected + side) < _cards.size()
+	var vis := _visible_games()
+	var p := vis.find(_selected)
+	var can := p + side >= 0 and p + side < vis.size()
 	var ring := GOLD if hover and can else Color(1, 1, 1, 0.55 if can else 0.18)
 	b.draw_circle(c, 56.0, Color(0.03, 0.03, 0.06, 0.65))
 	b.draw_circle(c, 56.0, Color(ring, 0.18 if hover else 0.08))
@@ -547,8 +568,57 @@ func _select_game(i: int, sound: bool = true) -> void:
 	for a in _arrows:
 		a.queue_redraw()
 	var tw := create_tween()
-	tw.tween_property(_card_box, "position:x", CARD_ROW_X - i * 414.0, 0.35) \
+	tw.tween_property(_card_box, "position:x", CARD_ROW_X - maxi(0, _visible_games().find(i)) * 414.0, 0.35) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## The games shown under the current style, in collection order.
+func _visible_games() -> Array[int]:
+	var out: Array[int] = []
+	for i in GameRegistry.GAMES.size():
+		if _style == "" or GameRegistry.GAMES[i].get("style", "") == _style:
+			out.append(i)
+	return out
+
+
+func _step(side: int) -> void:
+	var vis := _visible_games()
+	var p := vis.find(_selected)
+	_select_game(vis[clampi(p + side, 0, vis.size() - 1)])
+
+
+func _set_style(st: String) -> void:
+	if st == _style:
+		return
+	_play("ui_move")
+	_style = st
+	var vis := _visible_games()
+	for i in _cards.size():
+		_cards[i].visible = vis.has(i)
+	_style_chips()
+	_select_game(_selected if vis.has(_selected) else vis[0], false)
+	for a in _arrows:
+		a.queue_redraw()
+
+
+func _cycle_style(side: int) -> void:
+	var all: Array = [""] + GameRegistry.styles()
+	_set_style(all[posmod(all.find(_style) + side, all.size())])
+
+
+func _style_chips() -> void:
+	for chip in _chips:
+		var on: bool = chip.get_meta("style") == _style
+		for state in ["normal", "hover", "pressed"]:
+			var sb := _panel_style(GOLD if on else Color(1, 1, 1, 0.25), 18)
+			sb.bg_color = Color(0.1, 0.08, 0.02, 0.85) if on else Color(0.03, 0.03, 0.06, 0.6)
+			sb.content_margin_left = 16
+			sb.content_margin_right = 16
+			sb.content_margin_top = 6
+			sb.content_margin_bottom = 6
+			chip.add_theme_stylebox_override(state, sb)
+		chip.add_theme_color_override("font_color", GOLD if on else Color(0.8, 0.82, 0.9))
+		chip.add_theme_color_override("font_hover_color", GOLD)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -560,9 +630,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if event.is_action("ui_left"):
-		_select_game(_selected - 1)
+		_step(-1)
 	elif event.is_action("ui_right"):
-		_select_game(_selected + 1)
+		_step(1)
+	elif event is InputEventKey and event.keycode in [KEY_TAB, KEY_E, KEY_PAGEDOWN]:
+		_cycle_style(-1 if event.shift_pressed else 1)
+	elif event is InputEventKey and event.keycode in [KEY_Q, KEY_PAGEUP]:
+		_cycle_style(-1)
 	elif event.is_action("ui_cancel"):
 		_play("ui_back")
 		_focus_menu(3)
@@ -616,6 +690,8 @@ func _show_cards(show: bool) -> void:
 	tw.tween_property(_card_box, "modulate:a", 1.0 if show else 0.0, 0.25)
 	for a in _arrows:
 		a.visible = show
+	for c in _chips:
+		c.visible = show
 	_card_box.mouse_filter = Control.MOUSE_FILTER_PASS if show else Control.MOUSE_FILTER_IGNORE
 	for c in _cards:
 		c.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
