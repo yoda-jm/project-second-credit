@@ -33,11 +33,18 @@ func _ready() -> void:
 	_music.bus = "Music"
 	add_child(_music)
 	game.frame_done.connect(_on_frame)
-	game.cave_started.connect(func(_e): if not _music.playing: _music.play())
+	game.cave_started.connect(func(_e): if not _music.playing: _start_music())
 	game.cave_finished.connect(func(_e, success): play("exit_enter" if success else "fail"))
 	game.countdown_tick.connect(func(n): play("go" if n == 0 else "count", -3.0))
 	if game.engine:
-		_music.play()
+		_start_music()
+
+
+func _start_music() -> void:
+	_music.volume_db = -40.0
+	_music.play()
+	create_tween().tween_property(_music, "volume_db", music_volume_db, 2.5).set_trans(Tween.TRANS_SINE) \
+		.set_ease(Tween.EASE_OUT)
 
 
 func play(name: String, volume_db: float = 0.0, pitch: float = 1.0, min_gap_ms: int = 0) -> void:

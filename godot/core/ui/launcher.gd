@@ -443,8 +443,10 @@ func _load_sounds() -> void:
 	theme.loop = true
 	_music.stream = theme
 	_music.bus = "Music"
+	_music.volume_db = -40.0
 	add_child(_music)
 	_music.play()
+	create_tween().tween_property(_music, "volume_db", 0.0, 2.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 func _play(name: String) -> void:
