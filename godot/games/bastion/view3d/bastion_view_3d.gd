@@ -60,19 +60,24 @@ func _build_world() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.3
+	env.ambient_light_energy = 0.25
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 0.8
+	env.tonemap_exposure = 0.9
+	env.tonemap_white = 6.0
 	env.glow_enabled = true
 	env.glow_intensity = 0.25
 	env.glow_hdr_threshold = 1.1
 	env.ssao_enabled = true
+	env.ssr_enabled = true  # the sea reflects the coast, castles and ships
+	env.ssr_max_steps = 48
+	env.ssr_fade_in = 0.2
+	env.ssr_fade_out = 2.0
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.7, 0.8, 0.9)
-	env.fog_density = 0.006
+	env.fog_density = 0.0015
 	env.adjustment_enabled = true
-	env.adjustment_saturation = 1.25
-	env.adjustment_contrast = 1.1
+	env.adjustment_saturation = 1.3
+	env.adjustment_contrast = 1.2
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
@@ -100,6 +105,7 @@ func _build_world() -> void:
 	var wm := ShaderMaterial.new()
 	wm.shader = load("res://games/bastion/shaders/water.gdshader")
 	_sea_mat = wm
+	wm.set_shader_parameter("normal_map", load("res://core/art/textures/water/normal.png"))
 	sea.material_override = wm
 	sea.position = Vector3(20, 0.0, 14)
 	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
