@@ -115,7 +115,7 @@ func _build_world() -> void:
 	tile.size = Vector3(1.0, LAND_H + 0.3, 1.0)
 	var lm := ShaderMaterial.new()
 	lm.shader = load("res://games/bastion/shaders/land.gdshader")
-	for t in [["grass", "grass"], ["sand", "sand"], ["rock", "rock"]]:
+	for t in [["grass", "grass"], ["lush", "grass_lush"], ["sand", "beach_sand"], ["rock", "rock"]]:
 		lm.set_shader_parameter(t[0] + "_albedo", load(Pbr.ROOT + t[1] + "/albedo.jpg"))
 		lm.set_shader_parameter(t[0] + "_normal", load(Pbr.ROOT + t[1] + "/normal.jpg"))
 	_land = _mm(tile, lm, true)

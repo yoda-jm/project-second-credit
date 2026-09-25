@@ -11,6 +11,8 @@ All from ambientCG (https://ambientcg.com), CC0 1.0, downscaled to 512 px. Thank
 | dark_rock | Rock035 |
 | stone_bricks | Bricks076C |
 | planks | Planks021 |
+| grass_lush | Grass001 |
+| beach_sand | Ground080 |
 | metal | Metal032 |
 
 Each folder has `albedo.jpg`, `normal.jpg` (OpenGL convention), `roughness.jpg` and `ao.jpg` (when provided).
