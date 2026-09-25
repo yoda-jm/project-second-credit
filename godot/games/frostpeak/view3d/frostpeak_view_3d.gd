@@ -463,17 +463,17 @@ func _build_hill() -> void:
 	var len := SkiJump.INRUN + 3.0
 	var mid := inrun_point(SkiJump.INRUN * 0.5 - 1.0)
 	var along_basis := Basis(Vector3.BACK, -INRUN_ANGLE)
-	var track := _box(self, mid + Vector3(0, 0.2, 0), Vector3(len, 0.4, 3.0), _flat(Color(0.9, 0.93, 0.98), 0.12))
+	var track := _box(self, mid + Vector3(0, 0.2, 0), Vector3(len, 0.4, 2.0), _flat(Color(0.9, 0.93, 0.98), 0.12))
 	track.basis = along_basis
 	for zz in [-0.35, 0.35]:
 		var groove := _box(self, mid + Vector3(0, 0.41, zz), Vector3(len, 0.02, 0.14), _flat(Color(0.55, 0.62, 0.72), 0.05))
 		groove.basis = along_basis
-	for zz in [-1.55, 1.55]:  # low rails with a white cap
+	for zz in [-1.05, 1.05]:  # low rails with a white cap
 		var wall := _box(self, mid + Vector3(0, 0.45, zz), Vector3(len, 0.5, 0.1), red)
 		wall.basis = along_basis
 		var cap := _box(self, mid + Vector3(0, 0.72, zz), Vector3(len, 0.05, 0.14), _flat(Color(0.95, 0.95, 0.95), 0.4))
 		cap.basis = along_basis
-	var beam := _box(self, mid + Vector3(0, -0.45, 0), Vector3(len, 0.9, 3.6), steel)
+	var beam := _box(self, mid + Vector3(0, -0.45, 0), Vector3(len, 0.9, 2.6), steel)
 	beam.basis = along_basis
 	var lamp := _flat(Color(1.0, 0.95, 0.8), 0.3, 3.0)
 	var a := 0.0
@@ -482,13 +482,13 @@ func _build_hill() -> void:
 		var ground := JUMP.y + _hill_y(p.x - JUMP.x)
 		var top := p.y - 0.9
 		if top - ground > 0.5:
-			for zz in [-1.5, 1.5]:
+			for zz in [-1.1, 1.1]:
 				_box(self, Vector3(p.x, (top + ground) * 0.5, p.z + zz), Vector3(0.35, top - ground, 0.35), steel)
 			var brace := _box(self, Vector3(p.x, (top + ground) * 0.5, p.z), Vector3(0.12, (top - ground) * 1.02, 0.12), steel)
 			brace.rotation.x = atan2(3.0, top - ground)
 			if top - ground > 6.0:
 				_box(self, Vector3(p.x, ground + (top - ground) * 0.5, p.z), Vector3(0.2, 0.2, 3.2), steel)
-		for zz in [-1.7, 1.7]:
+		for zz in [-1.15, 1.15]:
 			_box(self, p + Vector3(0, 0.85, zz), Vector3(0.07, 0.07, 0.07), lamp)
 		a += 7.0
 	# the start house at the top, the take-off table at the lip
@@ -778,7 +778,7 @@ func _update_jump(j: SkiJump, delta: float) -> void:
 			_jumper.basis = Basis(Vector3.UP, PI * 0.5).rotated(Vector3.BACK, -INRUN_ANGLE)
 			_anim(_jumper, "tuck" if j.tuck > 0.5 else "idle")
 			# behind and above, riding down the track with the jumper
-			var cam := inrun_point(maxf(-2.0, j.along - 9.0)) + Vector3(0, 3.2, 3.5)
+			var cam := inrun_point(maxf(-2.0, j.along - 7.0)) + Vector3(0, 1.9, 4.2)
 			var ahead := inrun_point(minf(SkiJump.INRUN, j.along + 8.0))
 			if j.phase == WinterEvent.Phase.READY and j.phase_left > 2.7:
 				_snap_camera(cam, ahead)
