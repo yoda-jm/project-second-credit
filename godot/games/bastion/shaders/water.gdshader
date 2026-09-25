@@ -33,7 +33,7 @@ void fragment() {
 	vec3 n = normalize(vec3(-dx * 0.14, 1.0, -dz * 0.14));
 	NORMAL = (VIEW_MATRIX * vec4(n, 0.0)).xyz;
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 4.0);
-	float sparkle = pow(vnoise(p * 5.0 + vec2(t * 0.7, -t * 0.5)) * vnoise(p * 7.3 - vec2(t * 0.4, t * 0.6)), 6.0) * 3.0;
+	float sparkle = pow(vnoise(p * 5.0 + vec2(t * 0.7, -t * 0.5)) * vnoise(p * 7.3 - vec2(t * 0.4, t * 0.6)), 14.0) * 1.2;
 	float depth = smoothstep(0.05, 0.55, land);
 	vec3 col = mix(deep, shallow, depth);
 	col = mix(col, col * 1.25, vnoise(p * 0.6 + t * 0.05));
