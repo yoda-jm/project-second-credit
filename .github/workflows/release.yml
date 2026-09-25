@@ -1,0 +1,62 @@
+name: Release builds
+
+# Builds Linux (AppImage), Windows (zip) and macOS (zip, ad-hoc signed).
+# - every push to main refreshes the rolling "latest" pre-release
+# - tags like m2-bastion or v0.2.0 publish a release of their own
+on:
+  push:
+    branches: [main]
+    tags: ["m*", "v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # tags, for the version in file names
+
+      - name: Cache portable Godot and export templates
+        uses: actions/cache@v4
+        with:
+          path: .tools
+          key: tools-godot-templates-${{ hashFiles('tools/fetch-tools.sh') }}
+
+      - name: Fetch Godot and export templates
+        run: tools/fetch-tools.sh godot templates
+
+      - name: Export
+        run: tools/export.sh
+
+      - name: Upload builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: second-credit-builds
+          path: build/dist/*
+
+      - name: Publish the rolling "latest" pre-release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest build/dist/* --prerelease --target "$GITHUB_SHA" --title "Latest build (main)" \
+            --notes "Built automatically from $GITHUB_SHA on main. May be unstable; tagged releases are the stable ones."
+
+      - name: Publish the tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/dist/* --title "Second Credit $GITHUB_REF_NAME" \
+            --notes "Playable builds for Linux (AppImage), Windows and macOS. See the README for what is inside." \
+            || gh release upload "$GITHUB_REF_NAME" build/dist/* --clobber

@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Scripts and tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: System packages (virtual display, software OpenGL)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq --no-install-recommends xvfb libgl1-mesa-dri libglx-mesa0 libvulkan1
+
+      - name: Cache portable Godot
+        uses: actions/cache@v4
+        with:
+          path: .tools
+          key: tools-godot-${{ hashFiles('tools/fetch-tools.sh') }}
+
+      - name: Fetch Godot
+        run: tools/fetch-tools.sh godot
+
+      - name: Parse every script
+        run: tools/check.sh
+
+      - name: GdUnit4 tests
+        run: tools/test.sh
+
+      - name: Test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: godot/reports/
+          if-no-files-found: ignore

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Second Credit</title>
+<meta name="description" content="Free, open-source remakes of 80s and 90s games that deserve another go, with a 2026 look.">
+<meta property="og:title" content="Second Credit">
+<meta property="og:description" content="Free, open-source remakes of 80s and 90s games that deserve another go.">
+<meta property="og:image" content="media/launcher.jpg">
+<link rel="icon" href="media/icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="stars" aria-hidden="true"></div>
+
+<header class="hero">
+  <video class="hero-bg" src="media/bastion-loop.webm" autoplay muted loop playsinline aria-hidden="true"></video>
+  <div class="hero-inner">
+    <p class="coin"><span class="blink">●</span> Insert coin</p>
+    <h1>Second Credit</h1>
+    <p class="tagline">Free remakes of games that deserve another go.</p>
+    <p class="lede">The gameplay you remember from the 80s and 90s, rules and levels intact, rebuilt with
+      2026 looks: real 3D, water, light, particles and a synthesised soundtrack. Free and open source.</p>
+    <div class="downloads">
+      <a class="btn primary" id="dl-main" href="https://github.com/yoda-jm/project-second-credit/releases/tag/latest">Download</a>
+      <a class="btn" href="https://github.com/yoda-jm/project-second-credit/releases/download/latest/SecondCredit-linux-x86_64.AppImage">Linux</a>
+      <a class="btn" href="https://github.com/yoda-jm/project-second-credit/releases/download/latest/SecondCredit-windows-x86_64.zip">Windows</a>
+      <a class="btn" href="https://github.com/yoda-jm/project-second-credit/releases/download/latest/SecondCredit-macos.zip">macOS</a>
+    </div>
+    <p class="small">Latest build from the main branch. <a href="https://github.com/yoda-jm/project-second-credit/releases">All releases</a> ·
+      <a href="https://github.com/yoda-jm/project-second-credit">Source on GitHub</a></p>
+  </div>
+</header>
+
+<main>
+  <section class="games" id="games">
+    <h2>Now playing</h2>
+
+    <article class="game glimmer">
+      <video src="media/glimmerdeep-loop.webm" poster="media/glimmerdeep.jpg" autoplay muted loop playsinline></video>
+      <div class="game-text">
+        <p class="inspired">Inspired by Boulder Dash (1984)</p>
+        <h3>Glimmerdeep</h3>
+        <p>Dig deep, grab the gems, mind the boulders. The cave rules are an exact port of GDash's engine,
+          checked against 306 recorded replays, so every classic cave plays the way it always did.</p>
+        <ul>
+          <li>Plays BDCFF cave files: bring your own packs</li>
+          <li>Crystal gems, falling boulders, fireflies and butterflies in 3D</li>
+          <li>Attract mode, death and win animations, music and effects</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="game bastion">
+      <video src="media/bastion-loop.webm" poster="media/bastion.jpg" autoplay muted loop playsinline></video>
+      <div class="game-text">
+        <p class="inspired">Inspired by Rampart (1990)</p>
+        <h3>Bastion Coast</h3>
+        <p>Build walls, aim cannons, hold the coast. Place cannons, fight off the fleet, then patch your walls
+          with falling pieces before the timer runs out.</p>
+        <ul>
+          <li>Live territory and a smart hole finder that points at the gaps</li>
+          <li>Animated sea with swell, foam and reflections; sinking ships</li>
+          <li>Friendly fire on your own walls, like the original</li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <section class="ladder" id="ladder">
+    <h2>The ladder</h2>
+    <p class="intro">Each game is built on the same engine and adds a few new capabilities, from a grid of rocks to
+      a real-time strategy game. The stack grows one rung at a time.</p>
+    <ol>
+      <li class="done"><span class="n">1</span><b>Glimmerdeep</b><i>Boulder Dash</i><em>Playable</em></li>
+      <li class="done"><span class="n">2</span><b>Bastion Coast</b><i>Rampart</i><em>Playable</em></li>
+      <li class="next"><span class="n">3</span><b>Game 3</b><i>Fruity Frank</i><em>Next</em></li>
+      <li><span class="n">4</span><b>Game 4</b><i>Alley Cat</i><em>Planned</em></li>
+      <li><span class="n">5</span><b>Game 5</b><i>Winter Games</i><em>Planned</em></li>
+      <li><span class="n">6</span><b>Game 6</b><i>Cannon Fodder</i><em>Planned</em></li>
+      <li><span class="n">7</span><b>Game 7</b><i>Double Dragon</i><em>Planned</em></li>
+      <li><span class="n">8</span><b>Game 8</b><i>Z</i><em>Planned</em></li>
+    </ol>
+  </section>
+
+  <section class="made" id="made">
+    <h2>How it's made</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Built with an AI pair</h3>
+        <p>Claude Code writes most of the code, models and sound; the owner steers, plays and judges. Every step is a
+          small, runnable commit, and the whole build is recorded as a construction movie.</p>
+      </div>
+      <div class="card">
+        <h3>Open tools only</h3>
+        <p>Godot 4 for the games, Blender scripts for every 3D model, NumPy and FluidSynth for the sound and music.
+          CC0 textures and fonts. No paid services.</p>
+      </div>
+      <div class="card">
+        <h3>Your levels still work</h3>
+        <p>If the original had maps, we read them: BDCFF caves today, and more formats to come. The files stay on
+          your machine; none of the original data ships with the game.</p>
+      </div>
+      <div class="card">
+        <h3>New art, same soul</h3>
+        <p>No original names, sprites, sounds or code. Just the rules and the feel of a game worth a second credit,
+          with a fresh coat of paint.</p>
+      </div>
+    </div>
+    <figure class="shot">
+      <img src="media/launcher.jpg" alt="The Second Credit launcher: game cards over floating 3D models" loading="lazy">
+      <figcaption>The launcher: one app, every game, shared settings.</figcaption>
+    </figure>
+  </section>
+</main>
+
+<footer>
+  <p>Code GPL-3.0-or-later · assets and levels CC BY-SA 4.0 · third-party assets CC0 or CC-BY, listed in
+    <a href="https://github.com/yoda-jm/project-second-credit/blob/main/CREDITS.md">CREDITS.md</a>.</p>
+  <p>Game names above are the inspirations, credited for reference; Second Credit is not affiliated with their owners.</p>
+</footer>
+
+<script>
+  // Point the main download button at the build for the visitor's system.
+  (function () {
+    var ua = navigator.userAgent, base = "https://github.com/yoda-jm/project-second-credit/releases/download/latest/";
+    var pick = /Windows/.test(ua) ? ["SecondCredit-windows-x86_64.zip", "Windows"]
+      : /Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua) ? ["SecondCredit-macos.zip", "macOS"]
+      : /Linux/.test(ua) && !/Android/.test(ua) ? ["SecondCredit-linux-x86_64.AppImage", "Linux"] : null;
+    if (pick) {
+      var a = document.getElementById("dl-main");
+      a.href = base + pick[0];
+      a.textContent = "Download for " + pick[1];
+    }
+  })();
+</script>
+</body>
+</html>

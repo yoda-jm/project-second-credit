@@ -1,5 +1,10 @@
 # Second Credit
 
+[![CI](https://github.com/yoda-jm/project-second-credit/actions/workflows/ci.yml/badge.svg)](https://github.com/yoda-jm/project-second-credit/actions/workflows/ci.yml)
+[![Release builds](https://github.com/yoda-jm/project-second-credit/actions/workflows/release.yml/badge.svg)](https://github.com/yoda-jm/project-second-credit/releases/tag/latest)
+
+**Website: https://yoda-jm.github.io/project-second-credit/** · **Download: [latest build](https://github.com/yoda-jm/project-second-credit/releases/tag/latest)** (Linux AppImage, Windows, macOS)
+
 Free, open-source remakes of simple 80s and 90s games. The original rules stay intact, and the presentation is
 fully modern: lighting, materials, particles, sound and music, in the spirit of Pac-Man Championship Edition
 and Tetris Effect.
@@ -10,7 +15,9 @@ and Tetris Effect.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
 > Status: **Glimmerdeep** (game 1) and **Bastion Coast** (game 2, working title) are playable, in 3D with sound
-> and music. Run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> and music. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+>
+> The macOS build is not notarised: right-click the app and choose Open the first time.
 
 ## Build order
 

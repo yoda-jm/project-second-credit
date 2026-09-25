@@ -13,6 +13,7 @@ config_version=5
 config/name="Second Credit"
 config/description="Free, open-source remakes of simple 80s and 90s games."
 run/main_scene="res://core/ui/launcher.tscn"
+config/icon="res://icon.png"
 config/features=PackedStringArray("4.7", "Forward Plus")
 
 [autoload]
@@ -34,6 +35,7 @@ enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/gdUn
 [rendering]
 
 environment/defaults/default_clear_color=Color(0.02, 0.02, 0.05, 1)
+textures/vram_compression/import_etc2_astc=true
 
 [gui]
 

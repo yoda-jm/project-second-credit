@@ -102,6 +102,18 @@ claude mcp list
 tools/test.sh && tools/capture.sh
 ```
 
+## 6. Builds, CI and the website
+
+- `tools/fetch-tools.sh godot templates` adds Godot's export templates (about 1 GB); `tools/export.sh [linux] [windows] [macos]`
+  then writes `build/dist/` (Linux AppImage, Windows zip, macOS zip with an ad-hoc signature). Presets are in
+  `godot/export_presets.cfg`; they leave out the tests, `godot/tools/` and the editor add-ons.
+- `tools/build-site.sh` assembles the website (`site/` plus the shared fonts) into `build/site`; preview it with
+  `python3 -m http.server -d build/site 8000`.
+- GitHub Actions (`.github/workflows/`):
+  - `ci.yml`: every push and pull request parses every script and runs the GdUnit4 tests (Xvfb, software OpenGL).
+  - `release.yml`: every push to `main` refreshes the rolling `latest` pre-release; tags `m*` and `v*` publish a release.
+  - `pages.yml`: deploys the website when `site/` changes. One-time setting: Settings, Pages, Source: GitHub Actions.
+
 ## For agents
 
 An agent working from a fresh clone should:

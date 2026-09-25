@@ -1,6 +1,8 @@
 #!/bin/bash
 # Downloads portable builds of the dev tools into .tools/ (git-ignored) and links them in .tools/bin.
-# Usage: tools/fetch-tools.sh   then   export PATH="$PWD/.tools/bin:$PATH"
+# Usage: tools/fetch-tools.sh [component ...]   then   export PATH="$PWD/.tools/bin:$PATH"
+# Components: godot templates blender mcp gh gitlfs uv gdash. No argument: everything except `templates`
+# (Godot's export templates, 1 GB, only needed to build releases). CI uses `godot` (tests) or `godot templates`.
 # Xvfb, FluidSynth and the emulators still come from the system package manager.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -13,9 +15,13 @@ UV=0.12.19
 BLENDER_MCP=1.0.3
 GDASH_COMMIT=545308a   # GDash (MIT), reference engine for game 1; its cave files are never committed   # Blender Lab MCP (GPL-3.0): add-on + blender-mcp server
 
+COMPONENTS=" ${*:-godot blender mcp gh gitlfs uv gdash} "
+want() { [[ "$COMPONENTS" == *" $1 "* ]]; }
+
 T=.tools; mkdir -p "$T/dl" "$T/bin"
 fetch() { [ -s "$T/dl/$2" ] || { curl -fsSL --retry 3 -o "$T/dl/$2.part" "$1" && mv "$T/dl/$2.part" "$T/dl/$2"; }; }
 
+if want godot || want templates; then
 if [ ! -x "$T/godot-$GODOT/godot" ]; then
   f=Godot_v${GODOT}-stable_linux.x86_64.zip
   fetch "https://github.com/godotengine/godot/releases/download/${GODOT}-stable/$f" "$f"
@@ -37,28 +43,45 @@ es="$T/godot-$GODOT/editor_data/editor_settings-${GODOT%.*}.tres"
 if [ -f "$es" ] && ! grep -q '^godot_ai/telemetry_enabled' "$es"; then
   sed -i '/^\[resource\]/a godot_ai/telemetry_enabled = false' "$es"
 fi
+fi
 
+# Export templates (self-contained mode keeps them in .tools/godot-*/editor_data/export_templates)
+tpl="$T/godot-$GODOT/editor_data/export_templates/${GODOT}.stable"
+if want templates && [ ! -f "$tpl/version.txt" ]; then
+  f=Godot_v${GODOT}-stable_export_templates.tpz
+  fetch "https://github.com/godotengine/godot/releases/download/${GODOT}-stable/$f" "$f"
+  mkdir -p "$tpl"
+  unzip -qo "$T/dl/$f" -d "$T/dl/tpl" && mv "$T/dl/tpl/templates/"* "$tpl/" && rm -rf "$T/dl/tpl"
+fi
+
+if want blender || want mcp; then
 if [ ! -x "$T/blender-$BLENDER/blender" ]; then
   f=blender-${BLENDER}-linux-x64.tar.xz
   fetch "https://download.blender.org/release/Blender${BLENDER%.*}/$f" "$f"
   tar -xJf "$T/dl/$f" -C "$T" && mv "$T/blender-${BLENDER}-linux-x64" "$T/blender-$BLENDER"
 fi
 ln -sfn "../blender-$BLENDER/blender" "$T/bin/blender"
+fi
 
+if want gh; then
 if [ ! -x "$T/gh-$GH/bin/gh" ]; then
   f=gh_${GH}_linux_amd64.tar.gz
   fetch "https://github.com/cli/cli/releases/download/v$GH/$f" "$f"
   tar -xzf "$T/dl/$f" -C "$T" && mv "$T/gh_${GH}_linux_amd64" "$T/gh-$GH"
 fi
 ln -sfn "../gh-$GH/bin/gh" "$T/bin/gh"
+fi
 
+if want gitlfs; then
 if [ ! -x "$T/git-lfs-$GITLFS/git-lfs" ]; then
   f=git-lfs-linux-amd64-v${GITLFS}.tar.gz
   fetch "https://github.com/git-lfs/git-lfs/releases/download/v$GITLFS/$f" "$f"
   tar -xzf "$T/dl/$f" -C "$T"   # unpacks to git-lfs-$GITLFS/
 fi
 ln -sfn "../git-lfs-$GITLFS/git-lfs" "$T/bin/git-lfs"
+fi
 
+if want uv || want mcp; then
 if [ ! -x "$T/uv-$UV/uv" ]; then
   f=uv-x86_64-unknown-linux-gnu.tar.gz
   fetch "https://github.com/astral-sh/uv/releases/download/$UV/$f" "uv-$UV.tar.gz"
@@ -66,8 +89,10 @@ if [ ! -x "$T/uv-$UV/uv" ]; then
 fi
 ln -sfn "../uv-$UV/uv" "$T/bin/uv"; ln -sfn "../uv-$UV/uvx" "$T/bin/uvx"
 export UV_CACHE_DIR="$PWD/$T/uv-cache" UV_PYTHON_INSTALL_DIR="$PWD/$T/uv-python"
+fi
 
 # Blender MCP: server in its own venv, add-on installed into the portable Blender (auto-start, online access on)
+if want mcp; then
 if [ ! -x "$T/blender-mcp-venv/bin/blender-mcp" ]; then
   "$T/bin/uv" venv -q "$T/blender-mcp-venv" --python 3.12
   "$T/bin/uv" pip install -q --python "$T/blender-mcp-venv/bin/python" \
@@ -84,14 +109,19 @@ bpy.context.preferences.addons['bl_ext.user_default.mcp'].preferences.use_autost
 bpy.context.preferences.system.use_online_access = True
 bpy.ops.wm.save_userpref()"
 fi
+fi
 # Register once per clone: claude mcp add --scope local blender -- "$PWD/.tools/blender-mcp-venv/bin/blender-mcp"
 # Start Blender normally (the add-on auto-starts on port 9876), or headless: blender -b --command blender_mcp
 
 # Reference sources (read-only, git-ignored): the ported engine's tests compare against them.
-if [ ! -d "$T/ref/gdash/.git" ]; then
+if want gdash && [ ! -d "$T/ref/gdash/.git" ]; then
   git clone -q https://github.com/meonwax/gdash.git "$T/ref/gdash"
   git -C "$T/ref/gdash" checkout -q "$GDASH_COMMIT"
 fi
 
 rm -rf "$T/dl"
-for b in godot blender gh git-lfs uv; do printf '%-8s ' "$b"; "$T/bin/$b" --version 2>/dev/null | head -1 || echo MISSING; done
+for b in godot blender gh git-lfs uv; do
+  [ -e "$T/bin/$b" ] && { printf '%-8s ' "$b"; "$T/bin/$b" --version 2>/dev/null | head -1; }
+done
+[ -f "$tpl/version.txt" ] && echo "export templates $(cat "$tpl/version.txt")"
+true
