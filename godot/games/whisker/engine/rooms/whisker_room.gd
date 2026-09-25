@@ -9,6 +9,7 @@ const ROOM_SECONDS := 30.0
 var kind := 0
 var bounds := Rect2(0, 0, 16, 9)
 var platforms: Array = []
+var walls: Array[Rect2] = []  ## solid boxes the cat can't walk through (it is pushed out sideways)
 var entry := Vector2(1.5, 5.0)
 var time_left := ROOM_SECONDS
 var status := 0  ## 0 playing, 1 won, -1 swept out
@@ -34,6 +35,24 @@ func swimming(_e: WhiskerEngine) -> bool:
 
 func swim(_e: WhiskerEngine, _dt: float, _jump: bool) -> void:
 	pass
+
+
+## Pushes the cat out of the walls sideways (called after each step, not while swimming).
+func resolve_walls(e: WhiskerEngine) -> void:
+	for w in walls:
+		if not wall_blocks(e, w):
+			continue
+		var r := e.cat.rect()
+		if r.intersects(w):
+			var left := r.end.x - w.position.x
+			var right := w.end.x - r.position.x
+			e.cat.pos.x += -left if left < right else right
+			e.cat.vel.x = 0.0
+
+
+## Rooms can let the cat through a wall (the fishbowl lets it in over the rim).
+func wall_blocks(_e: WhiskerEngine, _w: Rect2) -> bool:
+	return true
 
 
 func add(rect: Rect2, what: String) -> void:

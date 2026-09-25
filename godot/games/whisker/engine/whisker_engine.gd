@@ -30,14 +30,15 @@ const CAN_X: Array[float] = [3.0, 7.5, 12.0, 16.5, 21.0]
 const CAN_TOP := 1.3
 const CAN_W := 1.3
 const FENCE_TOP := 3.2
-const LINE_Y: Array[float] = [5.4, 7.6, 9.8]
+const LINE_Y: Array[float] = [5.2, 7.3, 9.4]  ## a jump (2.2 m) reaches the next line up
 const LINE_SPEED: Array[float] = [1.2, -1.6, 2.0]
 const WINDOW_X: Array[float] = [4.0, 9.0, 14.0, 19.0]
-const WINDOW_Y: Array[float] = [6.4, 8.6, 10.8]  ## bottom of each row of window openings
+const WINDOW_Y: Array[float] = [6.3, 8.4, 10.5]  ## bottom of each row of window openings (reached from the line below)
 const WINDOW_SIZE := Vector2(1.6, 1.5)
 const MAX_OPEN := 4
 const DOG_SPEED := 2.4
-const DOG_CHASE := 5.6
+const DOG_CHASE := 4.6  ## a little slower than the cat at first; +8 % per level
+const DOG_ALERT := 0.45  ## the dog barks and braces before it runs
 const DOG_SIGHT := 8.0
 const SHOE_EVERY := Vector2(2.5, 5.0)
 const SHOE_FLIGHT := 1.0
@@ -60,7 +61,7 @@ var stunned := 0.0
 var input_x := 0  ## -1, 0, 1: set by the game every tick
 var input_y := 0  ## -1 down, 1 up
 var windows: Array[Dictionary] = []  ## {col, row, rect: Rect2, open: bool, t: float, room: RoomKind}
-var dog := {"x": 18.0, "dir": -1, "chasing": false}
+var dog := {"x": 18.0, "dir": -1, "chasing": false, "alert": 0.0}
 var shoes: Array[Dictionary] = []  ## {pos, vel, spin}
 var room: WhiskerRoom = null
 var room_window := -1
@@ -104,7 +105,7 @@ func _respawn() -> void:
 	facing = 1
 	stunned = 0.0
 	shoes.clear()
-	dog = {"x": 18.0, "dir": -1, "chasing": false}
+	dog = {"x": 18.0, "dir": -1, "chasing": false, "alert": 0.0}
 
 
 func _set_phase(p: Phase, secs: float) -> void:
@@ -167,6 +168,7 @@ func tick() -> void:
 				room.swim(self, TICK, jump_now)
 			else:
 				_control(TICK, jump_now)
+				room.resolve_walls(self)
 			room.tick(self, TICK)
 			if room.status != 0:
 				_leave_room(room.status > 0)
@@ -222,8 +224,12 @@ func _tick_dog(dt: float) -> void:
 	var chasing: bool = on_street and absf(dx) < DOG_SIGHT
 	if chasing and not dog["chasing"]:
 		event.emit("dog_bark", {"x": dog["x"]})
+		dog["alert"] = DOG_ALERT
 	dog["chasing"] = chasing
-	if chasing:
+	dog["alert"] = maxf(0.0, dog["alert"] - dt)
+	if chasing and dog["alert"] > 0.0:
+		dog["dir"] = 1 if dx > 0.0 else -1  # turns to face the cat, barking
+	elif chasing:
 		dog["dir"] = 1 if dx > 0.0 else -1
 		dog["x"] += dog["dir"] * DOG_CHASE * (1.0 + 0.08 * (level - 1)) * dt
 	else:

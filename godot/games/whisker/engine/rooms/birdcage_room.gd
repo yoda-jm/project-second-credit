@@ -3,7 +3,7 @@ extends WhiskerRoom
 ## The bird cage: jump up and knock the hanging cage down; the door springs open and the bird flutters around the
 ## room. Catch it.
 
-const CAGE := Rect2(11.4, 4.6, 1.4, 1.6)
+const CAGE := Rect2(11.2, 4.4, 1.4, 1.6)
 const BIRD_SPEED := 3.2
 
 var cage_down := false
@@ -16,7 +16,8 @@ func setup(e: WhiskerEngine) -> void:
 	add(Rect2(2.5, 0, 2.6, 1.5), "table")
 	add(Rect2(6.4, 0, 1.4, 3.0), "bookcase")
 	add(Rect2(8.6, 2.9, 2.0, 0.25), "shelf")
-	add(Rect2(14.2, 0, 1.6, 2.2), "dresser")
+	add(Rect2(13.0, 0, 1.0, 1.2), "chair")      # chair, dresser, then a leap at the cage
+	add(Rect2(14.2, 0, 1.6, 2.4), "dresser")
 	entry = Vector2(1.0, 6.0)
 	goal = 1
 

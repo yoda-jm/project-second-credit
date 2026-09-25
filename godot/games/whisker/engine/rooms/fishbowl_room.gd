@@ -3,7 +3,7 @@ extends WhiskerRoom
 ## The fishbowl: climb the dresser, dive into the bowl and catch the fish before your air runs out. The eel's
 ## touch is a shock (a life lost).
 
-const BOWL := Rect2(5.5, 1.0, 6.0, 4.2)  ## the water inside the glass
+const BOWL := Rect2(4.6, 1.0, 6.0, 4.2)  ## the water inside the glass
 const AIR_SECONDS := 6.0
 const SWIM := 3.6
 const FISH_SPEED := 2.2
@@ -16,17 +16,23 @@ var _in_water := false
 
 func setup(e: WhiskerEngine) -> void:
 	super.setup(e)
-	add(Rect2(4.8, 0, 7.4, 1.0), "table")       # the table under the bowl
-	add(Rect2(0.4, 0, 2.2, 3.4), "dresser")
-	add(Rect2(2.9, 0, 1.3, 1.7), "chair")
-	add(Rect2(13.0, 0, 2.4, 2.4), "cabinet")
-	entry = Vector2(1.2, 6.0)
+	add(Rect2(4.0, 0, 7.2, 1.0), "table")       # the table under the bowl
+	add(Rect2(0.3, 0, 1.4, 1.8), "chair")       # chair, then cabinet, then a leap into the bowl
+	add(Rect2(2.0, 0, 1.6, 3.4), "cabinet")
+	add(Rect2(13.0, 0, 2.4, 2.4), "dresser")
+	walls.append(BOWL.grow_individual(0.1, 0, 0.1, 0))  # the glass
+	entry = Vector2(1.0, 6.0)
 	goal = 3
 	for i in goal:
 		fish.append({"pos": BOWL.position + Vector2(1.0 + i * 1.8, 1.0 + (i % 2) * 1.6),
 			"vel": Vector2(FISH_SPEED * (1 if i % 2 == 0 else -1), e.rng.randf_range(-0.6, 0.6))})
 	for i in mini(1 + (e.level - 1) / 2, 2):
 		eels.append({"pos": BOWL.position + Vector2(3.0, 0.8 + i * 2.2), "phase": e.rng.randf() * TAU, "dir": 1 if i == 0 else -1})
+
+
+## The glass lets the cat in over the rim only.
+func wall_blocks(e: WhiskerEngine, _w: Rect2) -> bool:
+	return e.cat.pos.y < BOWL.end.y - 0.4
 
 
 func swimming(e: WhiskerEngine) -> bool:

@@ -201,3 +201,13 @@ func test_same_seed_and_inputs_replay_identically() -> void:
 			e.tick()
 		out.append([e.score, e.lives, e.cat.pos, e.dog["x"], e.shoes.size()])
 	assert_array(out[0]).is_equal(out[1])
+
+
+func test_demo_bot_wins_rooms() -> void:
+	var e := WhiskerEngine.new(21)
+	var bot := WhiskerBot.new()
+	for i in int(90.0 / E.TICK):
+		bot.drive(e)
+		e.tick()
+	assert_int(e.rooms_won).is_greater_equal(3)
+	assert_int(e.phase).is_not_equal(E.Phase.GAME_OVER)
