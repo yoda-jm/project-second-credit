@@ -26,6 +26,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - The gardener, fruit and monsters are built by scripts in `tools/blender/` (the gardener is the collection's first
   rigged and animated character); sound effects and the garden theme are synthesised by `tools/audio/`.
 
+## Game 4 (Whisker Alley, working title)
+
+- Inspired by *Alley Cat* (Bill Williams, Synapse Software, 1984). None of its code, graphics, sounds or layouts are
+  in this repo; the rules are rewritten from how the game plays. rhuizer/alleycat (GPL-3.0) was looked at as a
+  behaviour reference; none of its code or data is used.
+- The cat, the lady cat, the bulldog and every prop are built by scripts in `tools/blender/`; sound effects and the
+  late-night swing are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

@@ -74,4 +74,8 @@ decisions below are settled unless the owner reopens them.
    original in an emulator. Open items: more gardens, the day-to-dusk cycle across a longer pack.
 5. CI (`.github/workflows/`: tests, Linux/Windows/macOS builds, a rolling `latest` release) and the website
    (`site/`, deployed by `pages.yml`) exist: refresh `site/` whenever a game changes a lot.
-6. Next: game 4 (Alley Cat), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)).
+6. Game 4, **Whisker Alley** (working title, `godot/games/whisker/`): playable. A platformer engine
+   (`engine/platform_body.gd`), the alley hub and five rooms (`engine/rooms/`), rigged cat, lady cat and bulldog
+   (`tools/blender/whisker_animals.py`). `--room=N` (user argument) starts a capture inside a room. Rules from
+   memory: check against the original.
+7. Next: game 5 (Winter Games), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)).
