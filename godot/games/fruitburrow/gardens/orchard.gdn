@@ -1,0 +1,52 @@
+; Fruitburrow garden pack. Designed for Second Credit. Licence CC BY-SA 4.0.
+; Format: see godot/games/fruitburrow/engine/garden_map.gd
+[pack]
+name=Second Credit Orchard
+
+[garden]
+name=First Harvest
+monsters=4
+diggers=0
+##c###A####A###c##
+#cc############cc#
+###gg########bb###
+##..............##
+##.#A#######.##.##
+#b.####N.....#s.s#
+#b.#pp###A##.#s.s#
+##.#pp######.##.##
+##.#########.##.##
+##......P.......##
+###A####cc####A###
+
+[garden]
+name=Cherry Row
+monsters=5
+diggers=1
+c#c#c##A##A##c#c#c
+##################
+#............#####
+#.##A##A##.#######
+#.########.###gg##
+#.##pp##N.......##
+#.##pp######A##.##
+#.#A#######bb##.##
+#.#########bb##.##
+#.......P.......##
+##ss##A###A##ss###
+
+[garden]
+name=Stone Garden
+monsters=6
+diggers=2
+##A##c#c#c#c##A###
+#####XX####XX#####
+##..............##
+##.#A##XXX##A#.###
+##.####ggg####.###
+#s.####N.......s##
+#s.#XX#####A##.###
+##.#pp#b######.###
+##.#pp#b##XX##.###
+##.......P.....###
+#A####cc##cc###A##
