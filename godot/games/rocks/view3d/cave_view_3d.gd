@@ -26,6 +26,7 @@ var _fx: CaveEffects
 var _backdrop: MeshInstance3D
 var _hero_facing := 1.0
 var _cells_kind := PackedInt32Array()
+var _landed := {}  ## cell index -> time an object landed there (for the squash)
 
 
 func _ready() -> void:
@@ -185,7 +186,7 @@ func _mesh(kind: int) -> Mesh:
 		Kind.AMOEBA: return load(MODELS + "amoeba.obj")
 		Kind.GATE: return load(MODELS + "exit.obj")
 		Kind.PORTAL: return load(MODELS + "portal.obj")
-		Kind.HERO: return load(MODELS + "hero.obj")
+		Kind.HERO: return _mesh_from_scene(MODELS + "hero.glb")
 		Kind.BLAST:
 			var s := SphereMesh.new()
 			s.radius = 0.5
@@ -196,6 +197,16 @@ func _mesh(kind: int) -> Mesh:
 	return b
 
 
+static func _mesh_from_scene(path: String) -> Mesh:
+	var root := (load(path) as PackedScene).instantiate()
+	var found: Mesh = null
+	for n in root.find_children("*", "MeshInstance3D", true, false):
+		found = (n as MeshInstance3D).mesh
+		break
+	root.free()
+	return found
+
+
 func _build_multimeshes() -> void:
 	for kind in Kind.size():
 		var mm := MultiMesh.new()
@@ -204,7 +215,8 @@ func _build_multimeshes() -> void:
 		mm.mesh = _mesh(kind)
 		var inst := MultiMeshInstance3D.new()
 		inst.multimesh = mm
-		inst.material_override = _material(kind)
+		if kind != Kind.HERO:  # the hero keeps the materials made in Blender
+			inst.material_override = _material(kind)
 		if kind == Kind.PORTAL or kind == Kind.BLAST:
 			inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(inst)
@@ -277,6 +289,8 @@ func _on_frame_done(engine: CaveEngine, _frame_ms: float) -> void:
 		_hero_facing = 1.0
 	for ev in engine.events:
 		_fx.on_event(ev, engine)
+		if ev[0] == "effect" and ev[4]:
+			_landed[int(ev[3]) * engine.w + int(ev[2])] = _time
 		if ev[0] == "explosion":
 			_trauma = minf(1.0, _trauma + 0.55)
 
@@ -289,7 +303,6 @@ func _process(delta: float) -> void:
 		return
 	_time += delta
 	var t := game.frame_progress
-	var ease := t * t * (3.0 - 2.0 * t)
 	for i in _counts.size():
 		_counts[i] = 0
 	var hero_pos := Vector3(engine.player_x, -engine.player_y, 0)
@@ -305,19 +318,30 @@ func _process(delta: float) -> void:
 			var pos := Vector3(x, -y, 0)
 			var from = _came_from.get(i)
 			if from != null:
-				pos = Vector3(from.x, -from.y, 0).lerp(pos, ease)
+				pos = Vector3(from.x, -from.y, 0).lerp(pos, t)
+			var squash := 0.0
+			var landed = _landed.get(i)
+			if landed != null:
+				var age: float = _time - landed
+				if age < 0.35:
+					squash = sin(age / 0.35 * PI) * 0.22 * (1.0 - age / 0.35)
+				else:
+					_landed.erase(i)
 			var basis := Basis()
 			var color := Color.WHITE
 			match kind:
 				Kind.BOULDER:
 					var roll := 0.0
 					if from != null:
-						roll = (from.x - x) * ease * PI * 0.5
-					basis = Basis(Vector3.BACK, roll) * Basis(Vector3.UP, float(i % 7))
+						roll = (from.x - x) * t * PI * 0.5
+					basis = Basis.from_scale(Vector3(1.0 + squash, 1.0 - squash, 1.0 + squash)) \
+						* Basis(Vector3.BACK, roll) * Basis(Vector3.UP, float(i % 7))
+					pos.y -= squash * 0.3
 					var tint := 0.85 + 0.15 * sin(i * 1.7)
 					color = Color(tint, tint * 0.97, tint * 0.93)
 				Kind.DIAMOND:
-					basis = Basis(Vector3.UP, _time * 1.6 + i) * Basis(Vector3.RIGHT, 0.25)
+					basis = Basis.from_scale(Vector3(1.0 + squash, 1.0 - squash, 1.0 + squash)) \
+						* Basis(Vector3.UP, _time * 1.6 + i) * Basis(Vector3.RIGHT, 0.25)
 				Kind.DIRT:
 					basis = Basis(Vector3.UP, float((i * 37) % 4) * PI * 0.5) * Basis.from_scale(Vector3(0.96, 0.96, 0.9))
 				Kind.FIREFLY:
