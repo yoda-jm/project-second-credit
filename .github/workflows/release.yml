@@ -34,6 +34,13 @@ jobs:
       - name: Fetch Godot and export templates
         run: tools/fetch-tools.sh godot templates
 
+      - name: Cache Godot's imported assets
+        uses: actions/cache@v4
+        with:
+          path: godot/.godot
+          key: godot-import-${{ runner.os }}-${{ hashFiles('godot/project.godot', 'godot/**/*.import', 'godot/**/*.jpg', 'godot/**/*.png', 'godot/**/*.glb', 'godot/**/*.obj', 'godot/**/*.wav', 'godot/**/*.ogg', 'godot/**/*.ttf') }}
+          restore-keys: godot-import-${{ runner.os }}-
+
       - name: Export
         run: tools/export.sh
 
