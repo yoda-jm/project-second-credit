@@ -28,6 +28,11 @@ func tick(e: WhiskerEngine, dt: float) -> void:
 		e.event.emit("broom", {})
 
 
+## Called when the cat leaves the room.
+func cleanup(_e: WhiskerEngine) -> void:
+	pass
+
+
 ## Rooms with water override these (the fishbowl).
 func swimming(_e: WhiskerEngine) -> bool:
 	return false

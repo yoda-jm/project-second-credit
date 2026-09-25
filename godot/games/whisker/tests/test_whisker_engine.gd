@@ -211,3 +211,53 @@ func test_demo_bot_wins_rooms() -> void:
 		e.tick()
 	assert_int(e.rooms_won).is_greater_equal(3)
 	assert_int(e.phase).is_not_equal(E.Phase.GAME_OVER)
+
+
+func test_dogbowls_drinking_all_bowls_wins() -> void:
+	var e := _room(E.RoomKind.DOGBOWLS)
+	var r := e.room as DogbowlsRoom
+	for x in DogbowlsRoom.BOWL_X:
+		e.cat.pos = Vector2(x, 0.0)
+		e.cat.vel = Vector2.ZERO
+		e.cat.on_ground = true  # already standing: no landing to wake the dogs
+		_run(e, DogbowlsRoom.DRINK_SECONDS + 0.2)
+	assert_int(e.rooms_won).is_equal(1)
+
+
+func test_landing_near_a_dog_wakes_it() -> void:
+	var e := _room(E.RoomKind.DOGBOWLS)
+	var r := e.room as DogbowlsRoom
+	e.cat.pos = Vector2(DogbowlsRoom.BOWL_X[1], 2.0)
+	e.cat.vel = Vector2.ZERO
+	e.cat.on_ground = false
+	_run(e, 0.6)
+	assert_float(r.dogs[1]["awake"]).is_greater(0.0)
+
+
+func test_third_room_leads_to_the_serenade_and_reaching_the_lady_levels_up() -> void:
+	var e := _room(E.RoomKind.MICE)
+	e.rooms_won = E.ROOMS_PER_SERENADE - 1
+	e.room.status = 1
+	_run(e, E.TICK * 2)
+	assert_int(e.phase).is_equal(E.Phase.ROOM)
+	assert_int(e.room.kind).is_equal(E.RoomKind.HEARTS)
+	var h := e.room as HeartsRoom
+	e.cat.pos = h.lady
+	_run(e, E.TICK * 2)
+	assert_int(e.serenades).is_equal(1)
+	assert_int(e.level).is_equal(2)
+	assert_int(e.phase).is_equal(E.Phase.ALLEY)
+
+
+func test_hearts_carry_the_cat() -> void:
+	var e := _room(E.RoomKind.MICE)
+	e.rooms_won = E.ROOMS_PER_SERENADE - 1
+	e.room.status = 1
+	_run(e, E.TICK * 2)
+	var h := e.room as HeartsRoom
+	h.arrows.clear()
+	var heart: Dictionary = h.hearts[0]
+	e.cat.pos = Vector2((heart["rect"] as Rect2).get_center().x, (heart["rect"] as Rect2).end.y)
+	_run(e, 0.5)
+	assert_str(e.cat.ground.get("kind", "")).is_equal("heart")
+	assert_float(absf(e.cat.pos.x - (heart["rect"] as Rect2).get_center().x)).is_less(0.3)

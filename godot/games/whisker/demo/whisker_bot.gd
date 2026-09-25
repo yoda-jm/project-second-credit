@@ -20,6 +20,8 @@ func drive(e: WhiskerEngine) -> void:
 			match e.room.kind:
 				E.RoomKind.FISHBOWL: _fishbowl(e, e.room as FishbowlRoom)
 				E.RoomKind.MICE: _mice(e, e.room as MiceRoom)
+				E.RoomKind.DOGBOWLS: _dogbowls(e, e.room as DogbowlsRoom)
+				E.RoomKind.HEARTS: _hearts(e, e.room as HeartsRoom)
 				_: _birdcage(e, e.room as BirdcageRoom)
 
 
@@ -190,3 +192,53 @@ func _birdcage(e: WhiskerEngine, r: BirdcageRoom) -> void:
 	_toward(e, b.x, 0.2)
 	if b.y > e.cat.pos.y + 0.8 and absf(b.x - e.cat.pos.x) < 1.5:
 		_jump(e)
+
+
+func _dogbowls(e: WhiskerEngine, r: DogbowlsRoom) -> void:
+	# never jump near the dogs: walk along the floor from bowl to bowl and stand still to drink
+	if not e.cat.on_ground:
+		return
+	for i in r.bowls.size():
+		if r.bowls[i] > 0.0:
+			var awake := false
+			for dog in r.dogs:
+				if dog["awake"] > 0.0 and absf(dog["x"] - e.cat.pos.x) < 3.0:
+					awake = true
+			if awake:  # a dog is up: wait on the cabinet, far from it
+				if _toward(e, 1.0, 0.2) < 0.3 and e.cat.pos.y < 0.1:
+					_jump(e, 1.0)
+				return
+			if e.cat.pos.y > 0.1:  # down from furniture, away from the dogs
+				e.input_x = 1 if e.cat.pos.x < DogbowlsRoom.BOWL_X[i] else -1
+				return
+			_toward(e, DogbowlsRoom.BOWL_X[i], 0.12)
+			return
+
+
+func _hearts(e: WhiskerEngine, r: HeartsRoom) -> void:
+	if _steer(e):
+		return
+	if not e.cat.on_ground:
+		return
+	if e.cat.pos.y > HeartsRoom.TOP_Y - 0.6:
+		_toward(e, r.lady.x, 0.1)
+		return
+	# the next heart up: wait until it drifts close, then jump for where it will be
+	var best: Dictionary = {}
+	for h in r.hearts:
+		var top: float = (h["rect"] as Rect2).end.y
+		if top > e.cat.pos.y + 0.5 and top < e.cat.pos.y + 2.3 and (best.is_empty() or top < (best["rect"] as Rect2).end.y):
+			best = h
+	if best.is_empty():
+		_toward(e, r.lady.x, 0.3)  # the last hop: the lady's ledge
+		if absf(e.cat.pos.x - r.lady.x) < 1.2:
+			_jump(e, r.lady.x)
+		return
+	var rect: Rect2 = best["rect"]
+	var lead: float = rect.get_center().x + best["vel"].x * 0.45
+	if absf(lead - e.cat.pos.x) < 2.2:
+		_jump(e, lead)
+	else:
+		# ride the current heart: walk toward the next one, but never off our own platform
+		var here: Rect2 = e.cat.ground.get("rect", Rect2(-100, 0, 300, 1))
+		_toward(e, clampf(lead, here.position.x + 0.4, here.end.x - 0.4), 0.2)

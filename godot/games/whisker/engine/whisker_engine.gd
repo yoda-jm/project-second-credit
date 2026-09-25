@@ -14,7 +14,7 @@ signal event(kind: String, data: Dictionary)  ## "jump", "bounce", "land", "wind
 ## "game_over", and room-specific events (see the rooms)
 
 enum Phase { READY, ALLEY, ROOM, DYING, GAME_OVER }
-enum RoomKind { FISHBOWL, MICE, BIRDCAGE }
+enum RoomKind { FISHBOWL, MICE, BIRDCAGE, DOGBOWLS, HEARTS }
 
 const TICK := 1.0 / 60.0
 const W := 24.0
@@ -46,6 +46,8 @@ const SHOE_GRAVITY := 15.0
 const STUN := 0.7
 const SCORE_ENTER := 50
 const SCORE_ROOM := 500
+const SCORE_SERENADE := 2000
+const ROOMS_PER_SERENADE := 3
 
 var rng := RandomNumberGenerator.new()
 var phase := Phase.READY
@@ -55,6 +57,7 @@ var score := 0
 var lives := LIVES
 var level := 1
 var rooms_won := 0
+var serenades := 0
 var cat := PlatformBody.new()
 var facing := 1
 var stunned := 0.0
@@ -88,7 +91,7 @@ func _build_alley() -> void:
 		_alley_platforms.append({"rect": Rect2(0, LINE_Y[i] - 0.05, W, 0.05), "kind": "line", "line": i,
 			"vel": Vector2(LINE_SPEED[i], 0)})
 	windows.clear()
-	var kinds := [RoomKind.FISHBOWL, RoomKind.MICE, RoomKind.BIRDCAGE]
+	var kinds := [RoomKind.FISHBOWL, RoomKind.MICE, RoomKind.BIRDCAGE, RoomKind.DOGBOWLS]
 	var i := 0
 	for row in WINDOW_Y.size():
 		for col in WINDOW_X.size():
@@ -287,12 +290,14 @@ func _try_windows() -> void:
 
 # ------------------------------------------------------------------ rooms
 
-func _enter_room(i: int) -> void:
+func _enter_room(i: int, serenade := false) -> void:
 	room_window = i
-	var kind: RoomKind = windows[i]["room"]
+	var kind: RoomKind = RoomKind.HEARTS if serenade else windows[i]["room"]
 	match kind:
 		RoomKind.FISHBOWL: room = FishbowlRoom.new()
 		RoomKind.MICE: room = MiceRoom.new()
+		RoomKind.DOGBOWLS: room = DogbowlsRoom.new()
+		RoomKind.HEARTS: room = HeartsRoom.new()
 		_: room = BirdcageRoom.new()
 	room.kind = kind
 	room.setup(self)
@@ -300,22 +305,34 @@ func _enter_room(i: int) -> void:
 	cat.vel = Vector2.ZERO
 	stunned = 0.0
 	shoes.clear()
-	score += SCORE_ENTER
+	if not serenade:
+		score += SCORE_ENTER
 	_set_phase(Phase.ROOM, 0.0)
 	event.emit("enter_room", {"window": i, "kind": kind})
 
 
 func _leave_room(won: bool) -> void:
 	var w := windows[room_window]
-	if won:
+	var was := room.kind
+	room.cleanup(self)
+	if won and was == RoomKind.HEARTS:
+		serenades += 1
+		level = 1 + serenades
+		var bonus := SCORE_SERENADE + int(room.time_left * 20.0)
+		score += bonus
+		event.emit("room_won", {"kind": was, "bonus": bonus})
+	elif won:
 		rooms_won += 1
 		var bonus := SCORE_ROOM + int(room.time_left * 10.0)
 		score += bonus
-		level = 1 + rooms_won / 3
-		event.emit("room_won", {"kind": room.kind, "bonus": bonus})
+		event.emit("room_won", {"kind": was, "bonus": bonus})
 	else:
-		event.emit("room_failed", {"kind": room.kind})
+		event.emit("room_failed", {"kind": was})
 	room = null
+	if won and was != RoomKind.HEARTS and rooms_won % ROOMS_PER_SERENADE == 0 and phase == Phase.ROOM:
+		event.emit("leave_room", {"window": room_window, "won": true})
+		_enter_room(room_window, true)  # straight on to the serenade
+		return
 	w["open"] = false
 	w["t"] = rng.randf_range(3.0, 6.0)
 	cat.pos = Vector2((w["rect"] as Rect2).get_center().x, (w["rect"] as Rect2).position.y)
