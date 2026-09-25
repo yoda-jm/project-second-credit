@@ -3,8 +3,6 @@ extends Node
 ## (Play, Settings, Credits, Quit). Keyboard, gamepad and mouse all work. Games return here from their pause
 ## menu. Pass "--game=<id>" (user argument) to jump straight into a game.
 
-const GEM_MESH := "res://games/glimmerdeep/art/models/diamond.obj"
-const BOULDER_MESH := "res://games/glimmerdeep/art/models/boulder.obj"
 const GOLD := Color(1.0, 0.83, 0.35)
 const PANEL := Color(0.05, 0.05, 0.09, 0.72)
 
@@ -20,8 +18,11 @@ var _fade: ColorRect
 var _sfx := {}
 var _sfx_player: AudioStreamPlayer
 var _music: AudioStreamPlayer
-var _gems: MultiMeshInstance3D
-var _rocks: MultiMeshInstance3D
+const PROP_COUNT := 90
+var _prop_mm := {}  ## mesh path -> MultiMeshInstance3D
+var _prop_count := {}
+var _previous := 0
+var _morph_t := 10.0
 var _camera: Camera3D
 var _time := 0.0
 var _seeds: Array[Vector4] = []
@@ -41,6 +42,9 @@ func _ready() -> void:
 	_select_game(0, false)
 	_focus_menu(0, false)
 	_fade_from_black()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--select="):  # for captures: change card after a second
+			get_tree().create_timer(1.0).timeout.connect(_select_game.bind(int(arg.substr(9))))
 
 
 # ------------------------------------------------------------------ backdrop
@@ -77,19 +81,58 @@ func _build_backdrop() -> void:
 
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2026
-	for i in 90:
+	for i in PROP_COUNT:
 		_seeds.append(Vector4(rng.randf_range(-13, 13), rng.randf_range(-7, 7), rng.randf_range(-16, -2), rng.randf()))
-	_gems = _multimesh(GEM_MESH, 55, _gem_material())
-	var rock_mat := StandardMaterial3D.new()
-	rock_mat.albedo_color = Color(0.3, 0.29, 0.28)
-	rock_mat.roughness = 0.8
-	_rocks = _multimesh(BOULDER_MESH, 35, rock_mat)
+	# one multimesh per distinct prop of every game; each floating object picks its shape from the selected game
+	for g in GameRegistry.GAMES:
+		for prop in g.get("props", []):
+			var key: String = prop[0]
+			if not _prop_mm.has(key):
+				_prop_mm[key] = _multimesh(key, PROP_COUNT, _prop_material(prop[1]))
 
 
-func _gem_material() -> Material:
-	var m := ShaderMaterial.new()
-	m.shader = load("res://games/glimmerdeep/shaders/gem.gdshader")
-	return m
+func _prop_material(kind: String) -> Material:
+	if kind == "gem":
+		var m := ShaderMaterial.new()
+		m.shader = load("res://games/glimmerdeep/shaders/gem.gdshader")
+		return m
+	var s := StandardMaterial3D.new()
+	match kind:
+		"rock":
+			s.albedo_color = Color(0.3, 0.29, 0.28)
+			s.roughness = 0.8
+		"iron":
+			s.albedo_color = Color(0.3, 0.3, 0.32)
+			s.metallic = 0.8
+			s.roughness = 0.35
+			s.emission_enabled = true
+			s.emission = Color(1.0, 0.35, 0.05)
+			s.emission_energy_multiplier = 0.9
+		"stone":
+			s.albedo_color = Color(0.62, 0.58, 0.5)
+			s.roughness = 0.9
+		"cone":
+			s.albedo_color = Color(1.0, 0.45, 0.05)
+			s.emission_enabled = true
+			s.emission = Color(1.0, 0.35, 0.0)
+			s.emission_energy_multiplier = 0.6
+		"steel":
+			s.albedo_color = Color(0.6, 0.65, 0.72)
+			s.metallic = 1.0
+			s.roughness = 0.3
+	return s
+
+
+## The prop mesh (key) that floating object i uses for game g: shares follow the game's "share" values.
+func _prop_for(g: int, i: int) -> String:
+	var props: Array = GameRegistry.GAMES[g].get("props", [])
+	var x := float((i * 7919) % 100) / 100.0
+	var acc := 0.0
+	for prop in props:
+		acc += prop[2]
+		if x < acc:
+			return prop[0]
+	return props.back()[0]
 
 
 func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
@@ -106,18 +149,24 @@ func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
 
 func _process(delta: float) -> void:
 	_time += delta
-	var gi := 0
-	var ri := 0
+	for key in _prop_mm:
+		_prop_count[key] = 0
+	_morph_t += delta
 	for i in _seeds.size():
 		var s := _seeds[i]
 		var p := Vector3(s.x + sin(_time * 0.2 + s.w * 9.0) * 0.6, s.y + fmod(_time * (0.15 + s.w * 0.2) + s.w * 20.0, 14.0) - 7.0, s.z)
-		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), _time * (0.3 + s.w)).scaled(Vector3.ONE * (0.6 + s.w * 0.8))
-		if i % 5 < 3 and gi < _gems.multimesh.instance_count:
-			_gems.multimesh.set_instance_transform(gi, Transform3D(b, p))
-			gi += 1
-		elif ri < _rocks.multimesh.instance_count:
-			_rocks.multimesh.set_instance_transform(ri, Transform3D(b, p))
-			ri += 1
+		# morph: each object shrinks, swaps shape and pops back, with a small stagger between objects
+		var k := clampf((_morph_t - s.w * 0.45) / 0.35, 0.0, 1.0)
+		var key := _prop_for(_selected, i) if k >= 0.5 else _prop_for(_previous, i)
+		var grow := absf(k * 2.0 - 1.0)
+		grow = 1.0 - pow(1.0 - grow, 3.0)
+		var spin := _time * (0.3 + s.w) + k * TAU
+		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), spin).scaled(Vector3.ONE * (0.6 + s.w * 0.8) * maxf(grow, 0.001))
+		var mm: MultiMesh = _prop_mm[key].multimesh
+		mm.set_instance_transform(_prop_count[key], Transform3D(b, p))
+		_prop_count[key] += 1
+	for key in _prop_mm:
+		_prop_mm[key].multimesh.visible_instance_count = _prop_count[key]
 	_camera.position = Vector3(sin(_time * 0.07) * 1.2, cos(_time * 0.05) * 0.5, 9.0)
 	_camera.look_at(Vector3(0, 0, -3))
 	for i in _cards.size():
@@ -414,6 +463,9 @@ func _select_game(i: int, sound: bool = true) -> void:
 	i = clampi(i, 0, _cards.size() - 1)
 	if i != _selected and sound:
 		_play("ui_move")
+	if i != _selected:
+		_previous = _selected
+		_morph_t = 0.0
 	_selected = i
 	var tw := create_tween()
 	tw.tween_property(_card_box, "position:x", 620.0 + 180.0 - i * 414.0 + 0.0 * i, 0.35) \
