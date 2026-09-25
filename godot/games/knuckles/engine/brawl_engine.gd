@@ -38,8 +38,8 @@ const ATTACKS := {
 	"crate": [0.2, 0.12, 0.35, 1.4, 22, 6.0, true, 0.6],
 }
 const ENEMY_KINDS := {
-	"thug": {"hp": 40, "speed": 2.4, "attacks": ["punch", "kick"], "think": 0.9},
-	"knifer": {"hp": 35, "speed": 2.8, "attacks": ["knife"], "think": 0.7, "weapon": "knife"},
+	"thug": {"hp": 40, "speed": 2.4, "attacks": ["punch", "kick"], "think": 1.15},
+	"knifer": {"hp": 35, "speed": 2.8, "attacks": ["knife"], "think": 0.95, "weapon": "knife"},
 	"bruiser": {"hp": 110, "speed": 1.8, "attacks": ["hook", "charge"], "think": 1.3},
 	"boss": {"hp": 220, "speed": 2.2, "attacks": ["hook", "kick", "charge"], "think": 0.8},
 }
@@ -344,8 +344,11 @@ func _hits() -> void:
 				break
 
 
+const PLAYER_ARMOUR := 0.65  ## players take this share of the damage (the street is many against one)
+
+
 func _damage(o: Dictionary, amount: int, by: Dictionary) -> void:
-	o["hp"] -= amount
+	o["hp"] -= int(ceil(amount * PLAYER_ARMOUR)) if o["player"] >= 0 else amount
 	if by["player"] >= 0:
 		score += amount * 10
 

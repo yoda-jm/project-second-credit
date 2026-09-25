@@ -147,3 +147,16 @@ func test_same_seed_and_inputs_replay_identically() -> void:
 			e.tick()
 		out.append([e.score, e.wave, e.fighters.size(), e.players()[0]["pos"]])
 	assert_array(out[0]).is_equal(out[1])
+
+
+func test_two_demo_bots_clear_the_first_stage() -> void:
+	var s := BrawlLevel.parse_file(FileAccess.get_file_as_string("res://games/knuckles/stages/downtown.brawl"))[0]
+	var e := BrawlEngine.new(s, 2, 7)
+	var bots := [BrawlBot.new(1), BrawlBot.new(2)]
+	var n := 0
+	while e.phase == B.Phase.PLAY and n < 60 * 300:
+		bots[0].drive(e, 0)
+		bots[1].drive(e, 1)
+		e.tick()
+		n += 1
+	assert_int(e.phase).is_equal(B.Phase.CLEAR)
