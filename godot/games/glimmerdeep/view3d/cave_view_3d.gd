@@ -26,6 +26,8 @@ var _fx: CaveEffects
 var _backdrop: MeshInstance3D
 var _hero_facing := 1.0
 var _cells_kind := PackedInt32Array()
+var _static_dirty := true  ## dirt, walls and steel only change on engine frames
+const STATIC_KINDS := [Kind.DIRT, Kind.BRICK, Kind.STEEL, Kind.MAGIC]
 var _landed := {}  ## cell index -> time an object landed there (for the squash)
 
 
@@ -86,7 +88,7 @@ func _build_environment() -> void:
 	_lamp.light_color = Color(1.0, 0.8, 0.5)
 	_lamp.light_energy = 1.6
 	_lamp.omni_range = 7.0
-	_lamp.shadow_enabled = true
+	_lamp.shadow_enabled = false  # omni shadows cost six extra passes; the key light keeps its shadows
 	add_child(_lamp)
 
 	_camera = Camera3D.new()
@@ -275,6 +277,7 @@ static func kind_of(e: int) -> int:
 # ---------------------------------------------------------------- game events
 
 func _on_cave_started(engine: CaveEngine) -> void:
+	_static_dirty = true
 	for i in _mm.size():
 		_mm[i].multimesh.instance_count = engine.w * engine.h
 	_came_from.clear()
@@ -288,6 +291,7 @@ func _on_cave_started(engine: CaveEngine) -> void:
 
 
 func _on_frame_done(engine: CaveEngine, _frame_ms: float) -> void:
+	_static_dirty = true
 	_came_from.clear()
 	for m in engine.moves:
 		var to_x: int = (m.x + D.DX[m.z] + engine.w) % engine.w
@@ -317,8 +321,11 @@ func _process(delta: float) -> void:
 		return
 	_time += delta
 	var t := game.frame_progress
+	var rebuild_static := _static_dirty
+	_static_dirty = false
 	for i in _counts.size():
-		_counts[i] = 0
+		if rebuild_static or not STATIC_KINDS.has(i):
+			_counts[i] = 0
 	var hero_pos := Vector3(engine.player_x, -engine.player_y, 0)
 	var w := engine.w
 	var gate_open := engine.gate_open
@@ -327,12 +334,14 @@ func _process(delta: float) -> void:
 			var i := y * w + x
 			var e: int = E.nonscanned_pair(engine.map[i])
 			var kind := kind_of(e)
-			if kind < 0:
+			if kind < 0 or (not rebuild_static and STATIC_KINDS.has(kind)):
 				continue
 			var pos := Vector3(x, -y, 0)
 			var from = _came_from.get(i)
 			if from != null:
-				pos = Vector3(from.x, -from.y, 0).lerp(pos, t)
+				# the hero reaches its new cell in a third of a step (responsive); falling things glide all along
+				var k := clampf(t * 3.0, 0.0, 1.0) if kind == Kind.HERO else t
+				pos = Vector3(from.x, -from.y, 0).lerp(pos, k)
 			var squash := 0.0
 			var landed = _landed.get(i)
 			if landed != null:

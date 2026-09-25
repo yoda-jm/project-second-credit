@@ -39,15 +39,20 @@ func test_home_castle_is_enclosed_at_start() -> void:
 
 func test_diagonal_walls_seal() -> void:
 	var e := _engine()
-	# a diamond of walls touching only at corners around (20, 14)
-	for p in [Vector2i(20, 12), Vector2i(21, 13), Vector2i(22, 14), Vector2i(21, 15), Vector2i(20, 16),
-			Vector2i(19, 15), Vector2i(18, 14), Vector2i(19, 13)]:
+	# a diamond of walls touching only at their corners around castle 0 (7..8, 6..7)
+	var ring: Array[Vector2i] = []
+	for y in range(3, 11):
+		for x in range(4, 12):
+			if absf(x - 7.5) + absf(y - 6.5) == 3.0:
+				ring.append(Vector2i(x, y))
+	for p in ring:
 		e.cells[p.y * e.map.w + p.x] = BastionEngine.Cell.WALL
 	e._compute_territory(false)
-	assert_bool(e.is_ours(20, 14)).is_true()
-	e.cells[12 * e.map.w + 20] = BastionEngine.Cell.EMPTY  # open a gap
+	assert_bool(e.is_ours(7, 6)).is_true()
+	assert_array(e.enclosed_castles).contains([0])
+	e.cells[ring[0].y * e.map.w + ring[0].x] = BastionEngine.Cell.EMPTY  # open a gap
 	e._compute_territory(false)
-	assert_bool(e.is_ours(20, 14)).is_false()
+	assert_bool(e.is_ours(7, 6)).is_false()
 
 
 func test_cannons_only_inside_territory() -> void:
@@ -180,3 +185,16 @@ func test_blocked_when_the_piece_fits_nowhere() -> void:
 		if e.cells[i] == BastionEngine.Cell.EMPTY:
 			e.cells[i] = BastionEngine.Cell.RUBBLE
 	assert_str(e.blocked()).is_equal("piece")
+
+
+func test_a_sealed_pocket_without_castle_is_not_territory() -> void:
+	var e := _engine()
+	e.cursor = Vector2(e.map.castles[1])
+	e.act()
+	# a small closed ring far from any castle
+	for p in [Vector2i(26, 14), Vector2i(27, 14), Vector2i(28, 14), Vector2i(26, 15), Vector2i(28, 15), Vector2i(26, 16),
+			Vector2i(27, 16), Vector2i(28, 16)]:
+		e.cells[p.y * e.map.w + p.x] = BastionEngine.Cell.WALL
+	e._compute_territory(false)
+	assert_bool(e.is_ours(27, 15)).is_false()
+	assert_bool(e.is_ours(e.map.castles[1].x, e.map.castles[1].y)).is_true()

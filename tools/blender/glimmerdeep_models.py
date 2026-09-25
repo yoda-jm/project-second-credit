@@ -113,7 +113,7 @@ def dirt():
     bpy.ops.mesh.primitive_cube_add(size=0.98)
     obj = bpy.context.active_object
     m = obj.modifiers.new("sub", "SUBSURF")
-    m.levels = 3
+    m.levels = 2  # the texture carries the detail; keep the instanced block light
     m.subdivision_type = "SIMPLE"
     bpy.ops.object.modifier_apply(modifier=m.name)
     for v in obj.data.vertices:

@@ -147,8 +147,10 @@ func _build_world() -> void:
 	em.albedo_color = Color(1.4, 2.2, 3.5)
 	_edge = _mm(eb, em, false)
 	_edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var hb := BoxMesh.new()
-	hb.size = Vector3(0.8, 0.12, 0.8)
+	var hb := CylinderMesh.new()  # a glowing beacon standing in each hole
+	hb.top_radius = 0.3
+	hb.bottom_radius = 0.42
+	hb.height = 1.6
 	var hm := StandardMaterial3D.new()
 	hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	hm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -362,7 +364,7 @@ func _process(delta: float) -> void:
 		_rebuild_board(e)
 		_land_dirty = false
 	_zone_pulse = maxf(0.0, _zone_pulse - delta * 0.8)
-	var za := 0.16 + 0.06 * sin(_time * 3.0) + 0.45 * _zone_pulse
+	var za := 0.3 + 0.08 * sin(_time * 3.0) + 0.45 * _zone_pulse
 	for i in _zone.multimesh.visible_instance_count:
 		_zone.multimesh.set_instance_color(i, Color(0.35, 0.65, 1.0, za))
 	for i in _edge.multimesh.visible_instance_count:
@@ -513,9 +515,10 @@ func _update_holes(e: BastionEngine) -> void:
 			for h in holes:
 				if n >= 64:
 					break
-				var lift := 0.08 * sin(_time * 5.0 + h.x)
-				_holes.multimesh.set_instance_transform(n, Transform3D(Basis(), Vector3(h.x, LAND_H + 0.1 + lift, h.y)))
-				_holes.multimesh.set_instance_color(n, Color(2.5, 0.25, 0.15, 0.45 + 0.4 * pulse))
+				var grow := 0.85 + 0.25 * pulse
+				_holes.multimesh.set_instance_transform(n, Transform3D(Basis.from_scale(Vector3(grow, 0.6 + 0.4 * pulse, grow)),
+					Vector3(h.x, LAND_H + 0.5, h.y)))
+				_holes.multimesh.set_instance_color(n, Color(3.0, 0.2, 0.1, 0.35 + 0.45 * pulse))
 				n += 1
 	_holes.multimesh.visible_instance_count = n
 

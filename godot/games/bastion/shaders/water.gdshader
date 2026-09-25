@@ -42,7 +42,7 @@ void fragment() {
 	float foam = smoothstep(0.25, 0.5, land) * smoothstep(0.75, 0.35, land) * smoothstep(0.55, 0.95, band * vnoise(p * 3.0 + t * 0.3) * 1.6);
 	foam += smoothstep(0.42, 0.5, land) * 0.8;
 	ALBEDO = mix(col, vec3(0.92, 0.96, 1.0), clamp(foam, 0.0, 1.0));
-	ROUGHNESS = mix(0.06, 0.6, clamp(foam, 0.0, 1.0));
-	SPECULAR = 0.7;
-	EMISSION = vec3(0.7, 0.85, 1.0) * (fres * 0.1 + sparkle * 1.2) + vec3(0.9) * foam * 0.15;
+	ROUGHNESS = mix(0.18, 0.6, clamp(foam, 0.0, 1.0));
+	SPECULAR = 0.35;
+	EMISSION = vec3(0.7, 0.85, 1.0) * fres * 0.08 + vec3(0.9) * foam * 0.12;
 }

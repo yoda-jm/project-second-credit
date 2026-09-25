@@ -477,15 +477,34 @@ func _compute_territory(final: bool) -> void:
 			if reach[j] == 0 and _open(j):
 				reach[j] = 1
 				stack.append(j)
-	var cells_owned := 0
-	for i in territory.size():
-		territory[i] = 1 if reach[i] == 0 and cells[i] != Cell.WALL else 0
-		cells_owned += territory[i]
+	# territory: only the enclosed areas that contain a castle (a sealed pocket without a castle is not ours)
+	territory.fill(0)
 	enclosed_castles.clear()
+	var cells_owned := 0
 	for c in map.castles.size():
 		var p := map.castles[c]
-		if territory[p.y * map.w + p.x] == 1:
-			enclosed_castles.append(c)
+		var start := p.y * map.w + p.x
+		if reach[start] == 1 or territory[start] == 1:
+			if territory[start] == 1:
+				enclosed_castles.append(c)
+			continue
+		enclosed_castles.append(c)
+		var fill: Array[int] = [start]
+		territory[start] = 1
+		while not fill.is_empty():
+			var i: int = fill.pop_back()
+			cells_owned += 1
+			var x := i % map.w
+			var y := i / map.w
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nx: int = x + d.x
+				var ny: int = y + d.y
+				if not map.inside(nx, ny):
+					continue
+				var j := ny * map.w + nx
+				if territory[j] == 0 and reach[j] == 0 and _open(j):
+					territory[j] = 1
+					fill.append(j)
 	if final:
 		score += cells_owned * 2 + enclosed_castles.size() * 250
 	_update_holes()
