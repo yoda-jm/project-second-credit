@@ -64,6 +64,11 @@ use **Configure** for Claude Code. It registers a `godot-ai attach` command. It 
 and `uvx`, which the wrapper provides. Choose the `local` scope in its settings, so the absolute path
 doesn't land in a committed file.
 
+If the dock shows no **Configure** button, check that ports 8000 (its server) and 9500 (editor WebSocket) are
+free with `ss -ltn`. To move them, close the editor and set `godot_ai/http_port` and `godot_ai/ws_port` in
+`.tools/godot-*/editor_data/editor_settings-*.tres`. Setting `godot_ai/mcp_client_scope = "local"` there
+also makes Configure use local scope.
+
 Telemetry is off: the `.tools/bin/godot` wrapper exports `GODOT_AI_DISABLE_TELEMETRY=true` (it also puts
 `.tools/bin` on `PATH` for `uvx` and keeps uv's cache in `.tools/`), and the script
 sets the `godot_ai/telemetry_enabled` editor setting to false (once the editor has created its settings file,
