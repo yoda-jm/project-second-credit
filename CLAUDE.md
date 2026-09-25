@@ -78,4 +78,9 @@ decisions below are settled unless the owner reopens them.
    (`engine/platform_body.gd`), the alley hub and five rooms (`engine/rooms/`), rigged cat, lady cat and bulldog
    (`tools/blender/whisker_animals.py`). `--room=N` (user argument) starts a capture inside a room. Rules from
    memory: check against the original.
-7. Next: game 5 (Winter Games), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)).
+7. Game 5, **Frostpeak Games** (working title, `godot/games/frostpeak/`): playable with speed skating and the
+   ski jump, 1-4 players in hot seat, CPU rivals, podium and medal table. `--event=N` starts a capture at an event.
+   Open items: biathlon, bobsled, hot dog, figure skating; the opening ceremony.
+8. Next: game 6 (Cannon Fodder), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)).
+9. Construction movies (`tools/movie_clip.sh`, `tools/make_movie.py`) need GPU captures with the monitor awake: do
+   Fruitburrow, Whisker Alley and Frostpeak when the owner is back (software captures stand in on the website).

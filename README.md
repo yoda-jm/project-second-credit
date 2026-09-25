@@ -14,7 +14,7 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: **Glimmerdeep** (game 1), **Bastion Coast** (game 2), **Fruitburrow** (game 3) and **Whisker Alley** (game 4), all working titles, are playable, in 3D with sound
+> Status: **Glimmerdeep** (game 1), **Bastion Coast** (game 2), **Fruitburrow** (game 3), **Whisker Alley** (game 4) and **Frostpeak Games** (game 5), all working titles, are playable, in 3D with sound
 > and music. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
@@ -27,7 +27,7 @@ and Tetris Effect.
 | 2 | Rampart (1990): **Bastion Coast** | Real-time phases, wall-piece placement, cannon battles, local versus |
 | 3 | Fruity Frank (1984): **Fruitburrow** | Rigged characters, enemy AI, deformable soil |
 | 4 | Alley Cat (1984): **Whisker Alley** | Platformer physics, character animation, multiple scenes |
-| 5 | Winter Games (1985) | Outdoor environments, event framework, advanced input, hot-seat play |
+| 5 | Winter Games (1985): **Frostpeak Games** | Outdoor environments, event framework, advanced input, hot-seat play |
 | 6 | Cannon Fodder (1993) | Top-down terrain, squads, pathfinding, map importer |
 | 7 | Double Dragon (1987) | Melee combat, co-op |
 | 8 | Z (1996) | RTS layer, Zod Engine map compatibility |

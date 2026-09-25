@@ -34,6 +34,13 @@ Second Credit stands on the work of many people. Everything below is free and op
 - The cat, the lady cat, the bulldog and every prop are built by scripts in `tools/blender/`; sound effects and the
   late-night swing are synthesised by `tools/audio/`.
 
+## Game 5 (Frostpeak Games, working title)
+
+- Inspired by *Winter Games* (Epyx, 1985). None of its code, graphics, sounds or anthems are in this repo; the
+  events are rewritten from how they play, the nations are invented, the fanfare and the march are our own.
+- Athletes and venue props are built by `tools/blender/frostpeak_athletes.py` and `frostpeak_models.py`; the ice
+  oval, the jump hill and the mountains are built in the game from the events' own geometry.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
