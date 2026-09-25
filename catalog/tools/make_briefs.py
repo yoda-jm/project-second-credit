@@ -31,3 +31,28 @@ for x in g:
     idx.append(f"{n}. [{x['name']}]({n:02d}-{gid}.md): {x['year']}, effort {EF[x['complexity']]}, gap {e.get('gap')}")
 open("docs/games/README.md", "w").write("\n".join(idx) + "\n")
 print("wrote", len(g), "briefs")
+
+# docs/catalog.md: every candidate game, readable without the catalog page
+allg = json.load(open("catalog/games.json"))
+C = ["# Candidate catalog\n",
+     f"All {len(allg)} games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. "
+     "The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack "
+     "makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the "
+     "inspiration only; every remake gets an original title.\n"]
+for label, sel in [("Roadmap", lambda x: x.get("roadmap")), ("Other candidates", lambda x: not x.get("roadmap"))]:
+    games = sorted([x for x in allg if sel(x)], key=lambda x: x.get("roadmap") or 0)
+    C.append(f"## {label}\n")
+    for x in games:
+        gid = x["id"]; dd = d.get(gid, {}); e = ex.get(gid, {})
+        n = x.get("roadmap")
+        head = f"### {n}. {x['name']}" if n else f"### {x['name']}"
+        C.append(f"{head}\n")
+        meta = f"*{x['year']} · {x['dev']} · {x['platform']} · {x['genre']} · remake effort: {EF[x['complexity']]}"
+        if e.get("gap"): meta += f" · free-version gap: {e['gap']}"
+        C.append(meta + "*" + (f" · [brief](games/{n:02d}-{gid}.md)" if n else "") + "\n")
+        C.append(f"**Loop.** {x['loop']}\n")
+        C.append(f"**Why remake it.** {x['pitch']}\n")
+        if dd.get("remake_hooks"): C.append(f"**Remake ideas.** {dd['remake_hooks']}\n")
+        if x.get("modern"): C.append(f"**Modern takes.** {x['modern']}\n")
+open("docs/catalog.md", "w").write("\n".join(C))
+print("wrote docs/catalog.md with", len(allg), "games")
