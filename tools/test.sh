@@ -5,7 +5,7 @@ set -uo pipefail
 source "$(dirname "$0")/xvfb.sh"
 cd "$(dirname "$0")/../godot"
 GODOT=${GODOT_BIN:-../.tools/bin/godot}
-args=("$@"); [ ${#args[@]} -eq 0 ] && args=(-a res://tests)
+args=("$@"); [ ${#args[@]} -eq 0 ] && args=(-a res://tests -a res://games)
 
 # Import first so new scripts and class names are known.
 "$GODOT" --headless --import >/dev/null 2>&1
