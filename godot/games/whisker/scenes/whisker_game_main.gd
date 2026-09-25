@@ -10,6 +10,10 @@ func _ready() -> void:
 	game.demo = args.has("--demo") and not args.has("--play")
 	game.demo_locked = game.demo and args.has("--locked")
 	game.start(21 if game.demo else -1)
+	for a in args:
+		if a.begins_with("--room="):  # captures: start inside a room
+			game.engine.phase = WhiskerEngine.Phase.ALLEY
+			game.engine.enter_room_kind(int(a.get_slice("=", 1)))
 	var pause := PauseMenu.new()
 	add_child(pause)
 	pause.restart_requested.connect(func(): game.start())

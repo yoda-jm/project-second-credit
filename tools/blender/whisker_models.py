@@ -390,7 +390,59 @@ def furniture():
         export(parts, name)
 
 
+def milk_bowl():
+    bowl_m = mat("dog_bowl", (0.75, 0.15, 0.12), 0.35, coat=0.4)
+    # the milk is drawn by the game (it goes down as the cat drinks)
+    export([lathe([(0.32, 0.0), (0.4, 0.02), (0.46, 0.22), (0.42, 0.24), (0.36, 0.08), (0.0, 0.08)], bowl_m)], "milk_bowl")
+
+
+def heart():
+    """A heart-shaped platform 1.8 m wide, flat top at z = 0 (the game stands the cat on it)."""
+    pink = mat("heart", (0.95, 0.25, 0.45), 0.35, coat=0.5, emit=0.3)
+    cu = bpy.data.curves.new("heart", "CURVE")
+    cu.dimensions = "2D"
+    sp = cu.splines.new("POLY")
+    pts = []
+    for i in range(48):
+        t = 2 * math.pi * i / 48
+        x = 16 * math.sin(t) ** 3
+        y = 13 * math.cos(t) - 5 * math.cos(2 * t) - 2 * math.cos(3 * t) - math.cos(4 * t)
+        pts.append((x / 18.0 * 0.9, y / 18.0 * 0.9))
+    sp.points.add(len(pts) - 1)
+    for i, (x, y) in enumerate(pts):
+        sp.points[i].co = (x, y, 0, 1)
+    sp.use_cyclic_u = True
+    cu.fill_mode = "BOTH"
+    cu.extrude = 0.12
+    cu.bevel_depth = 0.04
+    o = bpy.data.objects.new("heart", cu)
+    bpy.context.collection.objects.link(o)
+    o.rotation_euler = (math.pi / 2, 0, 0)  # stand it up facing the camera
+    o.location = (0, 0, -0.55)
+    for x in bpy.context.selected_objects:
+        x.select_set(False)
+    bpy.context.view_layer.objects.active = o
+    o.select_set(True)
+    bpy.ops.object.convert(target="MESH")
+    bpy.ops.object.transform_apply(location=True, rotation=True)
+    export([put(active(), pink, True)], "heart")
+
+
+def arrow():
+    gold = mat("arrow_gold", (1.0, 0.8, 0.35), 0.3, 1.0)
+    feather = mat("arrow_feather", (0.95, 0.95, 1.0), 0.8)
+    tip = mat("arrow_tip", (1.0, 0.3, 0.5), 0.3, emit=0.8)
+    parts = [cyl(0.018, 1.0, (0, 0, 0), gold, rot=(0, math.pi / 2, 0), verts=8)]
+    for s_ in (-1, 1):
+        parts.append(box((0.18, 0.01, 0.07), (0.45, 0, 0.04 * s_), feather, rot=(0, 0.3 * s_, 0), bevel=0.0))
+    parts.append(sphere(0.06, (-0.52, 0, 0), tip, (1.2, 0.5, 1.0)))
+    export(parts, "arrow")
+
+
 reset()
+milk_bowl()
+heart()
+arrow()
 trash_can()
 fence()
 washing()

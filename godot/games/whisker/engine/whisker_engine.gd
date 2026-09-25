@@ -343,6 +343,14 @@ func _leave_room(won: bool) -> void:
 	event.emit("leave_room", {"window": room_window, "won": won})
 
 
+## Captures and tests: go straight into a room of this kind (the serenade for HEARTS).
+func enter_room_kind(kind: RoomKind) -> void:
+	for i in windows.size():
+		if kind == RoomKind.HEARTS or windows[i]["room"] == kind:
+			_enter_room(i, kind == RoomKind.HEARTS)
+			return
+
+
 func die(why: String) -> void:
 	_die(why)
 

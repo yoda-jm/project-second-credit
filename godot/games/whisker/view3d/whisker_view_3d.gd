@@ -35,6 +35,7 @@ var _time := 0.0
 var _shake := 0.0
 var _cam_alley := Transform3D()
 var _cam_room := Transform3D()
+var _cam_hearts := Transform3D()
 var _catch_t := 0.0
 var _land_t := 0.0
 
@@ -102,6 +103,7 @@ func _build_world() -> void:
 	add_child(_camera)
 	_cam_alley = _fit(Vector3(E.W * 0.5, E.H * 0.5 - 0.3, 0), Vector2(E.W + 1.0, E.H + 0.5), Vector3(0, 0.12, 1))
 	_cam_room = _fit(Vector3(8.0, 4.3, 0), Vector2(16.5, 9.2), Vector3(0, 0.1, 1))
+	_cam_hearts = _fit(Vector3(8.0, 6.8, 0), Vector2(16.5, 14.2), Vector3(0, 0.05, 1))
 	_camera.transform = _cam_alley
 
 
@@ -287,9 +289,10 @@ func _enter_room_set(e: WhiskerEngine) -> void:
 	_room_set = Node3D.new()
 	add_child(_room_set)
 	var r := e.room
-	var wallpaper: Color = [Color(0.45, 0.62, 0.7), Color(0.75, 0.62, 0.45), Color(0.62, 0.5, 0.7)][r.kind]
+	var wallpaper: Color = [Color(0.45, 0.62, 0.7), Color(0.75, 0.62, 0.45), Color(0.62, 0.5, 0.7),
+		Color(0.55, 0.68, 0.5), Color(0.35, 0.18, 0.35)][r.kind]
 	var paper := Pbr.material("planks", wallpaper, 0.8)
-	_box(_room_set, Vector3(8, 4.5, -1.2), Vector3(18, 10, 0.3), paper)
+	_box(_room_set, Vector3(8, 7.0, -1.2), Vector3(18, 15, 0.3), paper)
 	_box(_room_set, Vector3(8, -0.25, 0), Vector3(18, 0.5, 3.0), Pbr.material("planks", Color(0.7, 0.5, 0.35), 1.2))
 	_box(_room_set, Vector3(8, 0.15, -1.0), Vector3(18, 0.3, 0.08), Pbr.material("planks", Color(0.9, 0.88, 0.8), 2.0))
 	# the window the cat came in through, with the night outside
@@ -304,7 +307,7 @@ func _enter_room_set(e: WhiskerEngine) -> void:
 	# furniture where the engine's platforms are
 	for p in r.platforms:
 		var k: String = p["kind"]
-		if k in ["floor", "cheese"]:
+		if k in ["floor", "cheese", "heart", "top"]:
 			continue
 		var rect: Rect2 = p["rect"]
 		if rect.position.y > 0.1:  # a floating shelf: a plank on two brackets
@@ -323,7 +326,7 @@ func _enter_room_set(e: WhiskerEngine) -> void:
 	lamp.light_color = Color(1.0, 0.85, 0.65)
 	lamp.light_energy = 2.5
 	lamp.omni_range = 16.0
-	lamp.shadow_enabled = true
+	lamp.shadow_enabled = r.kind != E.RoomKind.HEARTS  # the floating hearts would throw heavy blots on the wall
 	_room_set.add_child(lamp)
 	_room_things.clear()
 	match r.kind:
@@ -372,6 +375,72 @@ func _enter_room_set(e: WhiskerEngine) -> void:
 			bird.scale = Vector3.ONE * 1.6
 			_room_set.add_child(bird)
 			_room_things["bird"] = bird
+		E.RoomKind.DOGBOWLS:
+			var dr := r as DogbowlsRoom
+			_room_things["bowls"] = []
+			_room_things["dogs"] = []
+			for i in DogbowlsRoom.BOWL_X.size():
+				var b := _scene("milk_bowl")
+				b.position = Vector3(DogbowlsRoom.BOWL_X[i], 0, 0.6)
+				b.scale = Vector3.ONE * 1.3
+				_room_set.add_child(b)
+				var milk := MeshInstance3D.new()
+				var disc := CylinderMesh.new()
+				disc.top_radius = 0.4
+				disc.bottom_radius = 0.36
+				disc.height = 0.03
+				milk.mesh = disc
+				var mm := StandardMaterial3D.new()
+				mm.albedo_color = Color(0.97, 0.96, 0.92)
+				mm.roughness = 0.2
+				milk.material_override = mm
+				milk.position = Vector3(0, 0.18, 0)
+				b.add_child(milk)
+				_room_things["bowls"].append({"bowl": b, "milk": milk})
+				var dog := _scene("bulldog")
+				dog.scale = Vector3.ONE * 1.3
+				_room_set.add_child(dog)
+				var zz := Label3D.new()
+				zz.text = "z"
+				var sf := SystemFont.new()
+				sf.font_names = PackedStringArray(["DejaVu Sans", "Arial", "Helvetica", "sans-serif"])
+				sf.font_weight = 700
+				zz.font = sf
+				zz.font_size = 96
+				zz.modulate = Color(0.85, 0.9, 1.0)
+				zz.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+				_room_set.add_child(zz)
+				_room_things["dogs"].append({"node": dog, "anim": dog.find_child("AnimationPlayer", true, false), "zz": zz})
+		E.RoomKind.HEARTS:
+			var hr := r as HeartsRoom
+			_room_things["hearts"] = []
+			for h in hr.hearts:
+				var n := _scene("heart")
+				_room_set.add_child(n)
+				_room_things["hearts"].append(n)
+			_box(_room_set, Vector3(8.0, HeartsRoom.TOP_Y - 0.2, 0), Vector3(2.8, 0.4, 1.2), Pbr.material("stone_bricks", Color(0.95, 0.85, 0.9), 2.0))
+			var lady := _scene("lady_cat")
+			lady.position = Vector3(hr.lady.x, HeartsRoom.TOP_Y, 0.2)
+			lady.scale = Vector3.ONE * 1.25
+			lady.rotation.y = -PI * 0.3
+			_room_set.add_child(lady)
+			var la: AnimationPlayer = lady.find_child("AnimationPlayer", true, false)
+			la.get_animation("idle").loop_mode = Animation.LOOP_LINEAR
+			la.play("idle")
+			_room_things["lady"] = lady
+			_room_things["arrows"] = []
+			for i in 4:
+				var a := _scene("arrow")
+				a.scale = Vector3.ONE * 1.5
+				a.visible = false
+				_room_set.add_child(a)
+				_room_things["arrows"].append(a)
+			var moonlight := OmniLight3D.new()
+			moonlight.position = Vector3(8, HeartsRoom.TOP_Y + 1.0, 2.0)
+			moonlight.light_color = Color(1.0, 0.6, 0.8)
+			moonlight.light_energy = 2.0
+			moonlight.omni_range = 8.0
+			_room_set.add_child(moonlight)
 	var broom := _scene("broom")
 	broom.scale = Vector3.ONE * 1.6
 	broom.visible = false
@@ -410,7 +479,7 @@ func _on_event(kind: String, d: Dictionary) -> void:
 	match kind:
 		"enter_room":
 			_enter_room_set(e)
-			_camera.transform = _cam_room
+			_camera.transform = _room_cam(e)
 		"leave_room":
 			_leave_room_set()
 			_camera.transform = _cam_alley
@@ -448,6 +517,10 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_fx.confetti(Vector3(8, 6, 1))
 
 
+func _room_cam(e: WhiskerEngine) -> Transform3D:
+	return _cam_hearts if e.room and e.room.kind == E.RoomKind.HEARTS else _cam_room
+
+
 func _v(p: Vector2, z: float) -> Vector3:
 	return Vector3(p.x, p.y, z)
 
@@ -467,7 +540,7 @@ func _process(delta: float) -> void:
 	else:
 		_update_alley(e, delta)
 	_shake = maxf(0.0, _shake - delta * 2.0)
-	var base := _cam_room if _room_set else _cam_alley
+	var base := _room_cam(e) if _room_set else _cam_alley
 	var s := _shake * _shake * (0.3 if Settings.camera_shake else 0.0)
 	var sway := Vector3(sin(_time * 0.2) * 0.25, sin(_time * 0.15) * 0.12, 0)
 	_camera.transform = Transform3D(base.basis, base.origin + sway + Vector3(sin(_time * 60.0), sin(_time * 53.0), 0) * s)
@@ -604,6 +677,44 @@ func _update_room(e: WhiskerEngine, delta: float) -> void:
 			bird.visible = r.status == 0
 			bird.position = Vector3(br.bird["pos"].x, br.bird["pos"].y, 0.3)
 			bird.rotation.z = sin(_time * 25.0) * (0.3 if br.bird["free"] else 0.05)
+		E.RoomKind.DOGBOWLS:
+			var dr := r as DogbowlsRoom
+			for i in dr.bowls.size():
+				var level: float = dr.bowls[i]
+				var milk: MeshInstance3D = _room_things["bowls"][i]["milk"]
+				milk.visible = level > 0.0
+				milk.position.y = 0.09 + 0.09 * level
+				milk.scale = Vector3(0.85 + 0.15 * level, 1.0, 0.85 + 0.15 * level)
+				var dd: Dictionary = _room_things["dogs"][i]
+				var dog: Node3D = dd["node"]
+				var awake: bool = dr.dogs[i]["awake"] > 0.0
+				dog.position = Vector3(dr.dogs[i]["x"], 0, 0.3)
+				dog.rotation.y = lerp_angle(dog.rotation.y, PI * 0.5 * dr.dogs[i]["dir"] if awake else -PI * 0.5, 1.0 - exp(-delta * 8.0))
+				var st := "run" if awake else "idle"
+				var anim: AnimationPlayer = dd["anim"]
+				if anim.current_animation != st:
+					anim.play(st, 0.2, 1.0 if awake else 0.3)
+				dog.scale = Vector3(1.3, 1.3 * (1.0 if awake else 0.9 + 0.03 * sin(_time * 2.0 + i)), 1.3)  # snoring
+				var zz: Label3D = dd["zz"]
+				zz.visible = not awake
+				var zt := fmod(_time * 0.6 + i * 0.3, 1.0)
+				zz.position = Vector3(dr.dogs[i]["x"] + 0.3 + zt * 0.5, 1.4 + zt * 1.2, 0.5)
+				zz.modulate.a = 1.0 - zt
+				zz.font_size = int(60 + zt * 60)
+		E.RoomKind.HEARTS:
+			var hr := r as HeartsRoom
+			for i in hr.hearts.size():
+				var n: Node3D = _room_things["hearts"][i]
+				var rect: Rect2 = hr.hearts[i]["rect"]
+				n.position = Vector3(rect.get_center().x, rect.end.y, 0.0)
+				n.rotation.z = sin(_time * 1.5 + i) * 0.05
+			var arrows: Array = _room_things["arrows"]
+			for i in arrows.size():
+				var a: Node3D = arrows[i]
+				a.visible = i < hr.arrows.size()
+				if a.visible:
+					a.position = Vector3(hr.arrows[i]["pos"].x, hr.arrows[i]["pos"].y, 0.4)
+					a.rotation.y = 0.0 if hr.arrows[i]["dir"] < 0 else PI
 	var broom: Node3D = _room_things["broom"]
 	broom.visible = r.time_left < 5.0
 	if broom.visible:  # the broom sweeps in from the right toward the cat

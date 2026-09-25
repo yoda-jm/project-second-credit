@@ -4,8 +4,9 @@ extends Control
 
 const P = WhiskerEngine.Phase
 const PURPLE := Color(0.75, 0.55, 1.0)
-const ROOM_NAMES := ["THE FISHBOWL", "THE BIG CHEESE", "THE BIRD CAGE"]
-const ROOM_GOALS := ["CATCH THE FISH - MIND THE EEL AND YOUR AIR", "CATCH FIVE MICE", "KNOCK DOWN THE CAGE, CATCH THE BIRD"]
+const ROOM_NAMES := ["THE FISHBOWL", "THE BIG CHEESE", "THE BIRD CAGE", "THE DOGS' DINNER", "THE SERENADE"]
+const ROOM_GOALS := ["CATCH THE FISH - MIND THE EEL AND YOUR AIR", "CATCH FIVE MICE", "KNOCK DOWN THE CAGE, CATCH THE BIRD",
+	"DRINK THE MILK - DON'T WAKE THE DOGS", "CLIMB THE HEARTS TO HER"]
 
 @export var game: WhiskerGame
 
@@ -34,7 +35,10 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"leave_room":
 			_fade = 1.0
 		"room_won":
-			_show("PURR-FECT!", "+%d" % d["bonus"], HudKit.GOOD, 2.0)
+			if d["kind"] == WhiskerEngine.RoomKind.HEARTS:
+				_show("LOVE IS IN THE AIR", "+%d  -  LEVEL %d" % [d["bonus"], game.engine.level], Color(1.0, 0.5, 0.75), 2.6)
+			else:
+				_show("PURR-FECT!", "+%d" % d["bonus"], HudKit.GOOD, 2.0)
 		"room_failed":
 			_show("SWEPT OUT!", "", HudKit.BAD, 1.6)
 		"death":

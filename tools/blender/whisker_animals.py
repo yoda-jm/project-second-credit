@@ -187,79 +187,90 @@ def gait(amp, lift, body_bob, tail_n, frames=(1, 5, 9, 13, 17)):
     return out
 
 
-# ================================================================== the cat
-clear_scene()
-fur = mat("cat_fur", (0.86, 0.46, 0.16), 0.8)
-dark = mat("cat_stripes", (0.55, 0.24, 0.08), 0.85)
-cream = mat("cat_cream", (0.98, 0.9, 0.78), 0.8)
-pink = mat("cat_pink", (0.95, 0.55, 0.6), 0.5)
-eye = mat("cat_eye", (0.45, 0.85, 0.2), 0.1, coat=1.0, emit=0.4)
-pupil = mat("cat_pupil", (0.02, 0.02, 0.02), 0.1, coat=1.0)
-whisk = mat("cat_whisker", (0.95, 0.95, 0.9), 0.4)
-HZ, SZ, FY, BY = 0.3, 0.32, -0.22, 0.2
-sphere(0.2, (0, -0.02, 0.31), "body", fur, (0.95, 1.55, 0.92))
-sphere(0.16, (0, -0.2, 0.33), "body", cream, (0.9, 1.0, 0.9))  # chest
-for k, y in enumerate((-0.1, 0.02, 0.14, 0.24)):  # tabby stripes over the back
-    sphere(0.1, (0, y, 0.41 - abs(y) * 0.1), "body", dark, (1.75, 0.35, 0.72))
-sphere(0.15, (0, -0.38, 0.5), "head", fur, (1.05, 0.95, 0.92), 32, 18)
-sphere(0.075, (0, -0.5, 0.45), "head", cream, (1.2, 0.9, 0.8))  # muzzle
-sphere(0.022, (0, -0.57, 0.48), "head", pink, (1.3, 0.8, 0.9))  # nose
-for s in (-1, 1):
-    sphere(0.042, (0.06 * s, -0.5, 0.54), "head", eye, (1, 0.6, 1.1))
-    sphere(0.02, (0.064 * s, -0.525, 0.54), "head", pupil, (0.45, 0.5, 1.4))
-    ear = cone(0.06, 0.005, 0.12, (0.09 * s, -0.36, 0.64), "head", fur, rot=(0.25, 0.3 * s, 0))
-    cone(0.035, 0.004, 0.08, (0.09 * s, -0.385, 0.635), "head", pink, rot=(0.25, 0.3 * s, 0))
-    for k in (-1, 0, 1):
-        capsule(0.004, (0.05 * s, -0.54, 0.45 + 0.012 * k), (0.2 * s, -0.56, 0.44 + 0.04 * k), "head", whisk, 0.002, 6)
-# the torn ear: a notch of stripe colour on the left ear
-sphere(0.018, (0.1, -0.38, 0.67), "head", dark)
-for side, sx in (("L", 1), ("R", -1)):
-    for end, y in (("f", FY), ("b", BY)):
-        capsule(0.05, (sx * 0.09, y, 0.27), (sx * 0.09, y, 0.12), f"leg_{end}{side}", fur, 0.042)
-        capsule(0.04, (sx * 0.09, y, 0.12), (sx * 0.09, y - 0.02, 0.03), f"paw_{end}{side}", fur, 0.035)
-        sphere(0.045, (sx * 0.09, y - 0.035, 0.025), f"paw_{end}{side}", cream, (1, 1.3, 0.6))
-TN, TS = 5, 0.09
-y, z = 0.3, 0.36
-for i in range(TN):
-    ny, nz = y + TS, z + 0.07 * (1 - i / TN)
-    capsule(0.04 - i * 0.005, (0, y, z), (0, ny, nz), f"tail{i}", dark if i == TN - 1 else fur, 0.035 - i * 0.005, 10)
-    y, z = ny, nz
-bones = quad_bones(HZ, 0.09, FY, BY, SZ, -0.5, 0.55, 0.3, 0.36, TN, TS, 0.07)
-idle = {}
-for f, ph in ((1, 0), (20, 1), (40, 0), (60, -1), (80, 0)):
-    k = {"head": (4 * ph, 0, 6 * ph), "@root": (0, 0, 0.004 * abs(ph))}
+# ================================================================== the cats
+def build_cat(name, fur_c, stripe_c, bow=False):
+    clear_scene()
+    fur = mat(name + "_fur", fur_c, 0.8)
+    dark = mat(name + "_stripes", stripe_c, 0.85)
+    cream = mat(name + "_cream", (0.98, 0.9, 0.78), 0.8)
+    pink = mat("cat_pink", (0.95, 0.55, 0.6), 0.5)
+    eye = mat("cat_eye", (0.45, 0.85, 0.2), 0.1, coat=1.0, emit=0.4)
+    pupil = mat("cat_pupil", (0.02, 0.02, 0.02), 0.1, coat=1.0)
+    whisk = mat("cat_whisker", (0.95, 0.95, 0.9), 0.4)
+    HZ, SZ, FY, BY = 0.3, 0.32, -0.22, 0.2
+    sphere(0.2, (0, -0.02, 0.31), "body", fur, (0.95, 1.55, 0.92))
+    sphere(0.16, (0, -0.2, 0.33), "body", cream, (0.9, 1.0, 0.9))  # chest
+    for k, y in enumerate((-0.1, 0.02, 0.14, 0.24)):  # tabby stripes over the back
+        sphere(0.1, (0, y, 0.41 - abs(y) * 0.1), "body", dark, (1.75, 0.35, 0.72))
+    sphere(0.15, (0, -0.38, 0.5), "head", fur, (1.05, 0.95, 0.92), 32, 18)
+    sphere(0.075, (0, -0.5, 0.45), "head", cream, (1.2, 0.9, 0.8))  # muzzle
+    sphere(0.022, (0, -0.57, 0.48), "head", pink, (1.3, 0.8, 0.9))  # nose
+    for s in (-1, 1):
+        sphere(0.042, (0.06 * s, -0.5, 0.54), "head", eye, (1, 0.6, 1.1))
+        sphere(0.02, (0.064 * s, -0.525, 0.54), "head", pupil, (0.45, 0.5, 1.4))
+        ear = cone(0.06, 0.005, 0.12, (0.09 * s, -0.36, 0.64), "head", fur, rot=(0.25, 0.3 * s, 0))
+        cone(0.035, 0.004, 0.08, (0.09 * s, -0.385, 0.635), "head", pink, rot=(0.25, 0.3 * s, 0))
+        for k in (-1, 0, 1):
+            capsule(0.004, (0.05 * s, -0.54, 0.45 + 0.012 * k), (0.2 * s, -0.56, 0.44 + 0.04 * k), "head", whisk, 0.002, 6)
+    # the torn ear: a notch of stripe colour on the left ear
+    sphere(0.018, (0.1, -0.38, 0.67), "head", dark)
+    for side, sx in (("L", 1), ("R", -1)):
+        for end, y in (("f", FY), ("b", BY)):
+            capsule(0.05, (sx * 0.09, y, 0.27), (sx * 0.09, y, 0.12), f"leg_{end}{side}", fur, 0.042)
+            capsule(0.04, (sx * 0.09, y, 0.12), (sx * 0.09, y - 0.02, 0.03), f"paw_{end}{side}", fur, 0.035)
+            sphere(0.045, (sx * 0.09, y - 0.035, 0.025), f"paw_{end}{side}", cream, (1, 1.3, 0.6))
+    TN, TS = 5, 0.09
+    y, z = 0.3, 0.36
     for i in range(TN):
-        k[f"tail{i}"] = (6 * ph, 0, 14 * ph * (i + 1) / TN)
-    idle[f] = k
-walk = gait(28, 30, 0.02, TN)
-run = gait(45, 50, 0.04, TN, frames=(1, 3, 5, 7, 9))
-jump = {1: {"leg_fL": (-50, 0, 0), "leg_fR": (-50, 0, 0), "leg_bL": (40, 0, 0), "leg_bR": (40, 0, 0), "head": (-12, 0, 0),
-            "body": (-10, 0, 0), "tail0": (25, 0, 0), "tail1": (15, 0, 0)},
-        10: {"leg_fL": (-60, 0, 0), "leg_fR": (-60, 0, 0), "leg_bL": (50, 0, 0), "leg_bR": (50, 0, 0), "head": (-15, 0, 0),
-             "body": (-12, 0, 0), "tail0": (30, 0, 0), "tail1": (20, 0, 0)}}
-fall = {1: {"leg_fL": (-25, 0, 10), "leg_fR": (-25, 0, -10), "leg_bL": (20, 0, 10), "leg_bR": (20, 0, -10), "head": (10, 0, 0),
-            "body": (8, 0, 0), "tail0": (-20, 0, 0), "tail1": (-20, 0, 0)},
-        10: {"leg_fL": (-30, 0, 14), "leg_fR": (-30, 0, -14), "leg_bL": (25, 0, 14), "leg_bR": (25, 0, -14), "head": (12, 0, 0),
-             "body": (8, 0, 0), "tail0": (-25, 0, 5), "tail1": (-25, 0, -5)}}
-swim = {}
-for f, ph in ((1, 1), (6, -1), (11, 1)):
-    swim[f] = {"leg_fL": (-40 * ph - 30, 0, 0), "leg_fR": (40 * ph - 30, 0, 0), "leg_bL": (30 * ph + 20, 0, 0),
-               "leg_bR": (-30 * ph + 20, 0, 0), "head": (-20, 0, 0), "body": (-15, 0, 0), "tail0": (10, 0, 8 * ph)}
-catch = {1: {}, 5: {"head": (30, 0, 0), "body": (15, 0, 0), "leg_fL": (-60, 0, 0), "leg_fR": (-60, 0, 0), "@root": (0, 0, 0.05)},
-         12: {"head": (10, 0, 0), "leg_fL": (-10, 0, 0), "leg_fR": (-10, 0, 0)}, 18: {}}
-die = {1: {}, 10: {"body": (0, 70, 0), "@root": (0, 0, 0.25), "leg_fL": (-40, 0, 30), "leg_bL": (40, 0, 30)},
-       20: {"body": (0, 170, 0), "@root": (0, 0, 0.3), "leg_fL": (-60, 0, 40), "leg_fR": (-60, 0, -40), "leg_bL": (60, 0, 40),
-            "leg_bR": (60, 0, -40), "head": (-20, 0, 0)},
-       30: {"body": (0, 180, 0), "@root": (0, 0, 0.32), "leg_fL": (-70, 0, 45), "leg_fR": (-70, 0, -45), "leg_bL": (70, 0, 45),
-            "leg_bR": (70, 0, -45), "head": (-25, 0, 20)}}
-cheer = {}
-for f, ph in ((1, 0), (6, 1), (11, 0), (16, 1), (21, 0)):
-    k = {"leg_fL": (-70 * ph, 0, 0), "body": (-25 * ph, 0, 0), "head": (-15 * ph, 0, 10 * ph), "@root": (0, 0, 0.12 * ph)}
-    for i in range(TN):
-        k[f"tail{i}"] = (-15, 0, 20 * (1 if ph else -1) * (i + 1) / TN)
-    cheer[f] = k
-rig_and_export("cat", bones, {"idle": idle, "walk": walk, "run": run, "jump": jump, "fall": fall, "swim": swim,
-                              "catch": catch, "die": die, "cheer": cheer})
+        ny, nz = y + TS, z + 0.07 * (1 - i / TN)
+        capsule(0.04 - i * 0.005, (0, y, z), (0, ny, nz), f"tail{i}", dark if i == TN - 1 else fur, 0.035 - i * 0.005, 10)
+        y, z = ny, nz
+    bones = quad_bones(HZ, 0.09, FY, BY, SZ, -0.5, 0.55, 0.3, 0.36, TN, TS, 0.07)
+    idle = {}
+    for f, ph in ((1, 0), (20, 1), (40, 0), (60, -1), (80, 0)):
+        k = {"head": (4 * ph, 0, 6 * ph), "@root": (0, 0, 0.004 * abs(ph))}
+        for i in range(TN):
+            k[f"tail{i}"] = (6 * ph, 0, 14 * ph * (i + 1) / TN)
+        idle[f] = k
+    walk = gait(28, 30, 0.02, TN)
+    run = gait(45, 50, 0.04, TN, frames=(1, 3, 5, 7, 9))
+    jump = {1: {"leg_fL": (-50, 0, 0), "leg_fR": (-50, 0, 0), "leg_bL": (40, 0, 0), "leg_bR": (40, 0, 0), "head": (-12, 0, 0),
+                "body": (-10, 0, 0), "tail0": (25, 0, 0), "tail1": (15, 0, 0)},
+            10: {"leg_fL": (-60, 0, 0), "leg_fR": (-60, 0, 0), "leg_bL": (50, 0, 0), "leg_bR": (50, 0, 0), "head": (-15, 0, 0),
+                 "body": (-12, 0, 0), "tail0": (30, 0, 0), "tail1": (20, 0, 0)}}
+    fall = {1: {"leg_fL": (-25, 0, 10), "leg_fR": (-25, 0, -10), "leg_bL": (20, 0, 10), "leg_bR": (20, 0, -10), "head": (10, 0, 0),
+                "body": (8, 0, 0), "tail0": (-20, 0, 0), "tail1": (-20, 0, 0)},
+            10: {"leg_fL": (-30, 0, 14), "leg_fR": (-30, 0, -14), "leg_bL": (25, 0, 14), "leg_bR": (25, 0, -14), "head": (12, 0, 0),
+                 "body": (8, 0, 0), "tail0": (-25, 0, 5), "tail1": (-25, 0, -5)}}
+    swim = {}
+    for f, ph in ((1, 1), (6, -1), (11, 1)):
+        swim[f] = {"leg_fL": (-40 * ph - 30, 0, 0), "leg_fR": (40 * ph - 30, 0, 0), "leg_bL": (30 * ph + 20, 0, 0),
+                   "leg_bR": (-30 * ph + 20, 0, 0), "head": (-20, 0, 0), "body": (-15, 0, 0), "tail0": (10, 0, 8 * ph)}
+    catch = {1: {}, 5: {"head": (30, 0, 0), "body": (15, 0, 0), "leg_fL": (-60, 0, 0), "leg_fR": (-60, 0, 0), "@root": (0, 0, 0.05)},
+             12: {"head": (10, 0, 0), "leg_fL": (-10, 0, 0), "leg_fR": (-10, 0, 0)}, 18: {}}
+    die = {1: {}, 10: {"body": (0, 70, 0), "@root": (0, 0, 0.25), "leg_fL": (-40, 0, 30), "leg_bL": (40, 0, 30)},
+           20: {"body": (0, 170, 0), "@root": (0, 0, 0.3), "leg_fL": (-60, 0, 40), "leg_fR": (-60, 0, -40), "leg_bL": (60, 0, 40),
+                "leg_bR": (60, 0, -40), "head": (-20, 0, 0)},
+           30: {"body": (0, 180, 0), "@root": (0, 0, 0.32), "leg_fL": (-70, 0, 45), "leg_fR": (-70, 0, -45), "leg_bL": (70, 0, 45),
+                "leg_bR": (70, 0, -45), "head": (-25, 0, 20)}}
+    cheer = {}
+    for f, ph in ((1, 0), (6, 1), (11, 0), (16, 1), (21, 0)):
+        k = {"leg_fL": (-70 * ph, 0, 0), "body": (-25 * ph, 0, 0), "head": (-15 * ph, 0, 10 * ph), "@root": (0, 0, 0.12 * ph)}
+        for i in range(TN):
+            k[f"tail{i}"] = (-15, 0, 20 * (1 if ph else -1) * (i + 1) / TN)
+        cheer[f] = k
+    if bow:
+        ribbon = mat("bow", (1.0, 0.35, 0.6), 0.4, coat=0.5)
+        for s_ in (-1, 1):
+            sphere(0.05, (0.07 * s_, -0.3, 0.64), "head", ribbon, (1.4, 0.5, 0.8))
+        sphere(0.025, (0, -0.3, 0.64), "head", ribbon)
+    rig_and_export(name, bones, {"idle": idle, "walk": walk, "run": run, "jump": jump, "fall": fall, "swim": swim,
+                                  "catch": catch, "die": die, "cheer": cheer})
+
+
+
+build_cat("cat", (0.86, 0.46, 0.16), (0.55, 0.24, 0.08))
+build_cat("lady_cat", (0.95, 0.94, 0.92), (0.7, 0.7, 0.75), bow=True)
 
 # ================================================================== the bulldog
 clear_scene()
