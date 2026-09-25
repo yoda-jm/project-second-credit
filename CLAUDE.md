@@ -47,7 +47,8 @@ decisions below are settled unless the owner reopens them.
 - Remote: https://github.com/yoda-jm/project-second-credit (branch `main`)
 - `docs/`: vision, roadmap, level packs, stack, setup, legal, the readable candidate list (`catalog.md`) and a
   brief per game (`docs/games/`)
-- `godot/`: the single Godot project: `core/` (launcher, settings autoload, pause menu, fonts, UI sounds) plus one
+- `godot/`: the single Godot project: `core/` (launcher, loading screen, settings autoload, pause menu, fonts,
+  UI sounds, shared PBR textures and particle materials) plus one
   folder per game in `games/`; vendored add-ons in `godot/addons/`,
   the capture scene in `godot/tools/capture/`
 - `tools/`: `fetch-tools.sh` (portable tools), `test.sh`, `check.sh`, `capture.sh`, `movie_clip.sh <game>` and
@@ -62,13 +63,12 @@ decisions below are settled unless the owner reopens them.
 ## Next steps
 
 1. Setup is in [docs/setup.md](docs/setup.md). Check work with `tools/check.sh`, `tools/test.sh` and
-   `tools/capture.sh`.
-2. Game 1 (`godot/games/glimmerdeep/`, Glimmerdeep): the engine is a port of GDash, exact on all 306 GDash
-   replays (`GLIMMERDEEP_REFERENCE=1 tools/test.sh`, see `tools/gdash_port/README.md`). `m1-grid` plays our first
-   free cave with a flat debug view and a demo replay. Next: speed up the engine loop, the 3D presentation
-   (diorama, lighting, particles, sound), menus, cave-pack browser and the in-game download of known cave
-   collections ([docs/level-packs.md](docs/level-packs.md)), the level editor, and more free caves.
-3. Game 2 (Rampart) after picking its original name: build, battle and repair phases.
-4. After game 2: CI on GitHub Actions (tests, then Windows, macOS and Linux AppImage exports as release
-   artifacts), and a GitHub Pages site for the project with its own look and spirit (games, construction
-   movies, how it is made).
+   `tools/capture.sh` (GPU captures if `.tools/capture.conf` has `CAPTURE_GPU=1`).
+2. Game 1, **Glimmerdeep** (`godot/games/glimmerdeep/`): playable. Engine exact to GDash (all 306 replays,
+   `GLIMMERDEEP_REFERENCE=1 tools/test.sh`). Open items: a campaign of our own caves, the cave-pack browser and
+   downloads, the level editor, an optional "responsive timing".
+3. Game 2, **Bastion Coast** (working title, `godot/games/bastion/`): playable (tag `m2-bastion`). Open items:
+   grunts landing from ships, more maps, 2-3 player versus, checking timings against the arcade in MAME.
+4. Now: CI on GitHub Actions (tests, then Windows, macOS and Linux AppImage exports as release artifacts) and a
+   GitHub Pages site for the project with its own look and spirit (games, construction movies, how it is made).
+5. Shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), then game 3.

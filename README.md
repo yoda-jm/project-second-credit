@@ -9,14 +9,15 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: game 1, **Glimmerdeep**, is playable (3D, sound, music); game 2 is next.
+> Status: **Glimmerdeep** (game 1) and **Bastion Coast** (game 2, working title) are playable, in 3D with sound
+> and music. Run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 
 ## Build order
 
 | # | Inspired by | Adds to the stack |
 |---|---|---|
 | 1 | Boulder Dash (1984): **Glimmerdeep** | Shared core, grid engine, level packs (BDCFF), editor, procedural props, the AI test loop |
-| 2 | Rampart (1990) | Real-time phases, wall-piece placement, cannon battles, local versus |
+| 2 | Rampart (1990): **Bastion Coast** | Real-time phases, wall-piece placement, cannon battles, local versus |
 | 3 | Fruity Frank (1984) | Rigged characters, enemy AI, deformable soil |
 | 4 | Alley Cat (1984) | Platformer physics, character animation, multiple scenes |
 | 5 | Winter Games (1985) | Outdoor environments, event framework, advanced input, hot-seat play |

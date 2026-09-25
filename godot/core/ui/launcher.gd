@@ -29,6 +29,7 @@ var _seeds: Array[Vector4] = []
 var _launching := false
 var _arrows: Array[Button] = []
 var _hovered_card := -1
+const CARD_ROW_X := 395.0  ## places the selected card in the middle of the card window
 
 
 func _ready() -> void:
@@ -94,6 +95,10 @@ func _build_backdrop() -> void:
 
 
 func _prop_material(kind: String) -> Material:
+	if kind == "model":
+		return null
+	if kind == "stone":
+		return Pbr.material("stone_bricks", Color(1.0, 0.96, 0.9), 1.4)
 	if kind == "gem":
 		var m := ShaderMaterial.new()
 		m.shader = load("res://games/glimmerdeep/shaders/gem.gdshader")
@@ -140,11 +145,19 @@ func _prop_for(g: int, i: int) -> String:
 func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = load(path)
+	if path.ends_with(".glb"):  # a game model: its first mesh, with the materials made in Blender
+		var root := (load(path) as PackedScene).instantiate()
+		for n in root.find_children("*", "MeshInstance3D", true, false):
+			mm.mesh = (n as MeshInstance3D).mesh
+			break
+		root.free()
+	else:
+		mm.mesh = load(path)
 	mm.instance_count = count
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
-	inst.material_override = mat
+	if mat:
+		inst.material_override = mat
 	add_child(inst)
 	return inst
 
@@ -270,10 +283,17 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	hint.position = Vector2(116, 1010)
 	_ui.add_child(hint)
 
+	# the cards slide inside a clipped window between the two arrows
+	var window := Control.new()
+	window.clip_contents = true
+	window.position = Vector2(610, 520)
+	window.size = Vector2(1170, 530)
+	window.mouse_filter = Control.MOUSE_FILTER_PASS
+	_ui.add_child(window)
 	_card_box = HBoxContainer.new()
-	_card_box.position = Vector2(620, 560)
+	_card_box.position = Vector2(CARD_ROW_X, 40)
 	_card_box.add_theme_constant_override("separation", 34)
-	_ui.add_child(_card_box)
+	window.add_child(_card_box)
 	for i in GameRegistry.GAMES.size():
 		var card := _make_card(GameRegistry.GAMES[i], i)
 		_card_box.add_child(card)
@@ -281,17 +301,20 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 
 	for side in [-1, 1]:
 		var arrow := Button.new()
-		arrow.text = "<" if side < 0 else ">"
 		arrow.flat = true
 		arrow.focus_mode = Control.FOCUS_NONE
-		arrow.custom_minimum_size = Vector2(90, 150)
-		arrow.position = Vector2(540 if side < 0 else 1810, 700)
-		arrow.add_theme_font_override("font", _font(false))
-		arrow.add_theme_font_size_override("font_size", 96)
-		arrow.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
-		arrow.add_theme_color_override("font_hover_color", GOLD)
-		arrow.add_theme_color_override("font_pressed_color", Color.WHITE)
-		arrow.pressed.connect(func(): _select_game(_selected + side))
+		arrow.custom_minimum_size = Vector2(120, 120)
+		arrow.size = Vector2(120, 120)
+		arrow.pivot_offset = Vector2(60, 60)
+		arrow.position = Vector2(480 if side < 0 else 1790, 725)
+		arrow.draw.connect(_draw_arrow.bind(arrow, side))
+		arrow.mouse_entered.connect(func(): arrow.queue_redraw(); _play("ui_move"))
+		arrow.mouse_exited.connect(arrow.queue_redraw)
+		arrow.pressed.connect(func():
+			_select_game(_selected + side)
+			var tw := create_tween()
+			tw.tween_property(arrow, "scale", Vector2.ONE * 0.85, 0.06)
+			tw.tween_property(arrow, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_BACK))
 		_ui.add_child(arrow)
 		_arrows.append(arrow)
 
@@ -352,6 +375,20 @@ func _make_card(g: Dictionary, index: int) -> Control:
 	v.add_child(_label("PRESS ENTER TO PLAY" if playable else "IN DEVELOPMENT", 20,
 		GOLD if playable else Color(0.55, 0.55, 0.62)))
 	return card
+
+
+## A round glass button with a chevron; gold when hovered, dimmed when there is nothing more that way.
+func _draw_arrow(b: Button, side: int) -> void:
+	var c := b.size * 0.5
+	var hover := b.is_hovered()
+	var can := (_selected + side) >= 0 and (_selected + side) < _cards.size()
+	var ring := GOLD if hover and can else Color(1, 1, 1, 0.55 if can else 0.18)
+	b.draw_circle(c, 56.0, Color(0.03, 0.03, 0.06, 0.65))
+	b.draw_circle(c, 56.0, Color(ring, 0.18 if hover else 0.08))
+	b.draw_arc(c, 56.0, 0.0, TAU, 64, ring, 4.0, true)
+	var d := float(side)
+	var pts := PackedVector2Array([c + Vector2(-12 * d, -26), c + Vector2(16 * d, 0), c + Vector2(-12 * d, 26)])
+	b.draw_polyline(pts, ring, 10.0, true)
 
 
 func _slider_row(parent: Container, label: String, value: float, on_change: Callable) -> void:
@@ -492,8 +529,10 @@ func _select_game(i: int, sound: bool = true) -> void:
 		_previous = _selected
 		_morph_t = 0.0
 	_selected = i
+	for a in _arrows:
+		a.queue_redraw()
 	var tw := create_tween()
-	tw.tween_property(_card_box, "position:x", 620.0 + 180.0 - i * 414.0 + 0.0 * i, 0.35) \
+	tw.tween_property(_card_box, "position:x", CARD_ROW_X - i * 414.0, 0.35) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 

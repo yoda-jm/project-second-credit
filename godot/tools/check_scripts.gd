@@ -17,7 +17,7 @@ func _process(_delta: float) -> bool:
 func _check() -> void:
 	var roots := OS.get_cmdline_user_args()
 	if roots.is_empty():
-		roots = PackedStringArray(["res://games", "res://boot", "res://tools"])
+		roots = PackedStringArray(["res://games", "res://core", "res://tools"])
 	var failed := 0
 	var count := 0
 	for r in roots:

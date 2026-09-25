@@ -41,3 +41,10 @@ func test_pause_menu_is_on_screen() -> void:
 	assert_bool(screen.encloses(panel.get_global_rect())).is_true()
 	pause._resume()
 	host.queue_free()
+
+
+func test_in_game_credits_match_credits_md() -> void:
+	var root := ProjectSettings.globalize_path("res://").path_join("../CREDITS.md").simplify_path()
+	if not FileAccess.file_exists(root):
+		return
+	assert_str(FileAccess.get_file_as_string("res://core/ui/credits.md")).is_equal(FileAccess.get_file_as_string(root))

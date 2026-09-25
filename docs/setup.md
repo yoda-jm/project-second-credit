@@ -82,10 +82,10 @@ or an agent check the work without opening the editor:
 
 ```bash
 tools/check.sh                      # parse every GDScript file, show errors
-tools/test.sh                       # GdUnit4 tests in godot/tests (exit code 0 = pass); reports in godot/reports/
+tools/test.sh                       # GdUnit4 tests of godot/games and godot/core (exit code 0 = pass); reports in godot/reports/
 tools/capture.sh -f 120 -e 30       # run the main scene for 2 s and keep 4 PNGs in captures/<timestamp>/
 tools/capture.sh -r 960x540         # smaller frames, quicker to look at
-tools/capture.sh -s res://boot/boot.tscn --gpu   # real GPU and Forward+ renderer (opens a window)
+tools/capture.sh -s res://games/bastion/scenes/bastion_game.tscn --gpu   # real GPU and full renderer (opens a window)
 ```
 
 `capture.sh` runs the scene inside `godot/tools/capture/capture.tscn`, which saves only the requested frames

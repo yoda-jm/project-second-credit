@@ -1,4 +1,5 @@
-"""Props that float behind the launcher when a game is selected (each game has its own set).
+"""Placeholder props that float behind the launcher for games still in development (cone, gear); playable games
+use their own models.
 Run: blender -b --factory-startup -P tools/blender/launcher_props.py -- godot/core/art/props
 Deterministic; output licence CC BY-SA 4.0. Provenance: this script.
 """
@@ -34,27 +35,6 @@ def join(parts, name, bevel=0.0, smooth=False):
     bpy.ops.wm.obj_export(filepath=os.path.join(out_dir, name + ".obj"), export_selected_objects=True,
                           export_materials=False, forward_axis="NEGATIVE_Z", up_axis="Y")
     print("exported", name)
-
-
-def cannonball():
-    reset()
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=14, radius=0.35)
-    ball = bpy.context.active_object
-    bpy.ops.mesh.primitive_cylinder_add(vertices=12, radius=0.08, depth=0.12, location=(0, 0, 0.36))
-    join([ball, bpy.context.active_object], "cannonball", smooth=True)
-
-
-def wall_piece():
-    """An L-shaped piece of four stone blocks, like Rampart's wall pieces."""
-    reset()
-    parts = []
-    for (x, z) in [(-0.5, 0.5), (-0.5, -0.5), (0.5, -0.5), (1.5, -0.5)]:
-        bpy.ops.mesh.primitive_cube_add(size=0.92, location=(x * 0.5, 0, z * 0.5))
-        o = bpy.context.active_object
-        o.scale = (0.5, 0.5, 0.5)
-        bpy.ops.object.transform_apply(scale=True)
-        parts.append(o)
-    join(parts, "wall_piece", bevel=0.03)
 
 
 def cone():
@@ -108,5 +88,5 @@ def gear():
     join([obj], "gear")
 
 
-for f in (cannonball, wall_piece, cone, gear):
+for f in (cone, gear):
     f()
