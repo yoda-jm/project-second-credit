@@ -14,6 +14,7 @@ var camera_shake := true  ## explosions shake the camera (turn off to reduce mot
 var show_fps := false
 
 var _fps_label: Label
+var _fonts: Array[Font] = []  ## kept alive for the whole session (see _warm_fonts)
 
 
 func _ready() -> void:
@@ -34,13 +35,16 @@ func _ready() -> void:
 	layer.add_child(_fps_label)
 
 
-## Builds every glyph the interface uses up front, so text never appears piece by piece.
+## Builds every glyph the interface uses up front, so text never appears piece by piece. The fonts stay
+## referenced for the whole session: otherwise a scene change frees them and the next screen reloads them
+## (and shows empty squares until the glyphs are rebuilt).
 func _warm_fonts() -> void:
 	var chars := ""
 	for c in range(32, 127):
 		chars += char(c)
 	for path in ["res://core/fonts/kenney_future.ttf", "res://core/fonts/kenney_future_narrow.ttf"]:
 		var f: Font = load(path)
+		_fonts.append(f)
 		for size in [20, 26, 34, 48, 72, 110]:
 			f.get_string_size(chars, HORIZONTAL_ALIGNMENT_LEFT, -1, size)
 		if f is FontFile:

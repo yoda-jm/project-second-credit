@@ -48,3 +48,20 @@ func test_in_game_credits_match_credits_md() -> void:
 	if not FileAccess.file_exists(root):
 		return
 	assert_str(FileAccess.get_file_as_string("res://core/ui/credits.md")).is_equal(FileAccess.get_file_as_string(root))
+
+
+func test_games_loaded_by_the_loading_screen_stop_when_paused() -> void:
+	# the loading screen runs while the tree is paused; the game it hosts must not, or the pause menu leaks input
+	var screen := LoadingScreen.new()
+	LoadingScreen.target = "res://games/glimmerdeep/scenes/cave_player.tscn"
+	add_child(screen)
+	for i in 600:
+		if screen._game != null:
+			break
+		await get_tree().process_frame
+	assert_object(screen._game).is_not_null()
+	get_tree().paused = true
+	assert_bool(screen._game.can_process()).is_false()
+	get_tree().paused = false
+	LoadingScreen.target = ""
+	screen.queue_free()

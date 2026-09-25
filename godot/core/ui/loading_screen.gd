@@ -6,6 +6,8 @@ extends Node
 
 const SCENE := "res://core/ui/loading_screen.tscn"
 const GOLD := Color(1.0, 0.83, 0.35)
+const FONT := preload("res://core/fonts/kenney_future.ttf")
+const NARROW := preload("res://core/fonts/kenney_future_narrow.ttf")
 
 static var target := ""
 static var target_title := ""
@@ -53,6 +55,7 @@ func _process(delta: float) -> void:
 				var packed: PackedScene = ResourceLoader.load_threaded_get(target)
 				get_tree().paused = true
 				_game = packed.instantiate()
+				_game.process_mode = Node.PROCESS_MODE_PAUSABLE  # not ALWAYS like this screen: the pause menu must stop it
 				add_child(_game)
 				_phase = "warm"
 			elif status == ResourceLoader.THREAD_LOAD_FAILED or status == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
@@ -81,8 +84,8 @@ func _process(delta: float) -> void:
 
 func _on_draw() -> void:
 	var vp := _draw.get_viewport_rect().size
-	var font: Font = load("res://core/fonts/kenney_future.ttf")
-	var narrow: Font = load("res://core/fonts/kenney_future_narrow.ttf")
+	var font: Font = FONT
+	var narrow: Font = NARROW
 	_draw.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.02, 0.04, _alpha))
 	var c := vp * 0.5
 	# a spinning gem
