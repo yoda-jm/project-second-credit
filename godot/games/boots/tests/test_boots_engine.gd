@@ -148,3 +148,16 @@ func test_same_seed_and_orders_replay_identically() -> void:
 			e.tick()
 		out.append([e.kills, e.alive_soldiers().size(), e.enemies.size(), e.time])
 	assert_array(out[0]).is_equal(out[1])
+
+
+func test_demo_bot_completes_the_campaign() -> void:
+	var text := FileAccess.get_file_as_string("res://games/boots/maps/first-tour.boots")
+	for mi in BootsMap.parse_campaign(text).size():
+		var e := BootsEngine.new(BootsMap.parse_campaign(text)[mi], 1)
+		var bot := BootsBot.new()
+		var n := 0
+		while e.phase == E.Phase.PLAY and n < 60 * 240:
+			bot.drive(e)
+			e.tick()
+			n += 1
+		assert_int(e.phase).is_equal(E.Phase.WON)

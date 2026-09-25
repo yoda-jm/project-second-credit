@@ -18,17 +18,18 @@ const TICK := 1.0 / 60.0
 const SPEED := 3.3  ## tiles per second on land
 const TERRAIN_SPEED := {T.LAND: 1.0, T.ROUGH: 0.7, T.WATER: 0.4, T.SHALLOW: 0.65, T.QUICKSAND: 0.35, T.SNOW: 0.6}
 const FOLLOW_GAP := 0.9  ## tiles between soldiers in the file
-const FIRE_EVERY := 0.22
+const FIRE_EVERY := 0.3
 const BULLET_SPEED := 16.0
-const BULLET_RANGE := 9.0
+const BULLET_RANGE := 7.5
 const SPREAD := 0.06  ## radians
 const GRENADE_RANGE := 7.0
 const GRENADE_FLIGHT := 0.9
 const BLAST := 1.7  ## radius, tiles
 const ROCKET_SPEED := 12.0
-const SIGHT := 8.5
-const ENEMY_FIRE := Vector2(1.1, 1.9)
-const ENEMY_SPREAD := 0.14
+const SIGHT := 8.0
+const ENEMY_FIRE := Vector2(0.8, 1.4)
+const ENEMY_SPREAD := 0.1
+const ENEMY_REACT := 0.6  ## an enemy that just spotted the squad hesitates this long before its first shot
 const ENEMY_BULLET := 11.0
 const ENEMY_SPEED := 1.8
 const HUT_SPAWN := Vector2(6.0, 10.0)
@@ -301,6 +302,8 @@ func _move_enemies(dt: float) -> void:
 			if d < best and clear_line(p, s["pos"]):
 				best = d
 				target = s
+		if not target.is_empty() and not e["alert"]:
+			e["fire_in"] = maxf(e["fire_in"], ENEMY_REACT)
 		e["alert"] = not target.is_empty()
 		if e["alert"]:
 			e["fire_in"] -= dt
