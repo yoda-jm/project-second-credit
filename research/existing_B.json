@@ -1,0 +1,1059 @@
+{
+  "pacman": {
+    "projects": [
+      {
+        "name": "Kapman (KDE)",
+        "url": "https://apps.kde.org/kapman/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (KDE)",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "KDE Games Pac-Man clone with SVG themes; maintained with KDE Gear releases."
+      },
+      {
+        "name": "pacman-canvas",
+        "url": "https://pacman.platzh1rsch.ch/",
+        "licence": "CC0 (code)",
+        "platforms": "Web",
+        "last_activity": "2021 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "HTML5 canvas clone; successor 'pacman-canvas-next' (MIT) unplayable."
+      },
+      {
+        "name": "pacman.c / pacman.zig (floooh)",
+        "url": "https://floooh.github.io/pacman.c/pacman.html",
+        "licence": "MIT",
+        "platforms": "Web/Win/Linux/macOS",
+        "last_activity": "2024 (unverified)",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Arcade-accurate minimal remake using sokol; uses recreated original maze/sprites."
+      },
+      {
+        "name": "neon_pacman (CyberSheepYT)",
+        "url": "https://github.com/CyberSheepYT/neon_pacman",
+        "licence": "unknown",
+        "platforms": "Web",
+        "last_activity": "2025-2026 (unverified)",
+        "status": "unknown",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Tiny single-file hobby project with bloom, particles, CRT overlay: shows the idea but not a full product."
+      }
+    ],
+    "official_modern": "Pac-Man Championship Edition / CE DX / CE 2 (Bandai Namco, commercial), Pac-Man 256, Pac-Man 99, Pac-Man World Re-Pac, Shadow Labyrinth (2025).",
+    "gap": "partly covered",
+    "gap_note": "Dozens of free clones exist but all are retro-faithful; only tiny hobby 'neon' web demos attempt CE-style glow. The CE vibe is owned by commercial Bandai Namco titles; no polished open-source equivalent exists."
+  },
+  "qix": {
+    "projects": [
+      {
+        "name": "Qixxy",
+        "url": "https://github.com/thenanisore/qixxy",
+        "licence": "MIT",
+        "platforms": "Desktop (JVM/libGDX)",
+        "last_activity": "2016 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Only Qix entry on OSGC; complete but minimal."
+      },
+      {
+        "name": "aXonix",
+        "url": "https://github.com/Borod4r/aXonix",
+        "licence": "unknown",
+        "platforms": "Android/Desktop (libGDX)",
+        "last_activity": "2015 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Xonix-variant remake."
+      },
+      {
+        "name": "Trappy Pixel",
+        "url": "https://agent4125.itch.io/trappypixel",
+        "licence": "freeware",
+        "platforms": "Windows/Linux (Godot)",
+        "last_activity": "2024 (unverified)",
+        "status": "unknown",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Free Qix/Xonix/JezzBall-style game with polished pixel-art presentation; not open source."
+      }
+    ],
+    "official_modern": "Qix++ (Taito/Square Enix, 2009 XBLA); Qix appears in Taito compilations (Egret II Mini etc.).",
+    "gap": "wide open",
+    "gap_note": "Only small hobby clones exist, none open source with modern effects; Qix's line-drawing/area-fill is ideal for neon/glow treatment and nobody has done it."
+  },
+  "lemmings": {
+    "projects": [
+      {
+        "name": "Lix",
+        "url": "https://www.lixgame.com/",
+        "licence": "CC0 (public domain)",
+        "platforms": "Windows/Linux/macOS",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "700+ original puzzles, networked multiplayer, level editor; v0.10.35 released Sep 2026. Pixel style."
+      },
+      {
+        "name": "Pingus",
+        "url": "https://github.com/Pingus/pingus",
+        "licence": "GPL-3.0",
+        "platforms": "Linux/Windows/macOS (SDL2)",
+        "last_activity": "2025",
+        "status": "active (sporadic)",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Penguin Lemmings clone with hi-res painted 2D graphics and editor; commits sporadic, last release 0.7.6 (2011)."
+      },
+      {
+        "name": "NeoLemmix",
+        "url": "https://www.neolemmix.com/",
+        "licence": "CC-BY-NC (not OSI)",
+        "platforms": "Windows",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Main community engine with huge custom level-pack scene and editor; original levels available as packs (unverified)."
+      },
+      {
+        "name": "Lemmings.ts",
+        "url": "https://lemmings.hmilch.net/lemmings.html",
+        "licence": "MIT",
+        "platforms": "Web",
+        "last_activity": "2023 (unverified)",
+        "status": "complete",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Browser engine port that loads original Lemmings data (commercial content)."
+      }
+    ],
+    "official_modern": "Lemmings (Sad Puppy/Sony, 2018 free-to-play mobile) and Lemmings: The Puzzle Adventure; Lemmings (2006 PSP/PS2 remake).",
+    "gap": "partly covered",
+    "gap_note": "Excellent free/open gameplay clones (Lix, Pingus) with level editors exist, but all are pixel or dated 2D; no open project offers a modern lit/3D 'premium' presentation."
+  },
+  "bomberman": {
+    "projects": [
+      {
+        "name": "Mr.Boom",
+        "url": "https://github.com/Javanaise/mrboom-libretro",
+        "licence": "MIT",
+        "platforms": "Libretro/SDL2: Win/Linux/macOS/Android/Switch/RPi",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "8-player Bomberman clone with netplay and bots; pixel-art; most-played open clone."
+      },
+      {
+        "name": "Granatier (KDE)",
+        "url": "https://apps.kde.org/granatier/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "KDE clone with SVG themes and arenas files."
+      },
+      {
+        "name": "Bombermaaan",
+        "url": "https://sourceforge.net/projects/bombermaaan/",
+        "licence": "GPL-3.0",
+        "platforms": "Windows/Linux",
+        "last_activity": "2011 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Classic SDL remake of Bomberman / Atomic Bomberman."
+      },
+      {
+        "name": "BombSquad / Ballistica engine",
+        "url": "https://github.com/efroemling/ballistica",
+        "licence": "MIT (engine code; assets unclear)",
+        "platforms": "Win/Linux/macOS/Android",
+        "last_activity": "2026 (unverified)",
+        "status": "active",
+        "kind": "spiritual successor",
+        "visual_level": 3,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Polished 3D physics party game built around bombs; not a Bomberman grid game but proves a modern-looking open bomb-arena engine exists."
+      }
+    ],
+    "official_modern": "Super Bomberman R / R 2 (Konami, 2017/2023), Amazing Bomberman (Apple Arcade), Bomberman Collection (2025).",
+    "gap": "partly covered",
+    "gap_note": "Many free grid clones are all retro; BombSquad is modern and open-source but a different (physics brawler) game. A premium-looking grid Bomberman with open licence is still missing."
+  },
+  "arkanoid": {
+    "projects": [
+      {
+        "name": "LBreakoutHD",
+        "url": "https://sourceforge.net/projects/lgames/",
+        "licence": "GPL-3.0",
+        "platforms": "Linux/Windows (Flathub)",
+        "last_activity": "2025 (v1.2.4, unverified date)",
+        "status": "active",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "16:9 hi-res remaster of LBreakout2 with effects; thousands of community levelsets and editor (from LBreakout2)."
+      },
+      {
+        "name": "TecnoballZ",
+        "url": "https://linux.tlk.fr/games/TecnoballZ",
+        "licence": "GPL-3.0",
+        "platforms": "Linux",
+        "last_activity": "2015 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Port of Amiga TecnoBall; retro pixel art."
+      },
+      {
+        "name": "Briquolo",
+        "url": "http://briquolo.free.fr/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows",
+        "last_activity": "2006 (unverified)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Early OpenGL 3D breakout with explosions, camera angles and level editor; dated 2000s 3D."
+      },
+      {
+        "name": "DX-Ball",
+        "url": "https://en.wikipedia.org/wiki/DX-Ball",
+        "licence": "freeware",
+        "platforms": "Windows",
+        "last_activity": "1996",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Classic freeware; DX-Ball 2 and later are commercial."
+      }
+    ],
+    "official_modern": "Arkanoid: Eternal Battle (2022, Microids/Taito); Arkanoid vs Space Invaders (mobile); Shatter (Sidhe, commercial spiritual successor with premium look).",
+    "gap": "partly covered",
+    "gap_note": "LBreakoutHD is an actively maintained open remaster with mild effects, but its look is still 2000s-era; nothing free reaches Shatter/Tetris-Effect-level presentation."
+  },
+  "frogger": {
+    "projects": [
+      {
+        "name": "Froggix",
+        "url": "https://sourceforge.net/projects/froggix/",
+        "licence": "GPL-3.0",
+        "platforms": "Win/Linux/macOS (Python)",
+        "last_activity": "2009 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Playable Python remake, development halted."
+      },
+      {
+        "name": "Saving Sue",
+        "url": "https://github.com/garu/Games-SavingSue",
+        "licence": "code open; mixed CC assets",
+        "platforms": "Linux/Win (Perl SDL)",
+        "last_activity": "2012 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Perl/SDL Frogger clone."
+      },
+      {
+        "name": "Frogger Remake (Lajawi)",
+        "url": "https://lajawi.itch.io/frogger-remake",
+        "licence": "unknown",
+        "platforms": "Windows",
+        "last_activity": "2023 (unverified)",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "One of many small itch.io student remakes."
+      }
+    ],
+    "official_modern": "Frogger in Toy Town (Konami, 2019 Apple Arcade), Frogger's Adventures series; Crossy Road (commercial free-to-play spiritual successor, voxel 3D).",
+    "gap": "wide open",
+    "gap_note": "Only student/hobby clones exist; no maintained open-source Frogger, let alone a modern-looking one."
+  },
+  "digdug": {
+    "projects": [
+      {
+        "name": "digdug (l-hackari)",
+        "url": "https://github.com/l-hackari/digdug",
+        "licence": "unknown",
+        "platforms": "Linux/Windows (C++/Allegro)",
+        "last_activity": "2019 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (recreated)",
+        "custom_levels": "no",
+        "note": "Hobby Allegro remake."
+      },
+      {
+        "name": "JavaDigDugGame (leonardo-ono)",
+        "url": "https://github.com/leonardo-ono/JavaDigDugGame",
+        "licence": "unknown",
+        "platforms": "Desktop (Java)",
+        "last_activity": "2018 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (recreated)",
+        "custom_levels": "no",
+        "note": "Faithful Java 2D recreation."
+      },
+      {
+        "name": "Dig Dug Revival (LC-Games)",
+        "url": "https://lowcarb.itch.io/dig-dug-revival",
+        "licence": "freeware",
+        "platforms": "Windows/macOS/Linux + C64",
+        "last_activity": "2023 (unverified)",
+        "status": "complete",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Free homage with procedurally generated playfields; retro look."
+      },
+      {
+        "name": "Digger Remastered",
+        "url": "https://en.wikipedia.org/wiki/Digger_(video_game)",
+        "licence": "GPL (unverified)",
+        "platforms": "Windows/Linux/DOS",
+        "last_activity": "2010s (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Open remake of 1983 Digger, a Dig Dug-like title; related rather than Dig Dug itself."
+      }
+    ],
+    "official_modern": "Dig Dug Deeper (2001, PC 3D); Mr. Driller series / Mr. Driller DrillLand (2022) is Namco's modern successor.",
+    "gap": "wide open",
+    "gap_note": "Only small hobby and retro-look remakes; nothing open and maintained, nothing with modern presentation."
+  },
+  "pengo": {
+    "projects": [
+      {
+        "name": "Lupengo",
+        "url": "https://lupengo.sourceforge.net/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (SDL)",
+        "last_activity": "2008 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Only Pengo clone listed on OSGC."
+      },
+      {
+        "name": "Pango",
+        "url": "https://www.dosgames.com/game/pango/",
+        "licence": "freeware",
+        "platforms": "DOS",
+        "last_activity": "1990s",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Classic freeware DOS conversion of Pengo."
+      },
+      {
+        "name": "SinLuces_Pengo",
+        "url": "https://mmiraa15.itch.io/sinluces-pengo",
+        "licence": "unknown",
+        "platforms": "Windows/Linux",
+        "last_activity": "2024-2025 (unverified)",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Small free itch.io remake."
+      }
+    ],
+    "official_modern": "No modern official remake; Pengo only in Sega compilations (e.g. Sega Ages / Astro City Mini).",
+    "gap": "wide open",
+    "gap_note": "Only tiny, dated or jam-level clones; the ice-sliding mechanic is untouched by any modern free remake."
+  },
+  "bubblebobble": {
+    "projects": [
+      {
+        "name": "The Bub's Brothers",
+        "url": "http://bub-n-bros.sourceforge.net/",
+        "licence": "MIT",
+        "platforms": "Linux/Windows/macOS (Python)",
+        "last_activity": "2010 (unverified)",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Networked multiplayer Bubble Bobble-like; pixel art; halted."
+      },
+      {
+        "name": "Bubble Bobble Nostalgie",
+        "url": "https://sourceforge.net/app/bubble-bobble-nostalgie/",
+        "licence": "shareware/free-to-try (not open source)",
+        "platforms": "Windows",
+        "last_activity": "2010s (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Faithful Windows remake; listed as free-to-try $14.95 on download sites."
+      },
+      {
+        "name": "Bubble Bobble C64 fan remaster",
+        "url": "https://www.timeextension.com/news/2025/10/bubble-bobbles-incredible-c64-port-just-got-a-new-fan-remaster-that-you-can-play-for-free",
+        "licence": "freeware",
+        "platforms": "C64",
+        "last_activity": "2025",
+        "status": "complete",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Unofficial enhanced C64 port remaster (itch.io)."
+      }
+    ],
+    "official_modern": "Bubble Bobble 4 Friends (Taito/ININ, 2019-2021), Bubble Bobble Double (mobile), Bubble Bobble Evolution (PSP).",
+    "gap": "wide open",
+    "gap_note": "Surprisingly thin free scene: no maintained open-source Bubble Bobble clone and nothing with modern visuals."
+  },
+  "rickdangerous": {
+    "projects": [
+      {
+        "name": "xrick",
+        "url": "https://github.com/zpqrtbnk/xrick",
+        "licence": "GPL-2.0 (code); original game graphics bundled",
+        "platforms": "Win/Linux/macOS/many ports (SDL2)",
+        "last_activity": "2020s (unverified)",
+        "status": "abandoned",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Reverse-engineered engine; ships original Core Design data with tolerance, not truly free assets."
+      },
+      {
+        "name": "RickyD",
+        "url": "https://sourceforge.net/projects/rickyd/",
+        "licence": "GPL-2.0",
+        "platforms": "Win/Linux (SDL2)",
+        "last_activity": "2020 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "C++/SDL2 remake."
+      },
+      {
+        "name": "Rick Dangerous DX / Amiga remaster (Z-Team)",
+        "url": "https://z-team.itch.io/rick-dangerous-amiga",
+        "licence": "freeware",
+        "platforms": "Amiga/NeoGeo",
+        "last_activity": "2023",
+        "status": "complete",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Remastered hi-colour graphics by Domkid; retro platforms only."
+      },
+      {
+        "name": "Rick Dangerous 3D (polobuilder)",
+        "url": "https://polobuilder.itch.io/rick-dangerous-3d",
+        "licence": "freeware",
+        "platforms": "Windows",
+        "last_activity": "2021",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "One-month student 3D remake; partial."
+      }
+    ],
+    "official_modern": "No official modern remake (Rick Dangerous rights with Square Enix/Eidos; DX edition existed on Wii homebrew/port).",
+    "gap": "wide open",
+    "gap_note": "Free versions are either engine ports needing original assets or retro-platform remasters; no open, modern-looking PC remake."
+  },
+  "loderunner": {
+    "projects": [
+      {
+        "name": "KGoldrunner (KDE)",
+        "url": "https://apps.kde.org/kgoldrunner/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Maintained KDE clone with many original-style level sets and editor; themeable SVG graphics."
+      },
+      {
+        "name": "Lode Runner - Total Recall",
+        "url": "https://simonhung.github.io/LodeRunner_TotalRecall/",
+        "licence": "source on GitHub (licence unclear)",
+        "platforms": "Web",
+        "last_activity": "2019 (unverified)",
+        "status": "complete",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes",
+        "note": "Browser recreation with original Apple II level sets and editor."
+      },
+      {
+        "name": "Lode Runner 2020",
+        "url": "https://github.com/Ma-Pe-Ma/Lode-Runner-2020",
+        "licence": "MIT (code; NES-derived assets)",
+        "platforms": "Win/Linux/Web/Android",
+        "last_activity": "2024 (unverified)",
+        "status": "complete",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "OpenGL 4.6 remake based on NES version with original Apple II levels."
+      }
+    ],
+    "official_modern": "Lode Runner Legacy (Tozai, 2017, voxel 3D with editor); Lode Runner 1 (2023, Tozai) (unverified).",
+    "gap": "partly covered",
+    "gap_note": "Solid free clones with editors and original levels exist but all look retro; the modern-look slot is taken only by commercial Lode Runner Legacy."
+  },
+  "sokoban": {
+    "projects": [
+      {
+        "name": "JSoko",
+        "url": "https://jsokoapplet.sourceforge.io/",
+        "licence": "GPL-3.0",
+        "platforms": "Java desktop",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes",
+        "note": "Feature-rich Sokoban with solver and huge level collections."
+      },
+      {
+        "name": "YASC",
+        "url": "https://sourceforge.net/projects/sokobanyasc/",
+        "licence": "GPL-2.0",
+        "platforms": "Windows",
+        "last_activity": "2024 (unverified)",
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes",
+        "note": "Long-maintained Sokoban with skins/solver."
+      },
+      {
+        "name": "Skladnik (KDE)",
+        "url": "https://apps.kde.org/skladnik/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux",
+        "last_activity": "2025 (unverified)",
+        "status": "active (sporadic)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes",
+        "note": "KDE Sokoban."
+      },
+      {
+        "name": "Sokobano",
+        "url": "https://sokobano.sourceforge.net/",
+        "licence": "GPL-2.0",
+        "platforms": "Java/OpenGL",
+        "last_activity": "2009 (unverified)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes",
+        "note": "3D OpenGL rendering; dated."
+      }
+    ],
+    "official_modern": "Sokoban Touch / Sokoban series (Falcon); countless commercial spiritual successors with premium look (Baba Is You, Patrick's Parabox, Stephen's Sausage Roll).",
+    "gap": "partly covered",
+    "gap_note": "Plenty of free faithful clones with the classic level collections (levels themselves widely freely shared), but none free and modern-looking."
+  },
+  "chuckieegg": {
+    "projects": [
+      {
+        "name": "Chuckie Egg: The Next Batch (Retrospec)",
+        "url": "https://acid-play.com/download/chuckie-egg-next-batch",
+        "licence": "freeware",
+        "platforms": "Windows",
+        "last_activity": "2001",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Retrospec freeware remake with updated graphics/music."
+      },
+      {
+        "name": "Chuckie Egg HTML5 (repton3.co.uk)",
+        "url": "https://www.repton3.co.uk/chuckieegg.aspx",
+        "licence": "unknown",
+        "platforms": "Web",
+        "last_activity": "2020s (unverified)",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Browser remake of BBC Micro version."
+      },
+      {
+        "name": "Chuckie Egg 2007 remake (Jozsef Laszlo)",
+        "url": "https://www.classic-retro-games.com/games/platform/chuckie-egg-668",
+        "licence": "open source (licence unverified)",
+        "platforms": "DOS/Windows",
+        "last_activity": "2007",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes",
+        "note": "Assembler/Pascal remake with level editor (unverified details)."
+      }
+    ],
+    "official_modern": "None official modern (mobile 'Chuckie Egg' by ZedZed is an unofficial/fan remake, unverified).",
+    "gap": "wide open",
+    "gap_note": "Only 2000s freeware and web clones; nothing open-source maintained or modern."
+  },
+  "manicminer": {
+    "projects": [
+      {
+        "name": "Manic Miner PC (Retrospec)",
+        "url": "https://retrospec.sgn.net/info.htm?id=mm&t=g",
+        "licence": "freeware",
+        "platforms": "Windows",
+        "last_activity": "2000s",
+        "status": "complete",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Classic Retrospec freeware remake with enhanced graphics/sound."
+      },
+      {
+        "name": "Manic Miner disassembly (SkoolKit)",
+        "url": "https://skoolkid.github.io/manicminer/",
+        "licence": "as-is (reference)",
+        "platforms": "Spectrum (reference)",
+        "last_activity": "2020s (unverified)",
+        "status": "complete",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Fully annotated disassembly; basis for ports."
+      },
+      {
+        "name": "Manic Miner for Windows (muckypaws)",
+        "url": "https://muckypaws.com/154-2/",
+        "licence": "freeware",
+        "platforms": "Windows",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Retro remake (unverified details)."
+      },
+      {
+        "name": "Pachi el Marciano",
+        "url": "https://sourceforge.net/projects/dragontech/",
+        "licence": "GPL-2.0",
+        "platforms": "Win/Linux (SDL)",
+        "last_activity": "2000s (unverified)",
+        "status": "complete",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Open Manic-Miner-like platformer."
+      }
+    ],
+    "official_modern": "No modern official remake (Matthew Smith / Software Projects rights; appears in ZX Spectrum Next / TheSpectrum bundles).",
+    "gap": "wide open",
+    "gap_note": "Only freeware/retro remakes and disassemblies; no open, modern-looking version."
+  },
+  "marblemadness": {
+    "projects": [
+      {
+        "name": "Neverball",
+        "url": "https://neverball.org/",
+        "licence": "GPL-2.0+",
+        "platforms": "Win/Linux/macOS/Web/mobile",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "3D tilt-the-world ball game with editor (Radiant maps); 1.6.x releases; clean but modest 3D visuals."
+      },
+      {
+        "name": "Trackballs",
+        "url": "https://trackballs.github.io",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (SDL2)",
+        "last_activity": "2023 (unverified)",
+        "status": "active (sporadic)",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Explicitly Marble Madness-inspired 3D game with level editor; dated look."
+      },
+      {
+        "name": "Marble Marcher (+ Community Edition)",
+        "url": "https://github.com/WAUthethird/Marble-Marcher-Community-Edition",
+        "licence": "GPL-2.0",
+        "platforms": "Windows/Linux",
+        "last_activity": "2021 (unverified)",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 3,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Ray-marched fractal marble racing with striking modern visuals; CE adds editor."
+      }
+    ],
+    "official_modern": "No official remake; commercial successors like Marble It Up (2018) and Super Monkey Ball.",
+    "gap": "partly covered",
+    "gap_note": "Open 3D marble games exist (Neverball, Trackballs) and Marble Marcher has premium visuals, but none recreates the isometric Marble Madness race-course design with modern polish."
+  },
+  "supersprint": {
+    "projects": [
+      {
+        "name": "Dust Racing 2D",
+        "url": "https://github.com/juzzlin/DustRacing2D",
+        "licence": "GPL-3.0 (code), CC-BY-SA assets",
+        "platforms": "Linux/Windows/macOS",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Top-down racer with Qt/OpenGL, AI, split-screen, track editor; press compared it to Super Sprint."
+      },
+      {
+        "name": "PySprint",
+        "url": "https://github.com/salem-ok/PySprint",
+        "licence": "CC0-1.0",
+        "platforms": "Win/macOS/Linux/RPi",
+        "last_activity": "2023 (unverified)",
+        "status": "active (sporadic)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "yes (planned/custom tracks)",
+        "note": "Recreation of Atari ST Super Sprint in Pygame."
+      },
+      {
+        "name": "Super Sprint Remake in UE5",
+        "url": "https://rubenvns.itch.io/super-sprint-remake",
+        "licence": "unknown",
+        "platforms": "Windows",
+        "last_activity": "2023 (unverified)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 3,
+        "ships_original_levels": "yes (2 tracks)",
+        "custom_levels": "no",
+        "note": "Student UE5 project, only 2 tracks."
+      }
+    ],
+    "official_modern": "No standalone modern remake; included in Atari compilations (Atari 50, Midway Arcade Treasures).",
+    "gap": "partly covered",
+    "gap_note": "Dust Racing 2D is a good open top-down racer but visually modest; no open, modern-looking arcade single-screen Super Sprint."
+  },
+  "gauntlet": {
+    "projects": [
+      {
+        "name": "Javascript Gauntlet",
+        "url": "https://github.com/jakesgordon/javascript-gauntlet/",
+        "licence": "MIT",
+        "platforms": "Web",
+        "last_activity": "2013 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes (JSON levels)",
+        "note": "Well-known HTML5 Gauntlet clone, simple pixel art."
+      },
+      {
+        "name": "Fight Or Perish",
+        "url": "http://www.newbreedsoftware.com/fop/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (SDL)",
+        "last_activity": "2000s",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Dandy/Gauntlet-style maze action."
+      },
+      {
+        "name": "rogue-gauntlet",
+        "url": "https://github.com/arabold/rogue-gauntlet",
+        "licence": "unknown",
+        "platforms": "Desktop (Godot 4 C#)",
+        "last_activity": "2025 (unverified)",
+        "status": "unknown",
+        "kind": "spiritual successor",
+        "visual_level": 3,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "3D Gauntlet-inspired roguelike; early hobby project."
+      }
+    ],
+    "official_modern": "Gauntlet (Arrowhead/WB, 2014) / Gauntlet Slayer Edition; Gauntlet in Midway/Atari compilations.",
+    "gap": "wide open",
+    "gap_note": "No complete, maintained open Gauntlet clone exists; only dated or experimental hobby projects."
+  },
+  "paperboy": {
+    "projects": [
+      {
+        "name": "game_paperboy (donxito)",
+        "url": "https://github.com/donxito/game_paperboy",
+        "licence": "unknown",
+        "platforms": "Web",
+        "last_activity": "2023 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Small browser remake."
+      },
+      {
+        "name": "Paperboy Remake University Project",
+        "url": "https://deeerb.itch.io/paperboy-remake-university-project",
+        "licence": "unknown",
+        "platforms": "Windows",
+        "last_activity": "2020s (unverified)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Student project."
+      }
+    ],
+    "official_modern": "Paperboy (Vivid Games, 2009 XBLA/mobile remake).",
+    "gap": "wide open",
+    "gap_note": "Essentially nothing beyond student/hobby experiments; entirely unoccupied space."
+  },
+  "xenon2": {
+    "projects": [
+      {
+        "name": "Xenon 2000: Project PCF",
+        "url": "https://archive.org/details/Xenon_2000_Project_PCF",
+        "licence": "freeware (official Bitmap Brothers)",
+        "platforms": "Windows",
+        "last_activity": "2000",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Official free one-level remake by Bitmap Brothers for PC Format; enhanced 2000-era graphics."
+      },
+      {
+        "name": "TypeScript Xenon",
+        "url": "https://github.com/ian-wigley/Xenon",
+        "licence": "MIT (code; uses original assets)",
+        "platforms": "Web",
+        "last_activity": "2020s (unverified)",
+        "status": "abandoned",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (partial)",
+        "custom_levels": "no",
+        "note": "Semi-playable browser remake."
+      },
+      {
+        "name": "Phavon",
+        "url": "https://sourceforge.net/projects/phavon/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (SDL)",
+        "last_activity": "2000s",
+        "status": "abandoned",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (partial)",
+        "custom_levels": "no",
+        "note": "Semi-playable remake with commercial content."
+      },
+      {
+        "name": "Chromium B.S.U.",
+        "url": "https://chromium-bsu.sourceforge.io/",
+        "licence": "Artistic/Clarified Artistic",
+        "platforms": "Linux/Windows/macOS",
+        "last_activity": "2020s (unverified)",
+        "status": "active (sporadic)",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Open OpenGL vertical shooter; not Xenon-specific."
+      }
+    ],
+    "official_modern": "Xenon 2 Megablast in Bitmap Brothers Collection (Evercade), no modern remake; Xenon 2000 was official freeware.",
+    "gap": "wide open",
+    "gap_note": "Only semi-playable ports and an official 2000 freeware one-level remake; no open, complete, modern-looking version."
+  },
+  "speedball2": {
+    "projects": [
+      {
+        "name": "Speedball 2 remake (Kroah, bringerp)",
+        "url": "http://bringerp.free.fr/RE/Speedball2/remake.php5",
+        "licence": "as-is (source released)",
+        "platforms": "Windows/Linux (C#/Mono)",
+        "last_activity": "2010s",
+        "status": "abandoned",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Reverse-engineered prototype from Atari ST version."
+      },
+      {
+        "name": "DCSpeedBall2",
+        "url": "https://github.com/LemonHaze420/DCSpeedBall2",
+        "licence": "as-is",
+        "platforms": "Pocket PC/Dreamcast",
+        "last_activity": "2020s (unverified)",
+        "status": "complete",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Released source of the Pocket PC/Dreamcast port."
+      }
+    ],
+    "official_modern": "Speedball 2 Evolution (2011), Speedball 2 HD (2013), Speedball 2 Tournament (2007), Brutal Deluxe on Evercade; Rebellion owns rights.",
+    "gap": "wide open",
+    "gap_note": "Only reverse-engineered ports needing original assets; nothing free, open and modern."
+  },
+  "pipemania": {
+    "projects": [
+      {
+        "name": "PipeNightDreams",
+        "url": "https://www.libsdl.org/projects/pipenightdreams/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (SDL)",
+        "last_activity": "2000s",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Classic SDL Pipe Mania clone."
+      },
+      {
+        "name": "Pipe Puzzle (tassaron)",
+        "url": "https://tassaron.com/game/pipe-puzzle",
+        "licence": "MIT",
+        "platforms": "Web (PixiJS)",
+        "last_activity": "2022 (unverified)",
+        "status": "complete",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Simple browser clone."
+      },
+      {
+        "name": "CoolDown",
+        "url": "https://code.google.com/archive/p/cooldown-game/",
+        "licence": "GPL-3.0",
+        "platforms": "Linux/Windows (SDL)",
+        "last_activity": "2010 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Free-content pipe puzzle."
+      }
+    ],
+    "official_modern": "Pipe Mania (2008, Empire Interactive, multi-platform remake); countless mobile clones.",
+    "gap": "wide open",
+    "gap_note": "Only dated or minimal clones; no modern-presentation free version."
+  }
+}

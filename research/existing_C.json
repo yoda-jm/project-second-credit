@@ -1,0 +1,731 @@
+{
+  "qbert": {
+    "projects": [
+      {
+        "name": "ReQbert",
+        "url": "https://github.com/leonicolas/ReQbert",
+        "licence": "GPL-3.0",
+        "platforms": "Web (JavaScript)",
+        "last_activity": "2023",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Semi-playable browser remake listed on osgameclones; development halted."
+      },
+      {
+        "name": "QBert-Recreated",
+        "url": "https://github.com/LeronBergelson/QBert-Recreated",
+        "licence": "unknown (no licence file)",
+        "platforms": "Unity (Windows)",
+        "last_activity": "2020",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Student-style Unity recreation, 5 stars."
+      }
+    ],
+    "official_modern": "Q*bert Rebooted (2014, Sideline Amusements; PC/PS3/PS4/Vita), commercial, hexagon-based 3D remake with a classic mode.",
+    "gap": "wide open",
+    "gap_note": "Only small, halted, pixel-faithful hobby clones exist; no free Q*bert with modern lighting/effects."
+  },
+  "bombjack": {
+    "projects": [
+      {
+        "name": "Bombjack (rvretrogames)",
+        "url": "https://rvretrogames.itch.io/bombjack",
+        "licence": "freeware",
+        "platforms": "Windows, macOS, Linux",
+        "last_activity": "unknown (itch release ~2021, unverified)",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Mix of arcade and Amstrad CPC versions."
+      },
+      {
+        "name": "Bomb Jack Remake (RADICALBLAST)",
+        "url": "https://radicalblast.itch.io/bomb-jack-remake",
+        "licence": "freeware (non-profit fan remake)",
+        "platforms": "Web",
+        "last_activity": "unknown (unverified)",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Browser recreation of the arcade game."
+      },
+      {
+        "name": "Bomb Jack remake (DOS, 2002)",
+        "url": "https://www.abandonwaredos.com/abandonware-game.php?abandonware=Bomb+Jack+remake&gid=3188",
+        "licence": "freeware",
+        "platforms": "DOS",
+        "last_activity": "2002",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Old fan remake with smoother animation."
+      }
+    ],
+    "official_modern": "None; only emulated re-releases (e.g. arcade ROM collections).",
+    "gap": "wide open",
+    "gap_note": "Several freeware fan clones, all pixel-faithful and closed-source; nothing open-source or modern-looking."
+  },
+  "headoverheels": {
+    "projects": [
+      {
+        "name": "Head over Heels (dougmencken)",
+        "url": "https://github.com/dougmencken/HeadOverHeels",
+        "licence": "GPL-3.0",
+        "platforms": "Linux, macOS, Windows (C++/Allegro)",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Open-source continuation of Jorge Rodriguez Santos' 2003 remake (the Retrospec one) with redrawn hi-res isometric graphics."
+      },
+      {
+        "name": "Head over Heels 2 (Helmantika)",
+        "url": "https://hoh.helmantika.com/en/",
+        "licence": "GPL-2.0",
+        "platforms": "Windows, Linux (C++/Allegro)",
+        "last_activity": "unknown (unverified)",
+        "status": "complete",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Original author's open-source release of his remake."
+      }
+    ],
+    "official_modern": "None.",
+    "gap": "partly covered",
+    "gap_note": "An active GPL enhanced 2D remake with hi-res sprites exists, but it is a faithful 2000s-style remake, not a modern lit/particle presentation."
+  },
+  "worms": {
+    "projects": [
+      {
+        "name": "Hedgewars",
+        "url": "https://hedgewars.org/",
+        "licence": "GPL-2.0 (code), free content",
+        "platforms": "Windows, macOS, Linux, Android",
+        "last_activity": "2026 (repo activity; last major release 1.0.2 in 2022, unverified)",
+        "status": "active",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Polished cartoon Worms-like with hedgehogs, map editor, online play; the de-facto free Worms."
+      },
+      {
+        "name": "WarMUX (ex-Wormux)",
+        "url": "https://libregamewiki.org/WarMUX",
+        "licence": "GPL (code and data)",
+        "platforms": "Windows, macOS, Linux",
+        "last_activity": "2011",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Worms clone with FOSS-mascot teams; last release 11.01 in Jan 2011."
+      }
+    ],
+    "official_modern": "Worms series continues commercially at Team17 (Worms W.M.D. 2016, Worms Rumble 2020, Worms Armageddon still sold).",
+    "gap": "partly covered",
+    "gap_note": "Hedgewars is a mature, active, open 2D Worms-like with its own art, but it's a cartoon look, not a premium lit/particle presentation."
+  },
+  "tetris": {
+    "projects": [
+      {
+        "name": "Techmino",
+        "url": "https://github.com/26F-Studio/Techmino",
+        "licence": "LGPL-3.0",
+        "platforms": "Windows, macOS, Linux, Android, iOS",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Feature-rich modern-guideline block game with effects, many modes, BGM; strong community."
+      },
+      {
+        "name": "OpenBlok",
+        "url": "https://github.com/mmatyas/openblok",
+        "licence": "GPL-3.0",
+        "platforms": "Windows, macOS, Linux, others",
+        "last_activity": "2025",
+        "status": "active (sporadic)",
+        "kind": "faithful clone",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Customizable, themeable falling-block game."
+      },
+      {
+        "name": "NullpoMino",
+        "url": "https://github.com/NullpoMino",
+        "licence": "BSD",
+        "platforms": "Java (desktop)",
+        "last_activity": "unknown (halted per osgameclones)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Competitive/rule-configurable engine, dated visuals."
+      },
+      {
+        "name": "tetris-spheres",
+        "url": "https://github.com/dcts/tetris-spheres",
+        "licence": "MIT",
+        "platforms": "Web (p5.js)",
+        "last_activity": "2023",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Small open-source 'Tetris Effect copycat' with artist-themed music/colors; proof of concept."
+      }
+    ],
+    "official_modern": "Tetris Effect: Connected (2018/2021, Monstars/Resonair) is exactly the premium-modern benchmark; Tetris 99, Tetris Forever, many licensed versions. Note The Tetris Company enforces trade dress/trademark aggressively.",
+    "gap": "partly covered",
+    "gap_note": "Many polished open-source block games (Techmino) exist, but none with a Tetris Effect-level audio-visual presentation; legal/trade-dress risk is the main constraint."
+  },
+  "rampart": {
+    "projects": [
+      {
+        "name": "Castle-Combat",
+        "url": "https://github.com/karlb/castle-combat",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (Python)",
+        "last_activity": "2026 (repo push; development otherwise halted)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Up to 4 players local/network Rampart clone."
+      },
+      {
+        "name": "Kajaani Kombat",
+        "url": "https://web.archive.org/web/20190713015809/http://kombat.kajaani.net/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux/Windows (C/SDL)",
+        "last_activity": "unknown (pre-2019)",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Rampart-like with local and online multiplayer."
+      },
+      {
+        "name": "RampartRemake (Thomarius)",
+        "url": "https://github.com/Thomarius/RampartRemake",
+        "licence": "unknown (no licence file)",
+        "platforms": "unknown",
+        "last_activity": "2026",
+        "status": "active (new)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "unknown",
+        "note": "Brand-new vibe-coded multiplayer recreation (unverified quality)."
+      }
+    ],
+    "official_modern": "None; only arcade collections. Castle Chaos (2015, Steam) is a commercial Rampart-like.",
+    "gap": "wide open",
+    "gap_note": "Only small halted or brand-new hobby clones with basic graphics; no modern-looking free Rampart."
+  },
+  "northsouth": {
+    "projects": [],
+    "official_modern": "The Bluecoats: North vs South (2012, Microids; iOS/Android/PC), North & South: The Game (2012, bitComposer, iOS), The Bluecoats: North & South (2020, Microids; Switch/PS4/XB1/PC) - all commercial and licensed from the comic.",
+    "gap": "wide open",
+    "gap_note": "No free or open-source recreation found; only commercial Microids remakes. Note the Les Tuniques Bleues comic licence would require a re-theme."
+  },
+  "chaosengine": {
+    "projects": [],
+    "official_modern": "The Chaos Engine (2013, Abstraction Games / Rebellion), commercial faithful remake for PC/Mac/Linux with HD options.",
+    "gap": "wide open",
+    "gap_note": "No free fan clone found on GitHub, itch.io or osgameclones; only the commercial faithful remake exists."
+  },
+  "syndicate": {
+    "projects": [
+      {
+        "name": "FreeSynd",
+        "url": "https://freesynd.sourceforge.io/",
+        "licence": "GPL-2.0",
+        "platforms": "Windows, macOS, Linux (C++/SDL)",
+        "last_activity": "unknown (sporadic, unverified)",
+        "status": "abandoned (sporadic)",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "no",
+        "note": "Reimplementation of the Syndicate engine; needs original game files."
+      },
+      {
+        "name": "Syndicate Wars Fan Expansion (swars)",
+        "url": "https://github.com/swfans/swars",
+        "licence": "GPL-3.0 (plus disassembled original code)",
+        "platforms": "Windows, macOS, Linux",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "no",
+        "note": "Port of the 1996 sequel Syndicate Wars; needs original data."
+      }
+    ],
+    "official_modern": "Syndicate (2012, Starbreeze/EA) FPS reboot; Satellite Reign (2015, 5 Lives Studios) is the commercial spiritual successor.",
+    "gap": "wide open",
+    "gap_note": "Only engine ports requiring original data with original visuals; no free modern-looking Syndicate."
+  },
+  "xcom": {
+    "projects": [
+      {
+        "name": "OpenXcom",
+        "url": "https://openxcom.org/",
+        "licence": "GPL-3.0",
+        "platforms": "Windows, macOS, Linux, Android",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "yes",
+        "note": "Definitive engine reimplementation with huge mod scene; needs original UFO/TFTD data."
+      },
+      {
+        "name": "OpenXcom Extended (OXCE)",
+        "url": "https://github.com/MeridianOXC/OpenXcom",
+        "licence": "GPL-3.0",
+        "platforms": "Windows, macOS, Linux, Android",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "yes",
+        "note": "Extended fork powering total conversions like X-Com Files; some mods ship free art."
+      },
+      {
+        "name": "UFO: Alien Invasion",
+        "url": "https://ufoai.org/",
+        "licence": "GPL-2.0 (content mixed free licences)",
+        "platforms": "Windows, macOS, Linux",
+        "last_activity": "2014 (last release 2.5)",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Full 3D X-COM-like on a Quake2-derived engine; 3D but dated visuals."
+      },
+      {
+        "name": "OpenApoc",
+        "url": "https://github.com/OpenApoc/OpenApoc",
+        "licence": "GPL-3.0",
+        "platforms": "Windows, Linux, macOS",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "no",
+        "note": "Reimplementation of X-COM: Apocalypse (sequel), for reference."
+      }
+    ],
+    "official_modern": "XCOM: Enemy Unknown (2012) and XCOM 2 (2016) by Firaxis; Xenonauts 1/2 and Phoenix Point are commercial spiritual successors.",
+    "gap": "partly covered",
+    "gap_note": "Gameplay is thoroughly covered by OpenXcom and UFO:AI, but no free version has modern premium visuals (OpenXcom uses 1994 art; UFO:AI's 3D dates from ~2010)."
+  },
+  "themehospital": {
+    "projects": [
+      {
+        "name": "CorsixTH",
+        "url": "https://corsixth.com/",
+        "licence": "MIT",
+        "platforms": "Windows, macOS, Linux",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "yes",
+        "note": "Mature Theme Hospital engine reimplementation with level editor; needs original data."
+      }
+    ],
+    "official_modern": "Two Point Hospital (2018, Two Point Studios/Sega) is the commercial spiritual successor.",
+    "gap": "wide open",
+    "gap_note": "CorsixTH is excellent but uses the original 1997 sprites and needs original data; nothing free with its own modern visuals."
+  },
+  "pang": {
+    "projects": [
+      {
+        "name": "Pang Zero",
+        "url": "https://sourceforge.net/projects/pangzero/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux, Windows, macOS, BSD (Perl/SDL)",
+        "last_activity": "2022 (Debian SDL port fork; original project ~2012, unverified)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Super Pang clone/extension for up to 6-8 players."
+      }
+    ],
+    "official_modern": "Pang Adventures (2016, DotEmu), commercial HD remake on PC/consoles/mobile.",
+    "gap": "wide open",
+    "gap_note": "Only an old Perl/SDL clone with simple graphics; no free modern-looking Pang."
+  },
+  "spyvsspy": {
+    "projects": [
+      {
+        "name": "Spy vs Spy - The Fuse and Ms Fire Files",
+        "url": "https://gamejolt.com/games/Spyvsspyremake/326304",
+        "licence": "freeware (fan game, uses MAD licensed characters)",
+        "platforms": "Windows",
+        "last_activity": "2018 (v1.20, unverified)",
+        "status": "abandoned (unverified)",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no (20 new levels)",
+        "custom_levels": "no",
+        "note": "Fan remake with improved HUD/sprites; IP-infringing."
+      },
+      {
+        "name": "spy-vs-spy (PierreZ)",
+        "url": "https://github.com/PierreZ/spy-vs-spy",
+        "licence": "unknown (no licence file)",
+        "platforms": "Desktop (C++/SFML)",
+        "last_activity": "2014",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Small hobby recreation."
+      }
+    ],
+    "official_modern": "Spy vs. Spy (2005, Vicious Cycle; 3D, PS2/Xbox) and Spy vs. Spy (2012, Robots and Pencils; iOS/Android) - commercial, MAD Magazine licensed.",
+    "gap": "wide open",
+    "gap_note": "Only closed freeware fan projects and tiny hobby code; nothing open or modern. MAD's spy characters are licensed IP, so a remake needs original characters."
+  },
+  "archon": {
+    "projects": [
+      {
+        "name": "XArchon",
+        "url": "http://xarchon.seul.org/",
+        "licence": "GPL-2.0",
+        "platforms": "Linux (C/C++, Qt/GTK)",
+        "last_activity": "early 2000s",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Reimplementation of Archon: The Light and the Dark."
+      },
+      {
+        "name": "Archon Remake",
+        "url": "https://sourceforge.net/projects/archonremake/",
+        "licence": "unknown (unverified)",
+        "platforms": "Web browser",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Browser remake on SourceForge."
+      },
+      {
+        "name": "Archon (heinrichelsigan)",
+        "url": "https://github.com/heinrichelsigan/Archon",
+        "licence": "GPL-3.0",
+        "platforms": "Android",
+        "last_activity": "2024",
+        "status": "abandoned (unverified)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes",
+        "custom_levels": "no",
+        "note": "Android port of classic Archon."
+      }
+    ],
+    "official_modern": "Archon Ultra (1994, SSI) and Archon Classic (2008, Free Fall, Windows) - commercial.",
+    "gap": "wide open",
+    "gap_note": "Only retro-faithful, dormant hobby clones; no modern presentation of the board+arena concept."
+  },
+  "mule": {
+    "projects": [
+      {
+        "name": "Planet M.U.L.E.",
+        "url": "https://www.planetmule.com/",
+        "licence": "freeware",
+        "platforms": "Windows, macOS, Linux (Java)",
+        "last_activity": "2025 (v1.4.2, Dec 2025)",
+        "status": "active",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes (original map/rules)",
+        "custom_levels": "no",
+        "note": "Faithful remake with online multiplayer, ranking and forum, by Turborilla; not open source."
+      },
+      {
+        "name": "mewl",
+        "url": "https://github.com/LionsPhil/mewl",
+        "licence": "GPL-2.0",
+        "platforms": "Desktop (C++/SDL)",
+        "last_activity": "2015",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Unplayable open-source attempt."
+      }
+    ],
+    "official_modern": "M.U.L.E. Returns (2016, Playsaurus; iOS/Android), commercial.",
+    "gap": "wide open",
+    "gap_note": "Planet M.U.L.E. is a well-maintained free (closed) remake but visually modest 2D; no open-source or premium-looking version."
+  },
+  "rodland": {
+    "projects": [
+      {
+        "name": "Rodland (GreenSnake)",
+        "url": "https://greensnakelinux.itch.io/rodland",
+        "licence": "freeware (source available to contributors)",
+        "platforms": "Web/desktop (JavaScript)",
+        "last_activity": "unknown (unverified)",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "JavaScript remake of the 8/16-bit versions, 1-2 players."
+      },
+      {
+        "name": "Rod-Land (Lego Racers)",
+        "url": "https://lego-racers.itch.io/rodland",
+        "licence": "freeware",
+        "platforms": "Web",
+        "last_activity": "unknown",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "24-hour jam recreation."
+      }
+    ],
+    "official_modern": "No remake; Retro-Bit released an NES cartridge edition (retro-bit.com/rodland) - a physical re-release, not a modern remake.",
+    "gap": "wide open",
+    "gap_note": "Only tiny pixel-faithful fan clones; nothing open or modern."
+  },
+  "fireice": {
+    "projects": [],
+    "official_modern": "None; original only (abandonware sites).",
+    "gap": "wide open",
+    "gap_note": "No free recreation found at all (GitHub, itch.io, osgameclones searched)."
+  },
+  "lostvikings": {
+    "projects": [
+      {
+        "name": "OpenVikings",
+        "url": "https://github.com/yuriks/OpenVikings",
+        "licence": "MIT",
+        "platforms": "Desktop",
+        "last_activity": "2026",
+        "status": "active (sporadic)",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "no",
+        "note": "Reverse-engineered rewrite of the DOS version."
+      },
+      {
+        "name": "LostVikings (akaWolf)",
+        "url": "https://github.com/akaWolf/LostVikings",
+        "licence": "unknown (no licence file)",
+        "platforms": "Linux, Windows (C++/SDL2)",
+        "last_activity": "2026",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original data)",
+        "custom_levels": "no",
+        "note": "Decompiled DOS executable wrapped in SDL2; needs original DATA.DAT."
+      },
+      {
+        "name": "freeVikings",
+        "url": "https://sourceforge.net/projects/freevikings/",
+        "licence": "GPL-2.0",
+        "platforms": "Desktop (Ruby)",
+        "last_activity": "~2000s",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "yes (unverified)",
+        "note": "Playable clone with its own graphics and levels."
+      },
+      {
+        "name": "lost-vikings-remake (Furyspark)",
+        "url": "https://github.com/Furyspark/lost-vikings-remake",
+        "licence": "unknown (no licence file)",
+        "platforms": "Web (HTML5)",
+        "last_activity": "2018",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Small HTML5 remake attempt."
+      }
+    ],
+    "official_modern": "Blizzard Arcade Collection (2021) re-releases The Lost Vikings (emulated, with rewind); no modern remake.",
+    "gap": "wide open",
+    "gap_note": "Only engine ports needing original data and old hobby clones; no free modern-looking version of the three-hero puzzle-platformer."
+  },
+  "superfrog": {
+    "projects": [
+      {
+        "name": "Frog (Almost There Games)",
+        "url": "https://freegames.valew.net/frog/",
+        "licence": "freeware (unverified; not open source)",
+        "platforms": "Windows, Linux",
+        "last_activity": "2026 (released Aug 2026)",
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (from original ADF disks)",
+        "custom_levels": "no",
+        "note": "Reimplementation needing original Amiga disks; widescreen, hi-res, controller, CRT filter, original pixel art."
+      },
+      {
+        "name": "Superfrog (SourceForge)",
+        "url": "https://sourceforge.net/projects/superfrog/",
+        "licence": "unknown (intended open source)",
+        "platforms": "multi-platform (planned)",
+        "last_activity": "~2000s",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Resource-collection project for an open remake; never completed."
+      }
+    ],
+    "official_modern": "Superfrog HD (2013, Team17; PS Vita/PC), commercial.",
+    "gap": "wide open",
+    "gap_note": "The only live free project is a data-requiring reimplementation with original pixel art; nothing open with new modern visuals."
+  },
+  "scorchedearth": {
+    "projects": [
+      {
+        "name": "Scorched3D",
+        "url": "http://www.scorched3d.co.uk/",
+        "licence": "GPL-2.0",
+        "platforms": "Windows, macOS, Linux",
+        "last_activity": "~2014 (unverified)",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Full 3D terrain version of Scorched Earth with online play; 3D but 2000s-era visuals."
+      },
+      {
+        "name": "Atomic Tanks",
+        "url": "https://atanks.sourceforge.io",
+        "licence": "GPL-2.0",
+        "platforms": "Windows, Linux (C++/Allegro)",
+        "last_activity": "unknown (halted, unverified)",
+        "status": "abandoned",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Classic 2D remake with hotseat play."
+      },
+      {
+        "name": "Scorched Earth 2000 HTML port",
+        "url": "http://www.scorch2000.com/web/",
+        "licence": "GPL-3.0",
+        "platforms": "Web",
+        "last_activity": "unknown (listed 'very active' on osgameclones)",
+        "status": "active (unverified)",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "JavaScript port of the Java Scorched Earth 2000."
+      }
+    ],
+    "official_modern": "None official; Pocket Tanks / ShellShock Live are commercial spiritual successors.",
+    "gap": "partly covered",
+    "gap_note": "Many open clones incl. a 3D one (Scorched3D), but all dormant and visually dated; no modern premium free version."
+  },
+  "micromachines": {
+    "projects": [
+      {
+        "name": "Dust Racing 2D",
+        "url": "https://github.com/juzzlin/DustRacing2D",
+        "licence": "GPL-3.0 (code and content)",
+        "platforms": "Windows, Linux, macOS (Qt/OpenGL)",
+        "last_activity": "2026",
+        "status": "active (sporadic)",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Top-down racer with split-screen and level editor; clean 2D, not toy-themed."
+      },
+      {
+        "name": "Yorg",
+        "url": "https://ya2.itch.io/yorg",
+        "licence": "GPL-3.0 / CC-BY-SA",
+        "platforms": "Windows, macOS, Linux (Python/Panda3D)",
+        "last_activity": "~2020 (unverified)",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "3D top-down car combat racer with online/local multiplayer."
+      },
+      {
+        "name": "Microracers",
+        "url": "https://microracers.sourceforge.net/",
+        "licence": "GPL-2.0",
+        "platforms": "Desktop (C++/SDL)",
+        "last_activity": "~2000s",
+        "status": "abandoned",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "unknown",
+        "note": "Semi-playable Micro Machines-like."
+      }
+    ],
+    "official_modern": "Micro Machines World Series (2017, Codemasters), commercial 3D.",
+    "gap": "partly covered",
+    "gap_note": "Dust Racing 2D is a solid, active, open top-down racer, but none has the toy-scale household tracks or a premium modern look."
+  }
+}

@@ -1,0 +1,18 @@
+# Private context
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Fair-use reference screenshots and the page that embeds them: never publish
+catalog/shots/
+catalog/index.html
+
+# Godot
+.godot/
+*.import.tmp
+export/
+build/
+
+# Python / misc
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,194 @@
+{
+ "pacman": {
+  "file": "shots/raw_pacman.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://commons.wikimedia.org/wiki/File:Pac-Man_gameplay_(1x_pixel-perfect_recreation).png"
+ },
+ "boulderdash": {
+  "file": "shots/raw_boulderdash.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://commons.wikimedia.org/wiki/File:Boulder_Dash_1984,_Level_1.gif"
+ },
+ "cannonfodder": {
+  "file": "shots/raw_cannonfodder.png",
+  "source": "https://it.wikipedia.org/wiki/File:Cannon_Fodder.png"
+ },
+ "qix": {
+  "file": "shots/raw_qix.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Qixingame.png"
+ },
+ "alleycat": {
+  "file": "shots/raw_alleycat.png",
+  "source": "https://it.wikipedia.org/wiki/File:Alley_Cat.png"
+ },
+ "lemmings": {
+  "file": "shots/raw_lemmings.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Amiga_Lemmings.png"
+ },
+ "arkanoid": {
+  "file": "shots/raw_arkanoid.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Arkanoid.png"
+ },
+ "frogger": {
+  "file": "shots/raw_frogger.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Frogger_game_arcade.png"
+ },
+ "digdug": {
+  "file": "shots/raw_digdug.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Digdug.png"
+ },
+ "pengo": {
+  "file": "shots/raw_pengo.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ARC_Pengo_(Act_2).png"
+ },
+ "rickdangerous": {
+  "file": "shots/raw_rickdangerous.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://it.wikipedia.org/wiki/File:Rick_Dangerous.png"
+ },
+ "loderunner": {
+  "file": "shots/raw_loderunner.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Lode_Runner_enemies.gif"
+ },
+ "sokoban": {
+  "file": "shots/raw_sokoban.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Sokoban_(PC-8801)_level_1_screenshot.png"
+ },
+ "chuckieegg": {
+  "file": "shots/raw_chuckieegg.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Chuckie_Egg_on_BBC_Micro.jpg"
+ },
+ "manicminer": {
+  "file": "shots/raw_manicminer.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Manic_Miner_Screenshot.png"
+ },
+ "marblemadness": {
+  "file": "shots/raw_marblemadness.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Marblemadnessscreenshot.png"
+ },
+ "supersprint": {
+  "file": "shots/raw_supersprint.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ARC_Super_Sprint.png"
+ },
+ "gauntlet": {
+  "file": "shots/raw_gauntlet.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ARC_Gauntlet.png"
+ },
+ "paperboy": {
+  "file": "shots/raw_paperboy.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ARC_Paperboy.png"
+ },
+ "xenon2": {
+  "file": "shots/raw_xenon2.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Xenon_II_Megablast_in-game_screenshot_(Atari_ST).png"
+ },
+ "speedball2": {
+  "file": "shots/raw_speedball2.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://it.wikipedia.org/wiki/File:Speedball_2.png"
+ },
+ "pipemania": {
+  "file": "shots/raw_pipemania.png",
+  "source": "https://it.wikipedia.org/wiki/File:Pipe_Mania.png"
+ },
+ "qbert": {
+  "file": "shots/raw_qbert.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Qbert.png"
+ },
+ "bombjack": {
+  "file": "shots/raw_bombjack.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Bombjack_Screenshot.png"
+ },
+ "headoverheels": {
+  "file": "shots/raw_headoverheels.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Head_over_heels_amstrad_1.png"
+ },
+ "worms": {
+  "file": "shots/raw_worms.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Worms_scrapyardscreenshot.png"
+ },
+ "tetris": {
+  "file": "shots/raw_tetris.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Tetris-VeryFirstVersion.png"
+ },
+ "z": {
+  "file": "shots/raw_z.png",
+  "source": "https://ru.wikipedia.org/wiki/%D0%A4%D0%B0%D0%B9%D0%BB:Z_game.png"
+ },
+ "rampart": {
+  "file": "shots/raw_rampart.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Rampart_screenshot.png"
+ },
+ "chaosengine": {
+  "file": "shots/raw_chaosengine.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ChaosEngine1_s11.png"
+ },
+ "syndicate": {
+  "file": "shots/raw_syndicate.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Syndicate_screenshot.png"
+ },
+ "xcom": {
+  "file": "shots/raw_xcom.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Xcom2.png"
+ },
+ "themehospital": {
+  "file": "shots/raw_themehospital.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ThemeHospital.gif"
+ },
+ "pang": {
+  "file": "shots/raw_pang.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Buster_Bros._Screenshot.png"
+ },
+ "spyvsspy": {
+  "file": "shots/raw_spyvsspy.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Spy_vs_Spy_A800_ingame.png"
+ },
+ "archon": {
+  "file": "shots/raw_archon.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:C64_Archon.png"
+ },
+ "mule": {
+  "file": "shots/raw_mule.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:M.U.L.E._Atari_8-bit_PAL_screenshot.png"
+ },
+ "rodland": {
+  "file": "shots/raw_rodland.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:ARC_Rod_Land_(Y%C5%8Dsei_Monogatari_Rod_Land).png"
+ },
+ "lostvikings": {
+  "file": "shots/raw_lostvikings.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:TheLostVikings.png"
+ },
+ "superfrog": {
+  "file": "shots/raw_superfrog.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://it.wikipedia.org/wiki/File:Superfrog_Amiga.jpg"
+ },
+ "scorchedearth": {
+  "file": "shots/raw_scorchedearth.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:Scorched_Earth_gameplay.png"
+ },
+ "micromachines": {
+  "file": "shots/raw_micromachines.org&utm_campaign=imageinfo&utm_content=original",
+  "source": "https://en.wikipedia.org/wiki/File:GB_Micro_Machines.png"
+ },
+ "alleycat_a8": {
+  "file": "shots/raw_alleycat_a8.gif",
+  "source": "https://ru.wikipedia.org/wiki/%D0%A4%D0%B0%D0%B9%D0%BB:A8-AlleyCat_gameplay.gif"
+ },
+ "bomberman": {
+  "file": "shots/raw_bomberman.png",
+  "source": "https://it.wikipedia.org/wiki/File:Bomberman_(videogioco_1990).png"
+ },
+ "northsouth": {
+  "file": "shots/raw_northsouth.png",
+  "source": "https://it.wikipedia.org/wiki/File:North_%26_South.png"
+ },
+ "fruityfrank": {
+  "file": "shots/raw_fruityfrank.jpg",
+  "source": "https://en.wikipedia.org/wiki/File:Fruity_frank_uk.jpg"
+ },
+ "doubledragon": {
+  "file": "shots/raw_doubledragon.png",
+  "source": "https://en.wikipedia.org/wiki/File:DDArcade.png"
+ },
+ "wintergames": {
+  "file": "shots/raw_wintergames.png",
+  "source": "https://en.wikipedia.org/wiki/File:C64_Winter_Games.png"
+ }
+}

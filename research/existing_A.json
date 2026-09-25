@@ -1,0 +1,467 @@
+{
+  "boulderdash": {
+    "projects": [
+      {
+        "name": "Rocks'n'Diamonds",
+        "url": "https://www.artsoft.org/rocksndiamonds/",
+        "licence": "GPL-2.0",
+        "platforms": "Windows, macOS, Linux, Android, browser (WASM)",
+        "last_activity": 2025,
+        "status": "active",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "no (ships own levels; community BD cave sets importable)",
+        "custom_levels": "yes",
+        "note": "Most complete free BD/Emerald Mine/Supaplex/Sokoban engine; since 4.4 (Dec 2024) integrates the GDash BD engine; 4.4.1.x Dec 2025 added Krissz engine support. Built-in editor, huge level archive. Pixel-art look."
+      },
+      {
+        "name": "GDash",
+        "url": "https://bitbucket.org/czirkoszoltan/gdash (fork: https://github.com/meonwax/gdash)",
+        "licence": "MIT",
+        "platforms": "Windows, Linux, macOS",
+        "last_activity": "unknown (sporadic; engine now lives on in Rocks'n'Diamonds)",
+        "status": "sporadic/maintained via R'n'D",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (ships classic cave sets in BDCFF)",
+        "custom_levels": "yes",
+        "note": "Most accurate BD engine, cave editor, OpenGL shader 'CRT' effects only; deliberately retro."
+      },
+      {
+        "name": "Boulder Rocks! 3D (GadZombie)",
+        "url": "https://gadzombie.itch.io/boulder-rocks-3d",
+        "licence": "freeware (closed source)",
+        "platforms": "Windows",
+        "last_activity": 2023,
+        "status": "unknown (devlog 2023, unverified later updates)",
+        "kind": "enhanced remake",
+        "visual_level": 3,
+        "ships_original_levels": "unknown (multiple level sets, BDCFF-compatible)",
+        "custom_levels": "yes",
+        "note": "Closest to 'modern' BD for free: 3D objects, toggleable special effects, modern + Atari sounds, complex level editor. Windows only, not open source; visual quality likely 'hobby 3D' rather than Pac-Man CE polish (unverified)."
+      },
+      {
+        "name": "Boulder (rh_galaxy)",
+        "url": "https://rh-galaxy.itch.io/boulder",
+        "licence": "freeware (unverified)",
+        "platforms": "Windows (unverified)",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "Reimplementation with some new elements and a level editor (unverified details)."
+      },
+      {
+        "name": "Various itch.io hobby remakes (LonelyBishop C, quadrathell PureBasic, LaurentM74, dgeph CPC-Remake)",
+        "url": "https://itch.io/games/free/tag-boulder-dash",
+        "licence": "freeware",
+        "platforms": "Windows/Linux/HTML5",
+        "last_activity": "2018-2024",
+        "status": "mostly finished/abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "partial",
+        "custom_levels": "no",
+        "note": "Learning projects; retro look."
+      },
+      {
+        "name": "Javascript BoulderDash (jakesgordon)",
+        "url": "https://github.com/jakesgordon/javascript-boulderdash",
+        "licence": "MIT",
+        "platforms": "browser",
+        "last_activity": "~2013 (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (original caves)",
+        "custom_levels": "no",
+        "note": "Well-known small HTML5 clone."
+      },
+      {
+        "name": "Other OSGC-listed clones (Epiphany, Lucy the Diamond Girl, CAVEZ of PHEAR, ASCII DASH, minerbold, Mining Haze...)",
+        "url": "https://osgameclones.com/boulder-dash/",
+        "licence": "GPL2/GPL3/MIT",
+        "platforms": "various",
+        "last_activity": null,
+        "status": "mostly halted",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "mixed",
+        "custom_levels": "mixed",
+        "note": "Large but retro-only ecosystem; none with modern presentation."
+      }
+    ],
+    "official_modern": "Commercial: Boulder Dash 30th Anniversary (2014), Boulder Dash Deluxe (2021, BBG), Boulder Dash 40th Anniversary (BBG Entertainment, 2024/2025; Steam, Switch, PS, Xbox, Mac) with HD modern graphics plus retro modes and new 'Modern Worlds'; BBG owns the brand since 2016 (name is trademarked).",
+    "gap": "partly covered",
+    "gap_note": "The free/open scene is huge but entirely retro (R'n'D, GDash); the only free 'modern' attempt is the closed-source Windows freeware Boulder Rocks! 3D, and the premium look is owned by commercial BD 40th Anniversary. An open, cross-platform, Pac-Man-CE-grade take is still open, but must avoid the trademarked name."
+  },
+  "cannonfodder": {
+    "projects": [
+      {
+        "name": "Open Fodder",
+        "url": "https://github.com/OpenFodder/openfodder",
+        "licence": "GPL-3.0",
+        "platforms": "Windows, Linux, macOS, OpenBSD, browser; ports to Switch/Vita",
+        "last_activity": 2025,
+        "status": "active",
+        "kind": "engine reimplementation (needs original data)",
+        "visual_level": 1,
+        "ships_original_levels": "yes (needs retail data; plays free Amiga cover-disk demos out of the box)",
+        "custom_levels": "yes (separate OpenFodder Editor + JS-scripted random maps)",
+        "note": "v2.0.0 released Dec 2025 (CF1 + CF2 support). Faithful pixel presentation, integer scaling; no visual upgrade."
+      },
+      {
+        "name": "Cannon Fodder Remastered (joshjcrossley)",
+        "url": "https://joshjcrossley.itch.io/cannon-fodder",
+        "licence": "unknown (itch.io free, unverified)",
+        "platforms": "unknown",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Small top-down army shooter tribute with vehicles/power-ups (unverified details)."
+      },
+      {
+        "name": "Cannon Fodder [Retro Remake] (Arowx)",
+        "url": "https://arowx.itch.io/cannon-fodder-rr",
+        "licence": "unknown",
+        "platforms": "unknown",
+        "last_activity": "unknown",
+        "status": "prototype",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "partial (level 1 only)",
+        "custom_levels": "no",
+        "note": "Speed-built test remake of level 1."
+      },
+      {
+        "name": "The Cannon Fodder Open Source Project (Open Hub)",
+        "url": "https://openhub.net/p/cannonfodder",
+        "licence": "unknown",
+        "platforms": "unknown",
+        "last_activity": "unknown (old)",
+        "status": "abandoned (unverified)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "unknown",
+        "note": "Old listing; no evidence of a playable release (unverified)."
+      }
+    ],
+    "official_modern": "Cannon Fodder 3 (2011/2012, Game Factory Interactive/Burut, 3D, unrelated to Sensible); originals sold on GOG/Steam; Codemasters holds the IP. No modern premium remake.",
+    "gap": "wide open",
+    "gap_note": "The only serious free option (Open Fodder) is an engine reimplementation that needs the original data and keeps pixel visuals; no free or commercial modern-presentation take on the formula exists."
+  },
+  "alleycat": {
+    "projects": [
+      {
+        "name": "Alley Cat Remeow Edition (Joflof)",
+        "url": "https://gamejolt.com/games/alleycatremeow/327439",
+        "licence": "freeware (closed source)",
+        "platforms": "Windows",
+        "last_activity": 2018,
+        "status": "finished",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes (all original stages + 5 new)",
+        "custom_levels": "no",
+        "note": "Best free version: enhanced HD-ish 2D graphics (old graphics optional), up to 4 players, arcade/versus modes, cabinet mode."
+      },
+      {
+        "name": "Alley Cat 2 (The Thinker)",
+        "url": "https://www.mobygames.com/game/36989/alley-cat-2/",
+        "licence": "freeware",
+        "platforms": "Windows",
+        "last_activity": 2006,
+        "status": "finished",
+        "kind": "enhanced remake",
+        "visual_level": 1,
+        "ships_original_levels": "yes (plus new rooms)",
+        "custom_levels": "no",
+        "note": "Fan sequel using assets extracted from the original, lightly enhanced."
+      },
+      {
+        "name": "alleycat (rhuizer)",
+        "url": "https://github.com/rhuizer/alleycat",
+        "licence": "GPL-3.0",
+        "platforms": "cross-platform C (CMake)",
+        "last_activity": "unknown (8 commits)",
+        "status": "abandoned (unverified)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (reimplements IBM 1984 version)",
+        "custom_levels": "no",
+        "note": "Open-source reimplementation of IBM PC Alley Cat."
+      },
+      {
+        "name": "Alley Cat (kirbycope, Unity 3D)",
+        "url": "https://github.com/kirbycope/AlleyCat",
+        "licence": "unknown",
+        "platforms": "Unity (unverified platforms)",
+        "last_activity": "unknown",
+        "status": "unknown/abandoned (unverified)",
+        "kind": "enhanced remake",
+        "visual_level": 3,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Atari original 'reimagined using Unity 3D'; hobby-scale."
+      },
+      {
+        "name": "Alley Cat - MIPT edition (HappyARL)",
+        "url": "https://github.com/HappyARL/Alley-Cat-MIPT-edition",
+        "licence": "unknown",
+        "platforms": "itch.io download",
+        "last_activity": "unknown",
+        "status": "finished (student project)",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Humorous student remake themed on a dorm cat."
+      },
+      {
+        "name": "AlleyQuest / Alley Cat Remake (SandCroc, ItsVenom)",
+        "url": "https://studiosandcroc.itch.io/alleyquest",
+        "licence": "freeware (unverified)",
+        "platforms": "unknown",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Small itch.io tributes."
+      }
+    ],
+    "official_modern": "None. The original DOS game is widely distributed as freeware/abandonware and playable on the Internet Archive.",
+    "gap": "wide open",
+    "gap_note": "Only hobby remakes exist; the best (Remeow, 2018) is enhanced-2D closed freeware. No open, modern-premium Alley Cat exists and there's no commercial remake either."
+  },
+  "z": {
+    "projects": [
+      {
+        "name": "The Zod Engine",
+        "url": "https://zod.sourceforge.net/ (https://sourceforge.net/projects/zod/)",
+        "licence": "GPL-3.0",
+        "platforms": "Linux, Windows, macOS, BSD",
+        "last_activity": 2018,
+        "status": "abandoned (original author)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "partial (recreated Z-style maps; original campaign maps in fork)",
+        "custom_levels": "yes (map editor + tile editor)",
+        "note": "C++/SDL/OpenGL remake of Z with online-persistent multiplayer; uses Z-like sprite art (asset provenance unverified)."
+      },
+      {
+        "name": "zod (fenio fork, SDL3)",
+        "url": "https://github.com/fenio/zod",
+        "licence": "GPL-3.0",
+        "platforms": "macOS (Apple Silicon), Linux, Windows (Homebrew/Scoop)",
+        "last_activity": 2025,
+        "status": "active (unverified exact date; recent SDL3 port)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (34 campaign maps)",
+        "custom_levels": "yes (zod_mapgen procedural skirmish generator)",
+        "note": "Modernized build: SDL3, HiDPI, scaled framebuffer, smoothing; still pixel-art presentation."
+      },
+      {
+        "name": "Qt_ZodEngine (BallWin)",
+        "url": "https://github.com/BallWin/Qt_ZodEngine",
+        "licence": "GPL-3.0 (inherited, unverified)",
+        "platforms": "desktop (Qt)",
+        "last_activity": "unknown",
+        "status": "abandoned (unverified)",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "unknown",
+        "note": "Qt-based rework of the Zod Engine."
+      }
+    ],
+    "official_modern": "Z The Game (2014, TickTock Games / KISS / Kavcom; Steam, rebuilt HD version, also mobile) and Z: Steel Soldiers (2001 3D sequel; Steam re-release 2014 with enhanced graphics). Rebellion acquired the Bitmap Brothers catalogue in 2019. Nothing with premium modern presentation.",
+    "gap": "partly covered",
+    "gap_note": "An open-source playable Z clone exists (Zod Engine + SDL3 fork) but it's pixel-faithful; no free version with modern lighting/effects, and the commercial 2014 HD remake is modest."
+  },
+  "fruityfrank": {
+    "projects": [
+      {
+        "name": "Fruity Frank 2023 HTML5 (LaurentM74)",
+        "url": "https://laurentm74.itch.io/fruity-frank-2023-remake",
+        "licence": "freeware",
+        "platforms": "browser (HTML5)",
+        "last_activity": 2023,
+        "status": "finished",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Browser remake; retro look."
+      },
+      {
+        "name": "Remake Fruity Frank 2020 Lua (LaurentM74 / Gamecodeur)",
+        "url": "https://laurentm74.itch.io/remake-fruity-franck-2020",
+        "licence": "freeware (unverified)",
+        "platforms": "Windows (Love2D)",
+        "last_activity": 2020,
+        "status": "finished",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "unknown",
+        "custom_levels": "no",
+        "note": "Love2D remake made in Gamecodeur school context."
+      },
+      {
+        "name": "Fruity-Frank (Tibi)",
+        "url": "https://github.com/Tibi/Fruity-Frank",
+        "licence": "unknown (no licence listed, unverified)",
+        "platforms": "desktop + Android (libGDX/Kotlin)",
+        "last_activity": "unknown",
+        "status": "abandoned/partial",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "partial",
+        "custom_levels": "no",
+        "note": "Partial clone."
+      },
+      {
+        "name": "Fruity Frank Remake (Nacho Cabanes tutorial)",
+        "url": "https://www.nachocabanes.com/videojuegos/fruity/",
+        "licence": "source available (licence unknown)",
+        "platforms": "Windows, Linux (C++/SDL)",
+        "last_activity": "~2000s (unverified)",
+        "status": "abandoned",
+        "kind": "faithful clone",
+        "visual_level": 1,
+        "ships_original_levels": "partial",
+        "custom_levels": "no",
+        "note": "Step-by-step Spanish programming tutorial remake; partial."
+      }
+    ],
+    "official_modern": "None. Original CPC/MSX game circulates as abandonware. Gameplay is a Mr. Do! derivative (Mr. Do! itself has Arcade Archives re-releases).",
+    "gap": "wide open",
+    "gap_note": "Only small retro hobby remakes and tutorials exist; nothing open and modern. Low name recognition outside France/UK CPC fans, but no competition."
+  },
+  "doubledragon": {
+    "projects": [
+      {
+        "name": "Double Dragon Reloaded - Alternate (Magggas, OpenBOR)",
+        "url": "https://magggas.itch.io/double-dragon-reloaded-alternate",
+        "licence": "freeware fan game (OpenBOR engine is BSD-3; content uses ripped/IP assets)",
+        "platforms": "Windows, Linux, macOS (via OpenBOR)",
+        "last_activity": "unknown (v5.1.1, unverified date)",
+        "status": "maintained (unverified)",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes (arcade DD1+DD2 mix plus custom stages)",
+        "custom_levels": "no",
+        "note": "Arcade remake built from scratch in OpenBOR, 20 characters, DD Advance moveset; sprite-based, some effects."
+      },
+      {
+        "name": "Double Dragon Remix (OpenBOR)",
+        "url": "https://openborgames.com/double-dragon-remix-OpenBOR",
+        "licence": "freeware fan game (IP assets)",
+        "platforms": "Windows/OpenBOR platforms",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes (unverified)",
+        "custom_levels": "no",
+        "note": "Fan remix with new characters and stages."
+      },
+      {
+        "name": "Ultimate Double Dragon v3.0 (Mau Herrera, OpenBOR)",
+        "url": "https://gbatemp.net/threads/ultimate-double-dragon-fanmade-remake-of-super-double-dragon-available-for-pc.623168/",
+        "licence": "freeware fan game",
+        "platforms": "Windows (OpenBOR)",
+        "last_activity": 2022,
+        "status": "finished (unverified)",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes (Super Double Dragon)",
+        "custom_levels": "no",
+        "note": "Remake of Super Double Dragon (not DD1)."
+      },
+      {
+        "name": "Double Dragon One (OzzyOuzo & Johnny16bit)",
+        "url": "https://ozzyouzo.itch.io/double-dragon",
+        "licence": "freeware homebrew",
+        "platforms": "Neo Geo (MAME/FBNeo/RetroArch, flashcarts)",
+        "last_activity": 2025,
+        "status": "active (beta 3.x updates)",
+        "kind": "enhanced remake",
+        "visual_level": 2,
+        "ships_original_levels": "yes (DD1 remade from scratch)",
+        "custom_levels": "no",
+        "note": "Neo Geo homebrew remake of DD1 using sprites from various sources; retro-premium 2D."
+      },
+      {
+        "name": "OpenBOR engine",
+        "url": "https://github.com/DCurrent/openbor",
+        "licence": "BSD-3-Clause",
+        "platforms": "Windows, Linux, macOS, Android, consoles",
+        "last_activity": "2025 (unverified)",
+        "status": "active",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes",
+        "note": "The free engine behind most DD fan games; all DD mods carry Technos/Arc IP, so not legally 'free' content."
+      }
+    ],
+    "official_modern": "Very well served commercially: Double Dragon Neon (2012), Double Dragon Trilogy, Double Dragon IV (2017), Double Dragon Gaiden: Rise of the Dragons (2023), Double Dragon Revive (Oct 2025, Arc System Works/Yuke's, 3D, update 1.5.0 July 2026). Arc System Works owns the IP.",
+    "gap": "partly covered",
+    "gap_note": "Many free fan remakes exist (OpenBOR, Neo Geo homebrew) but they're IP-infringing sprite games, not open content, and not premium-modern; the modern-look slot is taken by recent commercial entries, so a free original beat-'em-up in the DD spirit would face strong comparison."
+  },
+  "wintergames": {
+    "projects": [
+      {
+        "name": "Fliegeralarms Wintergames AGA (Fliegeralarm Games)",
+        "url": "https://fliegeralarm-games.itch.io/fliegeralarms-winter",
+        "licence": "freeware (unverified; AmiGameJam 9 entry)",
+        "platforms": "Amiga 1200 AGA (real hardware/emulator)",
+        "last_activity": 2026,
+        "status": "new (Sept 2026)",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "New multi-event winter game: bobsleigh, luge, biathlon, ski jump, downhill/slalom, speed skating, curling, 4 players; Amiga pixel art."
+      },
+      {
+        "name": "Extreme Tux Racer",
+        "url": "https://sourceforge.net/projects/extremetuxracer/",
+        "licence": "GPL-2.0",
+        "platforms": "Windows, Linux, macOS",
+        "last_activity": "unknown (v0.8.x, unverified date)",
+        "status": "sporadic",
+        "kind": "spiritual successor",
+        "visual_level": 2,
+        "ships_original_levels": "no",
+        "custom_levels": "yes (courses)",
+        "note": "Only loosely related (single downhill sledding event), 3D but dated."
+      },
+      {
+        "name": "Retro Winter Sports 1986",
+        "url": "https://apps.apple.com/us/app/-/id1157349848",
+        "licence": "commercial/free-to-play mobile (unverified)",
+        "platforms": "iOS",
+        "last_activity": "unknown",
+        "status": "unknown",
+        "kind": "spiritual successor",
+        "visual_level": 1,
+        "ships_original_levels": "no",
+        "custom_levels": "no",
+        "note": "Pixel homage to 80s winter sports games; not free/open (context only)."
+      }
+    ],
+    "official_modern": "Only emulated re-releases: C64 Direct-to-TV (2004), Wii Virtual Console (2009), THEC64 / Evercade TheC64 Collection 3 (2024), Antstream, Atari 'Epyx Game Collection' 2600 cartridge. 'The Games: Winter Edition' (1988 sequel) is sold on Steam. Epyx IP is held by Jaleco/others (unverified). No modern remake.",
+    "gap": "wide open",
+    "gap_note": "No open-source or freeware remake of Winter Games found at all; closest is a brand-new Amiga-only jam game. A modern multi-event winter sports game with premium presentation would face no free competition."
+  }
+}

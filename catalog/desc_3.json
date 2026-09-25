@@ -1,0 +1,23 @@
+{
+ "fruityfrank": {
+  "gameplay": "Frank moves through a garden made of soil, digging tunnels as he goes, and collects the fruit scattered around the screen. Monsters follow him through the tunnels. He can throw a ball that bounces along the passages and knocks out a monster, and apples can be undermined so they fall and squash whatever is below. Clearing all the fruit or all the monsters ends the level.",
+  "levels": "Single-screen garden levels that get faster and more crowded as you progress, with the tunnel layout reshaped by the player's own digging each time.",
+  "challenge": "You open new paths for the monsters as you dig, so every tunnel is a trade-off. The ball has to come back before you can throw again, which leaves you exposed if you miss.",
+  "unique": "A home-computer take on the Mr. Do! formula that became one of the best-loved Amstrad CPC games, especially in France. Its bright, fruity look and bouncy music gave it a charm that stood out on the CPC.",
+  "remake_hooks": "Deformable soil with visible cross-sections, squashy physics on falling apples, and a bouncing ball with a glowing trail. Warm garden lighting and a day-to-dusk cycle across levels."
+ },
+ "doubledragon": {
+  "gameplay": "You walk through side-scrolling stages on a depth plane, fighting gang members with punches, kicks, jump kicks, an elbow strike, and grabs that lead into knee strikes and throws. Enemies drop weapons such as bats, whips, knives and dynamite, and you can also throw boxes, oil drums and rocks. Two players fight together.",
+  "levels": "Four missions: city streets, a factory, a forest and the gang's hideout, each ending with a boss fight. In two-player mode the brothers fight each other at the end to decide who wins Marian.",
+  "challenge": "Enemies surround you and hit hard, and big bruisers like Abobo can take off a lot of health quickly. Crowd control and spacing matter, and some platforms and pits can kill you instantly. Players famously discovered that the elbow strike trivialised many fights.",
+  "unique": "It defined the co-op beat 'em up. Weapon pickups, grabs and throws, and the bitter versus ending between the two brothers were all firsts or near-firsts that the whole genre copied.",
+  "remake_hooks": "Heavy hit-stop, ragdoll knockdowns, rain-slick neon streets and dynamic crowds. Weapons with real physics and online co-op."
+ },
+ "wintergames": {
+  "gameplay": "Players pick a country (complete with anthem) and compete in turn across winter sports events. Each event has its own control scheme: waggling or rhythmic left-right joystick movement for speed skating and biathlon skiing, precise timing for the ski jump take-off and landing, and chained moves for figure skating and hot dog aerials. Medals and points are tallied across events.",
+  "levels": "Seven events on the C64 version, opened by a ceremony. You can practise a single event, compete in one, or play them all in sequence as a full games.",
+  "challenge": "Each event is a separate motor-skill test, from stamina-heavy waggling to split-second timing and memorised routines. Mastery comes from practising the exact rhythm of each control.",
+  "unique": "The fun came from how the controls were built. Each event turned the joystick into a physical performance, and the multiplayer hot-seat made it a living-room party game long before that was a genre.",
+  "remake_hooks": "Motion controls, trigger pressure and rumble for each event. Snow and ice shaders, alpine lighting, crowd atmosphere, and online or couch tournaments with national anthems."
+ }
+}

@@ -1,0 +1,9 @@
+{
+ "boulderdash": "Must read (and ideally write) **BDCFF**. The classic cave sets in BDCFF come with GDash (MIT), which is also the reference for exact engine rules (cave timing, amoeba, magic wall, slime, explosions). Also check Rocks'n'Diamonds (GPL-2.0) level-set formats and the extended engines it supports.",
+ "fruityfrank": "No community format found. Define a simple text-grid format in the same style as BDCFF. A CPC disk importer is optional and comes later.",
+ "alleycat": "No maps: fixed alley and window rooms. rhuizer/alleycat (GPL-3.0) is a reimplementation of the IBM PC version to use as a behaviour reference.",
+ "wintergames": "None: the events are fixed content.",
+ "cannonfodder": "Read the original CF1/CF2 map (`.map`) and sprite-placement (`.spt`) files as Open Fodder (GPL-3.0) does, plus OpenFodder Editor output. Open Fodder also runs the free Amiga cover-disk demo data, which is legal test material.",
+ "doubledragon": "None worth targeting: OpenBOR fan mods contain the original IP.",
+ "z": "Read Zod Engine maps (GPL-3.0; the fenio fork has 34 campaign maps and a procedural skirmish generator). Original Z data importer: format still to investigate."
+}
