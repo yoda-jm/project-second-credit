@@ -39,6 +39,9 @@ var _cam_look := Vector3.ZERO
 var _time := 0.0
 var _shake := 0.0
 var _last_player_pos := Vector3.ZERO
+var _anim: AnimationPlayer  ## the gardener's animations (idle, walk, dig, throw, die, cheer)
+var _throw_t := 0.0
+var _model_offset := 0.0  ## models are centred on the cell; the placeholder shapes sit a little lower
 
 
 func _ready() -> void:
@@ -121,9 +124,9 @@ func _on_garden(e: FruitburrowEngine) -> void:
 func _build_board(e: FruitburrowEngine) -> void:
 	var w := e.map.w
 	var h := e.map.h
-	var soil_mat := Pbr.material("soil", Color(0.95, 0.8, 0.65), 1.2)
-	var back_mat := Pbr.material("soil", Color(0.42, 0.32, 0.25), 1.2)
-	var frame_mat := Pbr.material("dark_rock", Color(0.55, 0.5, 0.46), 1.0)
+	var soil_mat := Pbr.material("soil", Color(1.0, 0.82, 0.62), 0.45)
+	var back_mat := Pbr.material("soil", Color(0.4, 0.3, 0.23), 0.45)
+	var frame_mat := Pbr.material("soil", Color(0.55, 0.42, 0.32), 0.45)
 	var grass_mat := Pbr.material("grass_lush", Color(0.85, 1.0, 0.8), 1.5)
 	var rock_mat := Pbr.material("rock", Color(0.75, 0.73, 0.7), 1.5)
 	# soil and stone blocks
@@ -157,17 +160,27 @@ func _build_board(e: FruitburrowEngine) -> void:
 	# fruit and apples
 	for c in e.fruit:
 		var n := _fruit_node(e.fruit[c])
-		n.position = _cell_pos(c) + Vector3(0, 0, 0.42)
-		n.rotation.y = randf_range(-0.5, 0.5)
+		n.position = _cell_pos(c) + Vector3(0, 0, 0.5)
+		n.rotation.y = randf_range(-0.4, 0.4)
+		n.scale = Vector3.ONE * 1.7
 		_board.add_child(n)
 		_fruit_nodes[c] = n
 	for a in e.apples:
 		var n := _apple_node()
-		n.position = _cell_pos(a["cell"]) + Vector3(0, 0, 0.35)
+		n.position = _cell_pos(a["cell"]) + Vector3(0, 0, 0.45)
+		n.scale = Vector3.ONE * 1.15
 		_board.add_child(n)
 		_apple_nodes[a["id"]] = n
 	_player = _player_node()
 	_board.add_child(_player)
+	_anim = _player.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if _anim:
+		_player.scale = Vector3.ONE * 1.2
+	_model_offset = 0.0 if _anim else -0.2
+	if _anim:
+		for a in ["idle", "walk", "dig", "cheer"]:
+			if _anim.has_animation(a):
+				_anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
 	_ball = _ball_node()
 	_board.add_child(_ball)
 
@@ -375,6 +388,8 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_shake = 0.5
 		"monster_hit":
 			_fx.pop(_cell_pos(d["pos"]))
+		"throw":
+			_throw_t = 0.45
 		"death":
 			_fx.pop(_cell_pos(d["pos"]))
 			_shake = 0.8
@@ -419,17 +434,35 @@ func _update_soil(e: FruitburrowEngine, delta: float) -> void:
 
 func _update_player(e: FruitburrowEngine, delta: float) -> void:
 	var pos := _cell_pos(e.pos_of(e.player))
-	var moving := pos.distance_to(_last_player_pos) > 0.001
+	var moving := pos.distance_to(_last_player_pos) > 0.0005
 	_last_player_pos = pos
-	var dying := e.phase == E.Phase.DYING
+	_throw_t = maxf(0.0, _throw_t - delta)
 	var face: Vector2i = e.player["face"]
-	var yaw := 0.0
-	if face.x != 0:
-		yaw = PI * 0.5 * face.x
+	var yaw := PI * 0.5 * face.x if face.x != 0 else (PI if face.y < 0 else 0.0)
+	_player.rotation.y = lerp_angle(_player.rotation.y, yaw, 1.0 - exp(-delta * 14.0))
+	if _anim:
+		_player.position = pos + Vector3(0, 0, 0.05)
+		var state := "idle"
+		var speed := 1.0
+		if e.phase == E.Phase.DYING:
+			state = "die"
+		elif e.phase == E.Phase.CLEAR:
+			state = "cheer"
+		elif _throw_t > 0.0:
+			state = "throw"
+			speed = 1.6
+		elif moving:
+			state = "dig" if e.player["dig"] else "walk"
+			speed = 1.5 if state == "walk" else 1.8
+		if _anim.current_animation != state:
+			_anim.play(state, 0.12, speed)
+		else:
+			_anim.speed_scale = 1.0
+		_player.visible = e.phase != E.Phase.GAME_OVER
+		return
 	var bob := absf(sin(_time * 14.0)) * 0.08 if moving else 0.0
 	_player.position = pos + Vector3(0, -0.2 + bob, 0.05)
-	_player.rotation.y = lerp_angle(_player.rotation.y, yaw, 1.0 - exp(-delta * 16.0))
-	var target_scale := Vector3.ONE if not dying else Vector3(1.4, 0.2, 1.4)
+	var target_scale := Vector3.ONE if e.phase != E.Phase.DYING else Vector3(1.4, 0.2, 1.4)
 	if e.phase == E.Phase.GAME_OVER:
 		target_scale = Vector3.ZERO
 	_player.scale = _player.scale.lerp(target_scale, 1.0 - exp(-delta * 10.0))
@@ -452,7 +485,7 @@ func _update_monsters(e: FruitburrowEngine, delta: float) -> void:
 		var pos := _cell_pos(e.pos_of(m))
 		var dir := Vector3(m["to"].x - m["cell"].x, 0, 0)
 		var wob := sin(_time * 10.0 + id) * 0.06
-		n.position = pos + Vector3(0, -0.12 + absf(wob), 0.05)
+		n.position = pos + Vector3(0, _model_offset * 0.6 + absf(wob), 0.05)
 		if dir.x != 0.0:
 			n.rotation.y = lerp_angle(n.rotation.y, PI * 0.5 * dir.x * 0.6, 1.0 - exp(-delta * 10.0))
 		n.scale = n.scale.lerp(Vector3(1.0 + wob, 1.0 - wob, 1.0 + wob), 1.0 - exp(-delta * 8.0))
@@ -468,7 +501,7 @@ func _update_apples(e: FruitburrowEngine) -> void:
 		var n: Node3D = _apple_nodes.get(a["id"])
 		if n == null:
 			continue
-		var p := Vector3(a["cell"].x, -a["y"], 0.35 if a["state"] == E.Apple.REST and e.at(a["cell"]) == T.SOIL else 0.05)
+		var p := Vector3(a["cell"].x, -a["y"], 0.45 if a["state"] == E.Apple.REST and e.at(a["cell"]) == T.SOIL else 0.05)
 		if a["state"] == E.Apple.WOBBLE:
 			n.rotation.z = sin(_time * 38.0) * 0.18
 		elif a["state"] == E.Apple.FALL:
