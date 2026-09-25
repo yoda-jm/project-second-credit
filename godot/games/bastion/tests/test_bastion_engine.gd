@@ -150,3 +150,33 @@ func test_friendly_fire_breaks_our_wall_but_not_empty_land() -> void:
 	assert_int(e.cell(wall.x, wall.y)).is_equal(BastionEngine.Cell.RUBBLE)
 	e._impact({"to": Vector2(10, 10), "ours": true})
 	assert_int(e.cell(10, 10)).is_equal(BastionEngine.Cell.EMPTY)
+
+
+func test_hole_detector_finds_the_gaps() -> void:
+	var e := _engine()
+	e.cursor = Vector2(e.map.castles[1])
+	e.act()
+	assert_array(e.holes_around(1)).is_empty()  # sealed at start
+	var walls := e._our_walls()
+	var a := walls[3]
+	var b := walls[walls.size() - 4]
+	e.cells[a.y * e.map.w + a.x] = BastionEngine.Cell.EMPTY
+	e.cells[b.y * e.map.w + b.x] = BastionEngine.Cell.EMPTY
+	var holes := e.holes_around(1)
+	assert_int(holes.size()).is_equal(2)
+	assert_bool(holes.has(a) and holes.has(b)).is_true()
+	# an unwalled castle is wide open
+	assert_int(e.holes_around(0, 6).size()).is_equal(7)
+
+
+func test_blocked_when_the_piece_fits_nowhere() -> void:
+	var e := _engine()
+	e.cursor = Vector2(e.map.castles[1])
+	e.act()
+	e.phase = BastionEngine.Phase.BUILD
+	e._next_piece()
+	assert_str(e.blocked()).is_equal("")
+	for i in e.cells.size():  # fill every free cell with rubble
+		if e.cells[i] == BastionEngine.Cell.EMPTY:
+			e.cells[i] = BastionEngine.Cell.RUBBLE
+	assert_str(e.blocked()).is_equal("piece")

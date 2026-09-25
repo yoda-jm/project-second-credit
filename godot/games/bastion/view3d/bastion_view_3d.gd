@@ -34,6 +34,9 @@ var _edge: MultiMeshInstance3D   ## glowing territory border
 var _zone_pulse := 0.0
 var _last_enclosed := 0
 var _wakes := {}  ## ship id -> CPUParticles3D
+var _holes: MultiMeshInstance3D
+var _blocked_cache := ""
+var _blocked_t := 0.0
 
 
 func _ready() -> void:
@@ -144,6 +147,15 @@ func _build_world() -> void:
 	em.albedo_color = Color(1.4, 2.2, 3.5)
 	_edge = _mm(eb, em, false)
 	_edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var hb := BoxMesh.new()
+	hb.size = Vector3(0.8, 0.12, 0.8)
+	var hm := StandardMaterial3D.new()
+	hm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	hm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	hm.vertex_color_use_as_albedo = true
+	_holes = _mm(hb, hm, false)
+	_holes.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_holes.multimesh.instance_count = 64
 	for prop in ["grass_tuft", "bush", "stones", "pine", "tree"]:
 		var mmi := _mm(_mesh_of(MODELS + prop + ".glb"), null, false)
 		_decor[prop] = mmi
@@ -355,6 +367,11 @@ func _process(delta: float) -> void:
 		_zone.multimesh.set_instance_color(i, Color(0.35, 0.65, 1.0, za))
 	for i in _edge.multimesh.visible_instance_count:
 		_edge.multimesh.set_instance_color(i, Color(1, 1, 1, 1) * (0.8 + 0.4 * sin(_time * 4.0 + i * 0.3) + _zone_pulse))
+	_blocked_t -= delta
+	if _blocked_t <= 0.0:
+		_blocked_cache = e.blocked()
+		_blocked_t = 0.25
+	_update_holes(e)
 	_update_ships(e, delta)
 	_update_balls(e)
 	_update_cursor(e)
@@ -483,6 +500,26 @@ func _update_ships(e: BastionEngine, delta: float) -> void:
 			_sinking.erase(entry)
 
 
+## Pulsing red markers on the cells that still need a wall to seal a castle (not when it is wide open).
+func _update_holes(e: BastionEngine) -> void:
+	var n := 0
+	var show := e.phase == BastionEngine.Phase.BUILD or e.phase == BastionEngine.Phase.CANNONS
+	if show:
+		var pulse := 0.55 + 0.45 * sin(_time * 7.0)
+		for c in e.castle_holes:
+			var holes: Array = e.castle_holes[c]
+			if holes.size() > BastionEngine.HOLE_LIMIT:
+				continue
+			for h in holes:
+				if n >= 64:
+					break
+				var lift := 0.08 * sin(_time * 5.0 + h.x)
+				_holes.multimesh.set_instance_transform(n, Transform3D(Basis(), Vector3(h.x, LAND_H + 0.1 + lift, h.y)))
+				_holes.multimesh.set_instance_color(n, Color(2.5, 0.25, 0.15, 0.45 + 0.4 * pulse))
+				n += 1
+	_holes.multimesh.visible_instance_count = n
+
+
 func _make_wake() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
 	p.amount = 40
@@ -533,9 +570,11 @@ func _update_cursor(e: BastionEngine) -> void:
 		BastionEngine.Phase.BUILD:
 			var at := Vector2i(e.cursor.round())
 			var ok := e.can_place_piece(at)
+			var grey := _blocked_cache == "piece"
 			for c in e.piece_cells_at(at):
 				_ghost.multimesh.set_instance_transform(n, Transform3D(Basis(), Vector3(c.x, LAND_H + 0.35, c.y)))
-				_ghost.multimesh.set_instance_color(n, (Color(0.3, 1.0, 0.4) if ok else Color(1.0, 0.25, 0.2)) * Color(1, 1, 1, 0.55 * pulse))
+				var gc := Color(0.5, 0.5, 0.5) if grey else (Color(0.3, 1.0, 0.4) if ok else Color(1.0, 0.25, 0.2))
+				_ghost.multimesh.set_instance_color(n, gc * Color(1, 1, 1, 0.55 * pulse))
 				n += 1
 		BastionEngine.Phase.CANNONS:
 			if e.cannons_to_place > 0:

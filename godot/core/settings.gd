@@ -25,12 +25,29 @@ func _ready() -> void:
 			AudioServer.set_bus_send(i, "Master")
 	load_settings()
 	apply()
+	_warm_fonts()
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	add_child(layer)
 	_fps_label = Label.new()
 	_fps_label.position = Vector2(12, 1040)
 	layer.add_child(_fps_label)
+
+
+## Builds every glyph the interface uses up front, so text never appears piece by piece.
+func _warm_fonts() -> void:
+	var chars := ""
+	for c in range(32, 127):
+		chars += char(c)
+	for path in ["res://core/fonts/kenney_future.ttf", "res://core/fonts/kenney_future_narrow.ttf"]:
+		var f: Font = load(path)
+		for size in [20, 26, 34, 48, 72, 110]:
+			f.get_string_size(chars, HORIZONTAL_ALIGNMENT_LEFT, -1, size)
+		if f is FontFile:
+			for size in [16, 32, 64]:
+				(f as FontFile).render_range(0, Vector2i(size, 0), 32, 126)
+	var def := ThemeDB.fallback_font
+	def.get_string_size(chars, HORIZONTAL_ALIGNMENT_LEFT, -1, 24)
 
 
 func _process(_delta: float) -> void:

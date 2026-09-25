@@ -20,7 +20,12 @@ n=$( (ls -d captures/movie/"$game"/*/ 2>/dev/null || true) | wc -l)
 dir=$(printf "captures/movie/%s/%03d-%s" "$game" $((n + 1)) "$(git rev-parse --short HEAD)")
 mkdir -p "$dir"
 fps=30
-with_xvfb .tools/bin/godot --path godot --rendering-method gl_compatibility --resolution "$res" \
+[ -f .tools/capture.conf ] && source .tools/capture.conf
+run=(with_xvfb .tools/bin/godot --path godot --rendering-method gl_compatibility)
+if [ "${CAPTURE_GPU:-0}" = 1 ]; then  # real GPU and the project's renderer, in a window on the current display
+  run=(.tools/bin/godot --path godot)
+fi
+"${run[@]}" --resolution "$res" \
   --write-movie "$PWD/$dir/clip.avi" --fixed-fps $fps --quit-after $((secs * fps)) "$scene" -- "${extra[@]}" \
   > "$dir/log.txt" 2>&1 || true
 git log -1 --format="%h %ci%n%s" > "$dir/commit.txt"

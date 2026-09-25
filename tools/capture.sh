@@ -8,6 +8,7 @@
 #   -r  resolution (default 1920x1080; 960x540 is about 4x faster in software)
 #   -o  output folder (default: captures/<timestamp>, git-ignored)
 #   --gpu  render on the current display with the real GPU and the project's renderer (opens a window).
+#          Also the default when CAPTURE_GPU=1 (environment, or .tools/capture.conf, git-ignored).
 #          The default is a private Xvfb display with software OpenGL (Compatibility renderer): no window,
 #          but no Forward+ effects and slower.
 set -euo pipefail
@@ -15,6 +16,9 @@ here=$(cd "$(dirname "$0")" && pwd)
 source "$here/xvfb.sh"
 GODOT=${GODOT_BIN:-$here/../.tools/bin/godot}
 scene="" frames=60 every="" res=1920x1080 out="" gpu=0
+# local default (git-ignored): .tools/capture.conf may set CAPTURE_GPU=1; the environment wins
+[ -f "$here/../.tools/capture.conf" ] && source "$here/../.tools/capture.conf"
+[ "${CAPTURE_GPU:-0}" = 1 ] && gpu=1
 while [ $# -gt 0 ]; do
   case $1 in
     -s) scene=$2; shift 2 ;;

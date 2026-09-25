@@ -8,6 +8,8 @@ const GOLD := Color(1.0, 0.83, 0.35)
 @export var game: BastionGame
 
 var _banner := ""
+var _blocked := ""
+var _blocked_check := 0.0
 var _banner_t := 10.0
 var _font: Font
 var _big: Font
@@ -41,6 +43,10 @@ func _show(text: String) -> void:
 
 func _process(delta: float) -> void:
 	_banner_t += delta
+	_blocked_check -= delta
+	if _blocked_check <= 0.0 and game.engine:
+		_blocked = game.engine.blocked()
+		_blocked_check = 0.25
 	queue_redraw()
 
 
@@ -69,6 +75,19 @@ func _draw() -> void:
 	elif e.phase == P.BUILD:
 		info += "    CASTLES ENCLOSED: %d" % e.enclosed_castles.size()
 	_text(Vector2(vp.x * 0.5, 46), info, 28, Color(0.9, 0.93, 1.0), null, true)
+	# castle status: sealed or how many holes are left
+	if e.phase != P.CHOOSE and e.phase != P.GAME_OVER:
+		var yy := 170.0
+		var castles: Array = e.castle_holes.keys()
+		castles.sort()
+		for c in castles:
+			var holes: Array = e.castle_holes[c]
+			var label := "HOME CASTLE" if c == e.home_castle else "CASTLE %d" % (c + 1)
+			var status := "SEALED" if holes.is_empty() else ("OPEN" if holes.size() > BastionEngine.HOLE_LIMIT
+				else "%d HOLE%s" % [holes.size(), "" if holes.size() == 1 else "S"])
+			var col := Color(0.45, 1.0, 0.55) if holes.is_empty() else Color(1.0, 0.4, 0.3)
+			_text(Vector2(30, yy), "%s: %s" % [label, status], 30, col)
+			yy += 40.0
 	# phase timer
 	var total: float = {P.CHOOSE: BastionEngine.CHOOSE_SECONDS, P.CANNONS: BastionEngine.CANNON_SECONDS,
 		P.BATTLE: BastionEngine.BATTLE_SECONDS, P.BUILD: BastionEngine.BUILD_SECONDS}.get(e.phase, 1.0)
@@ -84,6 +103,12 @@ func _draw() -> void:
 		var size := int(88 * (1.0 + 0.25 * exp(-_banner_t * 8.0)))
 		draw_rect(Rect2(0, vp.y * 0.42 - 70, vp.x, 110), Color(0, 0, 0, 0.35 * a))
 		_text(Vector2(vp.x * 0.5, vp.y * 0.42 + 10), _banner, size, Color(GOLD, a), _big, true)
+	# blocked: nowhere to put the current piece or cannon (the timer keeps running)
+	if _blocked != "" and e.phase != P.GAME_OVER:
+		var msg := "NO ROOM FOR THIS PIECE - WAIT FOR THE TIMER" if _blocked == "piece" else "NO ROOM LEFT FOR CANNONS"
+		var a := 0.7 + 0.3 * sin(_banner_t * 6.0)
+		draw_rect(Rect2(vp.x * 0.5 - 520, vp.y - 140, 1040, 64), Color(0.5, 0.05, 0.03, 0.75 * a))
+		_text(Vector2(vp.x * 0.5, vp.y - 95), msg, 34, Color(1, 0.9, 0.85, a), _big, true)
 	# hints
 	var hint := ""
 	match e.phase:

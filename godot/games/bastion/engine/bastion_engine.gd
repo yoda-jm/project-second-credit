@@ -46,6 +46,10 @@ var round_number := 0
 var score := 0
 var home_castle := -1
 var enclosed_castles: Array[int] = []
+## For the home castle and every castle being walled in: castle index -> holes (cells to wall to seal it).
+## A castle listed with more than HOLE_LIMIT holes is wide open.
+var castle_holes := {}
+const HOLE_LIMIT := 12
 var cursor := Vector2(0, 0)  ## in cells; during battle it is a free aim point
 var piece: Array[Vector2i] = []
 var piece_turns := 0
@@ -110,6 +114,40 @@ func can_place_cannon(origin: Vector2i) -> bool:
 			if not buildable(x, y) or not is_ours(x, y):
 				return false
 	return true
+
+
+## True if the current wall piece fits somewhere on the map, in any rotation.
+func piece_fits_anywhere() -> bool:
+	for turns in 4:
+		var cells_r := WallPieces.rotated(WallPieces.SHAPES[_piece_shape], turns)
+		for y in map.h:
+			for x in map.w:
+				var ok := true
+				for c in cells_r:
+					if not buildable(x + c.x, y + c.y):
+						ok = false
+						break
+				if ok:
+					return true
+	return false
+
+
+## True if a 2x2 cannon still fits somewhere inside our territory.
+func cannon_fits_anywhere() -> bool:
+	for y in map.h:
+		for x in map.w:
+			if can_place_cannon(Vector2i(x, y)):
+				return true
+	return false
+
+
+## "piece" or "cannon" when the current placement is impossible anywhere (the timer keeps running), else "".
+func blocked() -> String:
+	if phase == Phase.BUILD and not piece.is_empty() and not piece_fits_anywhere():
+		return "piece"
+	if phase == Phase.CANNONS and cannons_to_place > 0 and not cannon_fits_anywhere():
+		return "cannon"
+	return ""
 
 
 func active_cannons() -> int:
@@ -450,6 +488,7 @@ func _compute_territory(final: bool) -> void:
 			enclosed_castles.append(c)
 	if final:
 		score += cells_owned * 2 + enclosed_castles.size() * 250
+	_update_holes()
 	_emit("enclosed", {"castles": enclosed_castles.duplicate(), "cells": cells_owned, "final": final})
 
 
@@ -460,6 +499,142 @@ func _in_play_area(p: Vector2) -> bool:
 ## Cells the outside can flow through: anything but walls and rocks.
 func _open(i: int) -> bool:
 	return cells[i] != Cell.WALL and map.terrain[i] != CoastMap.Terrain.ROCK
+
+
+func _update_holes() -> void:
+	castle_holes.clear()
+	for c in map.castles.size():
+		if enclosed_castles.has(c):
+			castle_holes[c] = [] as Array[Vector2i]
+			continue
+		# only castles we are building around: the home castle, or walls within 4 cells
+		var near := c == home_castle
+		var p := map.castles[c]
+		for y in range(p.y - 4, p.y + 6):
+			for x in range(p.x - 4, p.x + 6):
+				if not near and cell(x, y) == Cell.WALL:
+					near = true
+		if near:
+			castle_holes[c] = holes_around(c, HOLE_LIMIT)
+
+
+## The holes of a castle's enclosure: the smallest set of cells that still need a wall so that the castle is
+## sealed off from the sea (a minimum vertex cut between the castle and the outside, by max-flow). Empty if the
+## castle is already enclosed; `limit` + 1 cells means "wide open" (more than `limit` holes). Cells that cannot
+## take a wall (rubble, cannons) cannot be part of the cut, so the answer is a set you can actually build.
+func holes_around(castle: int, limit: int = 12) -> Array[Vector2i]:
+	var n := map.w * map.h
+	# node 2i = cell entry, 2i+1 = cell exit; SINK = 2n
+	var sink := 2 * n
+	var cap := {}  # edge key (a * 4 * n + b) -> residual capacity
+	var adj: Array[PackedInt32Array] = []
+	adj.resize(2 * n + 1)
+	var big := 1 << 20
+
+	var add_edge := func(a: int, b: int, c: int) -> void:
+		var k1 := a * (2 * n + 1) + b
+		var k2 := b * (2 * n + 1) + a
+		if not cap.has(k1):
+			adj[a].append(b)
+			adj[b].append(a)
+			cap[k1] = 0
+			cap[k2] = cap.get(k2, 0)
+		cap[k1] += c
+
+	var castle_cells := {}
+	var cp := map.castles[castle]
+	for dy in 2:
+		for dx in 2:
+			castle_cells[(cp.y + dy) * map.w + cp.x + dx] = true
+	for y in map.h:
+		for x in map.w:
+			var i := y * map.w + x
+			if map.at(x, y) == CoastMap.Terrain.WATER:
+				continue
+			if cells[i] == Cell.WALL or map.terrain[i] == CoastMap.Terrain.ROCK:
+				continue
+			var cuttable := cells[i] == Cell.EMPTY and not castle_cells.has(i) and map.castle_at(x, y) < 0
+			# closing a gap next to an existing wall is cheaper, so the cut follows the wall line
+			var touches_wall := false
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				if cell(x + d.x, y + d.y) == Cell.WALL:
+					touches_wall = true
+			add_edge.call(2 * i, 2 * i + 1, (1 if touches_wall else 2) if cuttable else big)
+			if x == 0 or y == 0 or x == map.w - 1 or y == map.h - 1:
+				add_edge.call(2 * i + 1, sink, big)
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nx: int = x + d.x
+				var ny: int = y + d.y
+				if not map.inside(nx, ny):
+					continue
+				var j := ny * map.w + nx
+				if map.at(nx, ny) == CoastMap.Terrain.WATER:
+					add_edge.call(2 * i + 1, sink, big)
+				elif cells[j] != Cell.WALL and map.terrain[j] != CoastMap.Terrain.ROCK:
+					add_edge.call(2 * i + 1, 2 * j, big)
+	var sources: Array[int] = []
+	for i in castle_cells:
+		if cells[i] != Cell.WALL:
+			sources.append(2 * i)
+	# Edmonds-Karp from all castle cells to the sink
+	var flow := 0
+	while flow <= 2 * limit:
+		var prev := {}
+		var queue: Array[int] = []
+		for src in sources:
+			prev[src] = -1
+			queue.append(src)
+		var head := 0
+		var found := false
+		while head < queue.size() and not found:
+			var u: int = queue[head]
+			head += 1
+			for v in adj[u]:
+				if not prev.has(v) and cap.get(u * (2 * n + 1) + v, 0) > 0:
+					prev[v] = u
+					if v == sink:
+						found = true
+						break
+					queue.append(v)
+		if not found:
+			break
+		var bottleneck := big
+		var v := sink
+		while prev[v] != -1:
+			bottleneck = mini(bottleneck, cap[prev[v] * (2 * n + 1) + v])
+			v = prev[v]
+		v = sink
+		while prev[v] != -1:
+			var u: int = prev[v]
+			cap[u * (2 * n + 1) + v] -= bottleneck
+			cap[v * (2 * n + 1) + u] = cap.get(v * (2 * n + 1) + u, 0) + bottleneck
+			v = u
+		flow += bottleneck
+	var out: Array[Vector2i] = []
+	if flow == 0:
+		return out
+	if flow > 2 * limit:
+		for k in limit + 1:
+			out.append(Vector2i(-1, -1))
+		return out
+	# the cut closest to the sea (so holes are the gaps in the wall line itself): cells whose exit can still
+	# reach the sea in the residual graph but whose entry cannot
+	var to_sea := {sink: true}
+	var queue2: Array[int] = [sink]
+	var h2 := 0
+	while h2 < queue2.size():
+		var v: int = queue2[h2]
+		h2 += 1
+		for u in adj[v]:
+			if not to_sea.has(u) and cap.get(u * (2 * n + 1) + v, 0) > 0:
+				to_sea[u] = true
+				queue2.append(u)
+	for i in n:
+		if to_sea.has(2 * i + 1) and not to_sea.has(2 * i) and cap.get((2 * i) * (2 * n + 1) + 2 * i + 1, -1) == 0:
+			out.append(Vector2i(i % map.w, i / map.w))
+	if out.size() > limit:
+		out.resize(limit + 1)
+	return out
 
 
 func _nearest_castle(p: Vector2) -> int:
