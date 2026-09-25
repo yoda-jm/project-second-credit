@@ -33,7 +33,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Dig the garden, pick the fruit, drop the apples.",
 		"inspired_by": "Fruity Frank (1984)",
 		"scene": "res://games/fruitburrow/scenes/fruitburrow_game.tscn",
-		"card": "",
+		"card": "res://core/ui/cards/fruitburrow.png",
 		"accent": Color(0.55, 1.0, 0.4),
 		"props": [["res://games/fruitburrow/art/models/apple.glb", "model", 0.3],
 			["res://games/fruitburrow/art/models/cherries.glb", "model", 0.25],
