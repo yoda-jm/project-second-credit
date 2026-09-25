@@ -170,3 +170,13 @@ func test_same_seed_and_inputs_replay_identically() -> void:
 			e.tick()
 		scores.append([e.score, e.lives, e.monsters.size(), e.pos_of(e.player)])
 	assert_array(scores[0]).is_equal(scores[1])
+
+
+func test_demo_bot_picks_fruit() -> void:
+	var g := GardenMap.load_pack("res://games/fruitburrow/gardens/orchard.gdn")[0]
+	var e := FruitburrowEngine.new(g, 11)
+	var bot := GardenBot.new()
+	for i in int(40.0 / E.TICK):
+		bot.drive(e)
+		e.tick()
+	assert_int(e.fruit.size()).is_less(g.fruit.size() - 5)
