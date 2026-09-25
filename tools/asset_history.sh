@@ -15,15 +15,15 @@ trap 'rm -rf "$tmp"' EXIT
 n=0
 git -C "$root" log --follow --format="%h" --name-only -- "$script" | awk 'NF' | paste - - | tac | \
 while read -r sha path; do
-  h=$(git -C "$root" show "$sha:$path" | sha1sum | cut -c1-12)
-  [ "$h" = "${prev:-}" ] && continue   # a rename or unrelated change: same models
+  git -C "$root" show "$sha:$path" > "$tmp/gen.py"
+  rm -rf "$tmp/models"; mkdir -p "$tmp/models"
+  "$blender" -b --factory-startup -P "$tmp/gen.py" -- "$tmp/models" > "$tmp/gen.log" 2>&1 || { echo "skip $sha"; continue; }
+  h=$(cat "$tmp"/models/* | sha1sum | cut -c1-12)
+  [ "$h" = "${prev:-}" ] && continue   # same models as the previous version (rename, comments...)
   prev=$h
   n=$((n + 1))
   png=$(printf "%s/%03d-%s.png" "$out" "$n" "$sha")
   [ -f "$png" ] && continue
-  git -C "$root" show "$sha:$path" > "$tmp/gen.py"
-  rm -rf "$tmp/models"; mkdir -p "$tmp/models"
-  "$blender" -b --factory-startup -P "$tmp/gen.py" -- "$tmp/models" > "$tmp/gen.log" 2>&1 || { echo "skip $sha"; continue; }
   subject=$(git -C "$root" log -1 --format="%ad" --date=short "$sha")
   "$blender" -b --factory-startup -P "$root/tools/blender/render_models.py" -- "$tmp/models" "$png" \
     "$game models, version $n ($subject)" > "$tmp/render.log" 2>&1

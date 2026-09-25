@@ -87,3 +87,65 @@ static func to_bdcff(moves: PackedByteArray) -> String:
 		out.append(NAMES[moves[i]] + (str(j - i) if j - i > 1 else ""))
 		i = j
 	return " ".join(out)
+
+
+## A demo that ends badly on purpose (for showing the death effect): the bot collects `gems` diamonds, then
+## finds dirt under a boulder, digs up into it and steps back down; the boulder follows and crushes it.
+static func record_death(cave: CaveStored, gems: int = 4, level: int = 0, seed: int = 0) -> Dictionary:
+	var c := CaveEngine.new(cave, level, seed)
+	var moves := PackedByteArray()
+	var script: Array[int] = []
+	while moves.size() < 3000 and c.player_state != CaveRendered.PlayerState.DIED \
+			and c.player_state != CaveRendered.PlayerState.TIMEOUT:
+		var m := D.STILL
+		if not script.is_empty():
+			m = script.pop_front()
+		elif c.diamonds_collected < gems:
+			m = next_move(c)
+		else:
+			var trap := _trap_below_boulder(c)
+			if trap == Vector2i(c.player_x, c.player_y) and c.player_state == CaveRendered.PlayerState.LIVING:
+				script = [D.UP, D.DOWN, D.STILL, D.STILL, D.STILL, D.STILL, D.STILL, D.STILL]
+				m = script.pop_front()
+			else:
+				m = _step_towards(c, trap)
+		moves.append(m)
+		c.iterate(m, false, false)
+	for i in 20:  # let the explosion play out
+		moves.append(D.STILL)
+		c.iterate(D.STILL, false, false)
+	return {"success": false, "movements": to_bdcff(moves), "frames": moves.size(), "died": c.player_state == CaveRendered.PlayerState.DIED}
+
+
+## The nearest reachable cell Q whose upper neighbour is dirt with a boulder on top.
+static func _trap_below_boulder(c: CaveEngine) -> Vector2i:
+	var best := Vector2i(-1, -1)
+	var best_d := 1 << 30
+	for y in range(3, c.h - 1):
+		for x in range(1, c.w - 1):
+			if c.get_cell(x, y - 1) == E.DIRT and c.get_cell(x, y - 2) == E.STONE \
+					and (c.get_cell(x, y) == E.DIRT or c.get_cell(x, y) == E.SPACE or c.get_cell(x, y) == E.PLAYER):
+				var d := absi(x - c.player_x) + absi(y - c.player_y)
+				if d < best_d:
+					best_d = d
+					best = Vector2i(x, y)
+	return best
+
+
+static func _step_towards(c: CaveEngine, target: Vector2i) -> int:
+	var start := Vector2i(c.player_x, c.player_y)
+	var first_step := {start: D.STILL}
+	var queue: Array[Vector2i] = [start]
+	var head := 0
+	while head < queue.size():
+		var p: Vector2i = queue[head]
+		head += 1
+		if p == target:
+			return first_step[p]
+		for dir in DIRS:
+			var n := Vector2i(p.x + D.DX[dir], p.y + D.DY[dir])
+			if first_step.has(n) or not _safe(c, p, n, dir):
+				continue
+			first_step[n] = dir if p == start else first_step[p]
+			queue.append(n)
+	return D.STILL

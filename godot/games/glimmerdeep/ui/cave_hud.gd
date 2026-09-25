@@ -9,6 +9,7 @@ var _message := ""
 var _message_t := 0.0
 var _time := 0.0
 var _count := -1
+var _death_t := -1.0
 var _count_t := 0.0
 
 
@@ -17,7 +18,10 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	game.cave_finished.connect(func(_e, success): _show(("CAVE CLEARED" if success else "OUT OF TIME") \
 		if success or game.engine.player_state == CaveRendered.PlayerState.TIMEOUT else "OUCH"))
-	game.cave_started.connect(func(_e): _message = "")
+	game.cave_started.connect(func(_e): _message = ""; _death_t = -1.0)
+	game.cave_finished.connect(func(e, success):
+		if not success and e.player_state == CaveRendered.PlayerState.DIED:
+			_death_t = 0.0)
 	game.countdown_tick.connect(func(n): _count = n; _count_t = 0.0)
 
 
@@ -30,6 +34,8 @@ func _process(delta: float) -> void:
 	_time += delta
 	_message_t += delta
 	_count_t += delta
+	if _death_t >= 0.0:
+		_death_t += delta
 	queue_redraw()
 
 
@@ -76,6 +82,12 @@ func _draw() -> void:
 		var f := _hatch_fraction(engine)
 		if f > 0.0:
 			draw_arc(c, 60, -PI * 0.5, -PI * 0.5 + TAU * f, 48, Color(1.0, 0.85, 0.35, 0.8), 8, true)
+	# red vignette pulse when the hero dies
+	if _death_t >= 0.0 and _death_t < 2.0:
+		var a := (1.0 - _death_t / 2.0) * 0.55
+		for i in 12:
+			var inset := float(i) * 18.0
+			draw_rect(Rect2(inset, inset, vp.x - inset * 2.0, vp.y - inset * 2.0), Color(0.8, 0.05, 0.02, a * 0.12), false, 18.0)
 	# message
 	if _message != "":
 		var a := clampf(_message_t * 3.0, 0.0, 1.0)

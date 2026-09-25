@@ -32,3 +32,10 @@ func test_3d_game_scene_runs() -> void:
 	var game: CaveGame = runner.find_child("Game")
 	assert_object(game.engine).is_not_null()
 	assert_bool(game.engine.hatched).is_true()
+
+
+func test_death_demo_crushes_the_hero() -> void:
+	var cave := BdcffLoader.load_file(FILE).caves[0]
+	var r := ReplayRunner.play(cave, cave.replays[1])
+	assert_bool(r["success"]).is_false()
+	assert_int(r["engine"].player_state).is_equal(CaveRendered.PlayerState.DIED)

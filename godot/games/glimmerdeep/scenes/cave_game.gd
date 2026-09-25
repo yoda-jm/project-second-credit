@@ -36,10 +36,10 @@ var _tapped_fire := false
 var _suicide := false
 
 
-func load_cave(path: String, index: int = 0, with_demo: bool = false) -> void:
+func load_cave(path: String, index: int = 0, with_demo: bool = false, demo_index: int = 0) -> void:
 	cave_set = BdcffLoader.load_file(path)
 	cave = cave_set.caves[index]
-	demo = cave.replays[0] if with_demo and not cave.replays.is_empty() else null
+	demo = cave.replays[mini(demo_index, cave.replays.size() - 1)] if with_demo and not cave.replays.is_empty() else null
 	restart()
 
 

@@ -65,6 +65,27 @@ with tempfile.TemporaryDirectory() as tmp:
                   f"fade=in:0:5,fade=out:{nfr - 5}:5")
             ff("-loop", "1", "-i", f, *SILENCE, "-t", str(d), "-vf", vf, *ENC, seg)
             segs.append(seg)
+    # how the 3D models evolved: one studio sheet per version (tools/asset_history.sh), then the turntable
+    sheets = sorted(glob.glob(os.path.join(root, "captures/assets", a.game, "*.png")))
+    turntable = os.path.join(root, "captures/assets", a.game, "turntable.mp4")
+    if sheets:
+        card = os.path.join(tmp, "900-models.mp4")
+        ff("-f", "lavfi", "-i", f"color=c=0x07060b:s={W}x{H}:d=2.4:r={FPS}", *SILENCE, "-t", "2.4",
+           "-vf", f"drawtext=fontfile={font}:text='THE 3D MODELS':fontcolor=0xffd35a:fontsize=48:x=(w-tw)/2:y=h/2-60,"
+                  f"drawtext=fontfile={font}:text='every version, built by Blender scripts':fontcolor=white:fontsize=32:"
+                  "x=(w-tw)/2:y=h/2+10,fade=in:0:8,fade=out:st=2.1:d=0.3", *ENC, card)
+        segs.append(card)
+        for i, sheet in enumerate(sheets):
+            seg = os.path.join(tmp, f"901-{i:03d}.mp4")
+            ff("-loop", "1", "-i", sheet, *SILENCE, "-t", "3", "-vf",
+               f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2,fade=in:0:6,fade=out:84:6",
+               *ENC, seg)
+            segs.append(seg)
+        if os.path.exists(turntable):
+            seg = os.path.join(tmp, "902-turntable.mp4")
+            ff("-stream_loop", "1", "-i", turntable, *SILENCE, "-t", "4", "-vf",
+               f"scale={W}:{H}:force_original_aspect_ratio=decrease,pad={W}:{H}:(ow-iw)/2:(oh-ih)/2", *ENC, seg)
+            segs.append(seg)
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as fh:
         fh.writelines(f"file '{s}'\n" for s in segs)

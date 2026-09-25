@@ -100,6 +100,10 @@ func on_event(ev: Array, engine: CaveEngine) -> void:
 			elif el == E.DIAMOND or el == E.DIAMOND_F:
 				burst(pos, Color(0.5, 0.95, 1.0), 6, 1.5, 0.4, 0.6, 2.0, -2.0)
 		"explosion":
+			if (E.FLAGS[ev[1]] & E.P_PLAYER) != 0:
+				burst(pos, Color(1.0, 0.8, 0.3), 90, 10.0, 1.4, 1.6, 4.0, -6.0)
+				burst(pos, Color(0.9, 0.15, 0.1), 50, 5.0, 1.2, 2.6, 2.5, -2.0)
+				flash(pos, Color(1.0, 0.25, 0.1), 16.0)
 			burst(pos, Color(1.0, 0.55, 0.15), 60, 7.0, 0.9, 2.2, 3.0, -3.0)
 			burst(pos, Color(0.3, 0.28, 0.26), 30, 3.0, 1.4, 2.5, 0.0, 1.0)
 			flash(pos, Color(1.0, 0.6, 0.25), 9.0)

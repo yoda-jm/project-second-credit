@@ -68,3 +68,7 @@ decisions below are settled unless the owner reopens them.
    free cave with a flat debug view and a demo replay. Next: speed up the engine loop, the 3D presentation
    (diorama, lighting, particles, sound), menus, cave-pack browser and the in-game download of known cave
    collections ([docs/level-packs.md](docs/level-packs.md)), the level editor, and more free caves.
+3. Game 2 (Rampart) after picking its original name: build, battle and repair phases.
+4. After game 2: CI on GitHub Actions (tests, then Windows, macOS and Linux AppImage exports as release
+   artifacts), and a GitHub Pages site for the project with its own look and spirit (games, construction
+   movies, how it is made).

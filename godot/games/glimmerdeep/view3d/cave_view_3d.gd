@@ -291,8 +291,12 @@ func _on_frame_done(engine: CaveEngine, _frame_ms: float) -> void:
 		_fx.on_event(ev, engine)
 		if ev[0] == "effect" and ev[4]:
 			_landed[int(ev[3]) * engine.w + int(ev[2])] = _time
-		if ev[0] == "explosion" and Settings.camera_shake:
-			_trauma = minf(1.0, _trauma + 0.55)
+		if ev[0] == "explosion":
+			var hero_died: bool = (E.FLAGS[ev[1]] & E.P_PLAYER) != 0
+			if Settings.camera_shake:
+				_trauma = 1.0 if hero_died else minf(1.0, _trauma + 0.55)
+			if hero_died:
+				_slow_motion()
 
 
 # ---------------------------------------------------------------- drawing
@@ -379,6 +383,18 @@ func _process(delta: float) -> void:
 	_update_camera(engine, hero_pos, delta)
 	_lamp.position = hero_pos + Vector3(0.0, 0.6, 1.4)
 	_lamp.visible = engine.player_state == CaveRendered.PlayerState.LIVING
+
+
+## A short slow-motion when the hero dies (the whole game slows down, then eases back).
+func _slow_motion() -> void:
+	Engine.time_scale = 0.25
+	var tw := create_tween().set_ignore_time_scale(true)
+	tw.tween_interval(0.6)
+	tw.tween_method(func(v: float): Engine.time_scale = v, 0.25, 1.0, 0.5)
+
+
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 
 
 func _add(kind: int, xf: Transform3D, color: Color) -> void:

@@ -50,6 +50,14 @@ Score=256
 Success=true
 Movements=.6 r7 d2 r d5 r u r u r u2 r3 u r u2 r11 d7 r3 d r2 d r7 u r u4 l u r u2 d10 l2 d2 r d3 u2 r3
 [/replay]
+[replay]
+Level=1
+RandomSeed=0
+Player=DemoBot (crushed on purpose)
+Score=0
+Success=false
+Movements=.6 r7 d2 r d5 r u r u r u2 r3 u d .6 l11 .20
+[/replay]
 [/cave]
 [/game]
 [/BDCFF]
