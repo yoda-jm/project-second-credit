@@ -3,7 +3,7 @@ shader_type spatial;
 // that sparkle as the camera moves. World-space, so any mesh can wear it.
 
 uniform vec3 tint : source_color = vec3(0.95, 0.97, 1.0);
-uniform vec3 shade : source_color = vec3(0.72, 0.8, 0.95);
+uniform vec3 shade : source_color = vec3(0.82, 0.86, 0.94);
 uniform float bump_scale = 0.35;
 uniform float sparkle = 1.0;
 uniform sampler2D mark_tex : source_color, hint_default_white;  // optional markings (lines), world XZ

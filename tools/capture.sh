@@ -7,6 +7,7 @@
 #   -e  keep every Nth frame (default: only the last frame)
 #   -r  resolution (default 1920x1080; 960x540 is about 4x faster in software)
 #   -o  output folder (default: captures/<timestamp>, git-ignored)
+#   -w  fast-forward: the first W frames run at 10x speed (reach a late moment quickly)
 #   --gpu  render on the current display with the real GPU and the project's renderer (opens a window).
 #          Also the default when CAPTURE_GPU=1 (environment, or .tools/capture.conf, git-ignored).
 #          The default is a private Xvfb display with software OpenGL (Compatibility renderer): no window,
@@ -15,7 +16,7 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 source "$here/xvfb.sh"
 GODOT=${GODOT_BIN:-$here/../.tools/bin/godot}
-scene="" frames=60 every="" res=1920x1080 out="" gpu=0
+scene="" frames=60 every="" res=1920x1080 out="" gpu=0 warp=0
 # local default (git-ignored): .tools/capture.conf may set CAPTURE_GPU=1; the environment wins
 env_gpu=${CAPTURE_GPU-unset}
 [ -f "$here/../.tools/capture.conf" ] && source "$here/../.tools/capture.conf"
@@ -25,6 +26,7 @@ while [ $# -gt 0 ]; do
   case $1 in
     -s) scene=$2; shift 2 ;;
     -f) frames=$2; shift 2 ;;
+    -w) warp=$2; shift 2 ;;
     -e) every=$2; shift 2 ;;
     -r) res=$2; shift 2 ;;
     -o) out=$2; shift 2 ;;
@@ -38,7 +40,7 @@ mkdir -p "$out"; out=$(cd "$out" && pwd)
 log=$(mktemp); trap 'rm -f "$log"' EXIT
 
 cmd=("$GODOT" --path "$here/../godot" --audio-driver Dummy --fixed-fps 60 --resolution "$res")
-user=(res://tools/capture/capture.tscn -- --demo --locked ${CAPTURE_ARGS:-} --frames="$frames" --every="$every" --out="$out")
+user=(res://tools/capture/capture.tscn -- --demo --locked ${CAPTURE_ARGS:-} --frames="$frames" --every="$every" --warp="$warp" --out="$out")
 [ -n "$scene" ] && user+=(--scene="$scene")
 rc=0
 if [ $gpu -eq 1 ]; then

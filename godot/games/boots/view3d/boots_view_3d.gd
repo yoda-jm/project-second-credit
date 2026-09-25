@@ -10,8 +10,9 @@ const T = preload("res://games/boots/engine/boots_map.gd").T
 const M := "res://games/boots/art/models/"
 const HEIGHT := {T.LAND: 0.0, T.ROUGH: 0.05, T.WATER: -0.55, T.SHALLOW: -0.14, T.TREE: 0.02, T.ROCK: 0.05,
 	T.QUICKSAND: -0.06, T.SNOW: 0.04, T.CLIFF: 1.3}
-const COLOR := {T.LAND: Color(0, 0, 0), T.ROUGH: Color(0.45, 0.35, 0), T.WATER: Color(1, 0.1, 0), T.SHALLOW: Color(1, 0, 0),
-	T.TREE: Color(0, 0, 0), T.ROCK: Color(0.2, 0.5, 0), T.QUICKSAND: Color(0.8, 0.25, 0.3), T.SNOW: Color(0, 0, 1), T.CLIFF: Color(0.3, 1, 0)}
+## land shader channels: red = soil (mud), green = rock (the rock texture is pale: use it sparingly), blue = cold tint
+const COLOR := {T.LAND: Color(0, 0, 0), T.ROUGH: Color(0.7, 0.08, 0), T.WATER: Color(1, 0.0, 0), T.SHALLOW: Color(0.9, 0, 0),
+	T.TREE: Color(0.15, 0, 0), T.ROCK: Color(0.55, 0.25, 0), T.QUICKSAND: Color(0.9, 0.05, 0.3), T.SNOW: Color(0, 0, 1), T.CLIFF: Color(0.3, 0.6, 0)}
 const GREEN := Color(0.25, 0.42, 0.2)
 const KHAKI := Color(0.62, 0.55, 0.36)
 

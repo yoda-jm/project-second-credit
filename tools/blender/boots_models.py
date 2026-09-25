@@ -19,29 +19,28 @@ def soldier():
     uni = mat("uniform", (0.25, 0.4, 0.2), 0.8)
     skin = mat("skin", (0.9, 0.7, 0.55), 0.6)
     helmet = mat("helmet", (0.22, 0.32, 0.18), 0.5, coat=0.3)
-    boot = mat("boots", (0.12, 0.1, 0.08), 0.6)
+    boot = mat("boots", (0.12, 0.1, 0.08), 0.6, coat=0.2)
     gun = mat("rifle", (0.1, 0.1, 0.11), 0.4, 0.6)
     stock = mat("stock", (0.45, 0.28, 0.15), 0.6)
     pack = mat("pack", (0.35, 0.33, 0.22), 0.8)
-    sphere(0.17, (0, 0, 1.3), "spine", uni, (1.15, 0.8, 1.1))
-    sphere(0.15, (0, 0, 1.0), "hips", uni, (1.1, 0.8, 0.8))
+    belt = mat("belt", (0.2, 0.18, 0.12), 0.7)
+    white = mat("eye_white", (0.95, 0.95, 0.92), 0.3)
+    iris = mat("iris", (0.2, 0.15, 0.1), 0.2)
+    athletic_body(uni, skin, white, iris, glove=skin, boot=boot)
+    sphere(0.125, (0, 0.005, 1.7), "head", helmet, (1.02, 1.08, 0.72))  # the helmet, with its brim
+    body_loft([(1.62, 0.13, 0.135, 0.005), (1.64, 0.125, 0.13, 0.005)], "head", helmet, 20, 0)
+    box((0.012, 0.012, 0.09), (0.09, -0.05, 1.6), "head", belt)  # chin strap
+    box((0.012, 0.012, 0.09), (-0.09, -0.05, 1.6), "head", belt)
+    body_loft([(1.05, 0.165, 0.11), (1.09, 0.165, 0.11)], "hips", belt, 20, 0)  # the belt, with pouches
+    for x in (-0.1, 0.0, 0.1):
+        box((0.05, 0.03, 0.05), (x, -0.115, 1.06), "hips", pack)
     box((0.26, 0.14, 0.3), (0, 0.16, 1.3), "spine", pack)
-    limb(0.05, (0, 0, 1.45), (0, 0, 1.55), "head", skin)
-    sphere(0.12, (0, 0, 1.63), "head", skin)
-    sphere(0.155, (0, 0.0, 1.7), "head", helmet, (1.0, 1.05, 0.72))  # the helmet, with a brim
-    sphere(0.02, (0.045, -0.115, 1.64), "head", mat("eyes", (0.05, 0.05, 0.05), 0.2))
-    sphere(0.02, (-0.045, -0.115, 1.64), "head", mat("eyes", (0.05, 0.05, 0.05), 0.2))
-    for s, side in ((1, "L"), (-1, "R")):
-        limb(0.055, (0.2 * s, 0, 1.42), (0.24 * s, 0, 1.12), "arm." + side, uni)
-        limb(0.045, (0.24 * s, 0, 1.12), (0.26 * s, -0.02, 0.88), "forearm." + side, uni, 0.04)
-        sphere(0.045, (0.265 * s, -0.025, 0.84), "forearm." + side, skin)
-        limb(0.08, (0.1 * s, 0, 0.95), (0.1 * s, 0, 0.52), "thigh." + side, uni, 0.065)
-        limb(0.06, (0.1 * s, 0, 0.52), (0.1 * s, 0, 0.12), "shin." + side, uni, 0.05)
-        box((0.11, 0.24, 0.12), (0.1 * s, -0.04, 0.07), "shin." + side, boot)
+    body_loft([(1.43, 0.12, 0.05, 0.2), (1.46, 0.12, 0.05, 0.2)], "spine", mat("bedroll", (0.3, 0.25, 0.18), 0.9), 12, 1)
     # the rifle in the right hand, pointing forward
-    box((0.05, 0.7, 0.06), (-0.26, -0.3, 0.86), "forearm.R", gun)
-    box((0.06, 0.2, 0.1), (-0.26, 0.08, 0.84), "forearm.R", stock)
-    box((0.03, 0.08, 0.12), (-0.26, -0.22, 0.78), "forearm.R", gun)
+    box((0.045, 0.7, 0.055), (-0.27, -0.3, 0.86), "forearm.R", gun)
+    box((0.055, 0.22, 0.09), (-0.27, 0.08, 0.84), "forearm.R", stock)
+    box((0.03, 0.08, 0.12), (-0.27, -0.22, 0.79), "forearm.R", gun)
+    box((0.025, 0.25, 0.03), (-0.27, -0.55, 0.88), "forearm.R", gun)
     run = {}
     for f, ph in ((1, 1), (6, 0), (11, -1), (16, 0), (21, 1)):
         run[f] = {"thigh.L": (40 * ph, 0, 0), "thigh.R": (-40 * ph, 0, 0), "shin.L": (-50 * max(0, -ph), 0, 0),
@@ -64,17 +63,9 @@ def hostage():
     trousers = mat("trousers", (0.45, 0.35, 0.25), 0.8)
     skin = mat("skin", (0.8, 0.6, 0.45), 0.6)
     hair = mat("hair", (0.15, 0.1, 0.08), 0.8)
-    sphere(0.16, (0, 0, 1.3), "spine", shirt, (1.1, 0.8, 1.1))
-    sphere(0.15, (0, 0, 1.0), "hips", trousers, (1.1, 0.8, 0.8))
-    limb(0.05, (0, 0, 1.45), (0, 0, 1.55), "head", skin)
-    sphere(0.12, (0, 0, 1.63), "head", skin)
-    sphere(0.125, (0, 0.02, 1.68), "head", hair, (1.0, 1.0, 0.7))
-    for s, side in ((1, "L"), (-1, "R")):
-        limb(0.05, (0.2 * s, 0, 1.42), (0.24 * s, 0, 1.12), "arm." + side, shirt)
-        limb(0.042, (0.24 * s, 0, 1.12), (0.26 * s, -0.02, 0.88), "forearm." + side, skin, 0.038)
-        limb(0.075, (0.1 * s, 0, 0.95), (0.1 * s, 0, 0.52), "thigh." + side, trousers, 0.06)
-        limb(0.055, (0.1 * s, 0, 0.52), (0.1 * s, 0, 0.1), "shin." + side, trousers, 0.045)
-        box((0.1, 0.2, 0.08), (0.1 * s, -0.03, 0.05), "shin." + side, mat("sandals", (0.4, 0.25, 0.1), 0.7))
+    white = mat("eye_white", (0.95, 0.95, 0.92), 0.3)
+    iris = mat("iris", (0.2, 0.12, 0.08), 0.2)
+    athletic_body(shirt, skin, white, iris, hair=hair, boot=mat("sandals", (0.4, 0.25, 0.1), 0.7), legs=trousers)
     walk = {}
     for f, ph in ((1, 1), (8, 0), (15, -1), (22, 0), (29, 1)):
         walk[f] = {"thigh.L": (25 * ph, 0, 0), "thigh.R": (-25 * ph, 0, 0), "arm.L": (-20 * ph, 0, 5), "arm.R": (20 * ph, 0, -5)}
@@ -198,7 +189,7 @@ def mine():
 
 def palm():
     trunk = mat("palm_trunk", (0.5, 0.38, 0.25), 0.8)
-    leaf = mat("palm_leaf", (0.25, 0.55, 0.2), 0.6)
+    leaf = mat("palm_leaf", (0.1, 0.32, 0.08), 0.55)
     parts = []
     pts = [(0.0, 0.0, z * 0.35) for z in range(8)]
     for i, (x, y, z) in enumerate(pts):
@@ -215,14 +206,14 @@ def palm():
 
 
 def bush():
-    leaf = mat("bush_leaf", (0.2, 0.45, 0.18), 0.7)
+    leaf = mat("bush_leaf", (0.08, 0.26, 0.07), 0.7)
     rnd = random.Random(3)
     parts = [psphere(rnd.uniform(0.2, 0.32), (rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25), rnd.uniform(0.15, 0.3)), leaf) for _ in range(6)]
     export(parts, "bush")
 
 
 def boulder():
-    rock = mat("rock", (0.5, 0.48, 0.45), 0.9)
+    rock = mat("rock", (0.22, 0.21, 0.2), 0.9)
     bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=0.5, location=(0, 0, 0.35))
     o = active_obj()
     rnd = random.Random(8)

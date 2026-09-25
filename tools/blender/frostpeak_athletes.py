@@ -14,38 +14,43 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from humanoid import *  # mat, sphere, box, limb, BONES, clear, keys, rig_export
 
 def body(kind):
-    suit = mat("suit", (0.85, 0.15, 0.15), 0.35, coat=0.3)
-    trim = mat("suit_trim", (0.95, 0.95, 0.95), 0.4)
-    skin = mat("skin", (0.92, 0.7, 0.55), 0.6)
-    boot = mat("athlete_boot", (0.1, 0.1, 0.12), 0.4, coat=0.4)
-    visor = mat("goggles", (0.2, 0.6, 0.9), 0.05, 0.6, coat=1.0)
-    sphere(0.16, (0, 0, 1.32), "spine", suit, (1.25, 0.72, 1.05))   # chest and shoulders
-    sphere(0.13, (0, 0, 1.15), "spine", suit, (1.05, 0.72, 1.0))    # waist
-    sphere(0.14, (0, 0, 0.99), "hips", suit, (1.12, 0.76, 0.75))    # pelvis
-    limb(0.05, (0, 0, 1.45), (0, 0, 1.55), "head", skin)            # neck
-    box((0.22, 0.012, 0.2), (0, -0.118, 1.28), "spine", trim)        # the race bib
-    box((0.12, 0.014, 0.05), (0, -0.124, 1.3), "spine", mat("bib_number", (0.1, 0.1, 0.12), 0.5))
-    sphere(0.11, (0, -0.01, 1.62), "head", skin, (0.95, 1.0, 1.1))
+    suit = mat("suit", (0.85, 0.15, 0.15), 0.3, coat=0.5)
+    trim = mat("suit_trim", (0.96, 0.96, 0.96), 0.35, coat=0.3)
+    skin = mat("skin", (0.9, 0.68, 0.54), 0.55)
+    white = mat("eye_white", (0.95, 0.95, 0.93), 0.2)
+    iris = mat("iris", (0.15, 0.25, 0.4), 0.1, coat=1.0)
+    glove = mat("gloves", (0.1, 0.1, 0.12), 0.5)
+    boot = mat("athlete_boot", (0.08, 0.08, 0.1), 0.35, coat=0.5)
+    visor = mat("goggles", (0.25, 0.55, 0.85), 0.03, 0.8, coat=1.0)
+    athletic_body(suit, skin, white, iris, hair=None, glove=glove, boot=boot)
+    # the race bib, front and back, with a dark number panel
+    for y, sgn in ((-0.108, 1), (0.1, -1)):
+        box((0.2, 0.012, 0.19), (0, y, 1.27), "spine", trim)
+        box((0.11, 0.014, 0.06), (0, y - 0.004 * sgn, 1.29), "spine", mat("bib_number", (0.08, 0.08, 0.1), 0.4))
+    # white stripes down the outside of the legs and arms
+    for s_, side in ((1, "L"), (-1, "R")):
+        muscle_limb([(0.178 * s_, 0, 0.92, 0.012), (0.172 * s_, -0.01, 0.75, 0.012), (0.152 * s_, 0, 0.55, 0.01)], "thigh." + side, trim, 8, 0)
+        muscle_limb([(0.25 * s_, 0, 1.4, 0.01), (0.272 * s_, 0, 1.28, 0.01), (0.29 * s_, 0, 1.15, 0.009)], "arm." + side, trim, 8, 0)
     if kind == "skater":
-        sphere(0.118, (0, 0.01, 1.64), "head", suit, (0.98, 1.02, 1.08))  # the tight hood
-        box((0.14, 0.03, 0.04), (0, -0.1, 1.64), "head", visor)
+        sphere(0.108, (0, 0.008, 1.665), "head", suit, (0.95, 1.02, 1.13))  # the tight hood over the head
+        sphere(0.095, (0, -0.02, 1.672), "head", visor, (1.02, 0.95, 0.35))  # wraparound visor
+        blade = mat("blade", (0.88, 0.9, 0.93), 0.1, 1.0)
+        holder = mat("blade_holder", (0.2, 0.2, 0.22), 0.3, 0.6)
+        for s_, side in ((1, "L"), (-1, "R")):
+            box((0.03, 0.2, 0.03), (0.1 * s_, -0.04, 0.0), "shin." + side, holder)
+            box((0.006, 0.44, 0.035), (0.1 * s_, -0.06, -0.03), "shin." + side, blade)
     else:
-        sphere(0.13, (0, 0.0, 1.66), "head", mat("helmet", (0.95, 0.95, 0.95), 0.3, coat=0.8), (1.0, 1.05, 1.0))
-        box((0.18, 0.04, 0.06), (0, -0.11, 1.63), "head", visor)
-    for s, side in ((1, "L"), (-1, "R")):
-        limb(0.055, (0.2 * s, 0, 1.42), (0.24 * s, 0, 1.12), "arm." + side, suit)
-        limb(0.045, (0.24 * s, 0, 1.12), (0.26 * s, -0.02, 0.88), "forearm." + side, suit, 0.04)
-        sphere(0.045, (0.265 * s, -0.025, 0.84), "forearm." + side, mat("gloves", (0.12, 0.12, 0.14), 0.6))
-        limb(0.08, (0.1 * s, 0, 0.95), (0.1 * s, 0, 0.52), "thigh." + side, suit, 0.065)
-        limb(0.06, (0.1 * s, 0, 0.52), (0.1 * s, 0, 0.12), "shin." + side, suit, 0.05)
-        box((0.1, 0.24, 0.1), (0.1 * s, -0.04, 0.07), "shin." + side, boot)
-        if kind == "skater":
-            blade = mat("blade", (0.85, 0.87, 0.9), 0.15, 1.0)
-            box((0.012, 0.44, 0.05), (0.1 * s, -0.06, 0.0), "shin." + side, blade)
-        else:
-            ski = mat("ski", (0.95, 0.8, 0.1), 0.3, coat=0.6)
-            box((0.1, 2.3, 0.025), (0.1 * s, -0.5, 0.01), "ski." + side, ski)
-            box((0.1, 0.12, 0.025), (0.1 * s, -1.66, 0.05), "ski." + side, ski, rot=(0.5, 0, 0))  # the tip
+        shell = mat("helmet", (0.96, 0.96, 0.97), 0.2, coat=1.0)
+        sphere(0.118, (0, 0.005, 1.69), "head", shell, (0.98, 1.05, 0.95))
+        sphere(0.1, (0, -0.035, 1.665), "head", visor, (1.0, 0.9, 0.38))
+        box((0.23, 0.02, 0.02), (0, 0.0, 1.665), "head", mat("strap", (0.1, 0.1, 0.1), 0.5))
+        ski = mat("ski", (0.95, 0.78, 0.1), 0.25, coat=0.8)
+        ski_edge = mat("ski_edge", (0.1, 0.1, 0.12), 0.3)
+        for s_, side in ((1, "L"), (-1, "R")):
+            box((0.11, 2.35, 0.022), (0.1 * s_, -0.52, -0.005), "ski." + side, ski)
+            box((0.112, 2.35, 0.006), (0.1 * s_, -0.52, -0.018), "ski." + side, ski_edge)
+            box((0.11, 0.16, 0.022), (0.1 * s_, -1.72, 0.035), "ski." + side, ski, rot=(0.45, 0, 0))  # the tip, turned up
+            box((0.07, 0.16, 0.05), (0.1 * s_, -0.03, 0.03), "ski." + side, mat("binding", (0.2, 0.2, 0.22), 0.3, 0.6))
 
 
 def build(kind):
@@ -80,20 +85,20 @@ def build(kind):
     else:
         tuck = {"spine": (75, 0, 0), "head": (-60, 0, 0), "thigh.L": (-70, 0, 0), "thigh.R": (-70, 0, 0),
                 "shin.L": (100, 0, 0), "shin.R": (100, 0, 0), "arm.L": (60, 0, 5), "arm.R": (60, 0, -5), "@root": (0, 0, -0.35),
-                "ski.L": (-30, 0, 0), "ski.R": (-30, 0, 0)}
+                "ski.L": (30, 0, 0), "ski.R": (30, 0, 0)}  # the ski bone's axis is flipped: +(thigh + shin) keeps the skis flat
         acts["tuck"] = ({1: tuck, 20: tuck})
         # the flight: body leaning far forward over V-shaped skis, arms back
         fly = {"hips": (70, 0, 0), "head": (-60, 0, 0), "arm.L": (20, 0, 12), "arm.R": (20, 0, -12),
-               "ski.L": (-72, 0, 18), "ski.R": (-72, 0, -18), "thigh.L": (5, 0, 0), "thigh.R": (5, 0, 0)}
+               "ski.L": (62, 0, 18), "ski.R": (62, 0, -18), "thigh.L": (5, 0, 0), "thigh.R": (5, 0, 0)}  # skis along the body, in a V
         fly2 = dict(fly)
         fly2["hips"] = (73, 0, 2)
         acts["flight"] = ({1: fly, 30: fly2, 60: fly})
         tele = {"spine": (20, 0, 0), "thigh.L": (-40, 0, 0), "shin.L": (60, 0, 0), "thigh.R": (20, 0, 0), "shin.R": (50, 0, 0),
-                "arm.L": (0, 0, 70), "arm.R": (0, 0, -70), "@root": (0, 0, -0.2)}
+                "arm.L": (0, 0, 70), "arm.R": (0, 0, -70), "@root": (0, 0, -0.2), "ski.L": (20, 0, 0), "ski.R": (70, 0, 0)}
         acts["telemark"] = ({1: tele, 20: tele})
         acts["fall"] = ({1: {}, 10: {"hips": (-80, 0, 30), "@root": (0, 0, 0.3), "arm.L": (0, 0, 120), "arm.R": (0, 0, -60)},
                                20: {"hips": (-95, 0, 60), "@root": (0, 0, 0.2), "arm.L": (0, 0, 150), "arm.R": (0, 0, -100),
-                                    "ski.L": (0, 40, 0)}})
+                                    "ski.L": (-65, 40, 0), "ski.R": (-95, 0, 0)}})
     rig_export(kind, out_dir, acts)
 
 

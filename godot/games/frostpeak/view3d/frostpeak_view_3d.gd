@@ -170,7 +170,7 @@ func _build_world() -> void:
 	we.environment = env
 	add_child(we)
 	_sun = DirectionalLight3D.new()
-	_sun.rotation_degrees = Vector3(-32, -40, 0)
+	_sun.rotation_degrees = Vector3(-24, -65, 0)  # low winter sun from the side: long shadows, relief on the snow
 	_sun.light_color = Color(1.0, 0.95, 0.88)
 	_sun.light_energy = 1.2
 	_sun.shadow_enabled = true
@@ -241,7 +241,7 @@ func _build_mountains() -> void:
 	mi.mesh = st.commit()
 	var m := ShaderMaterial.new()
 	m.shader = _snow_mat.shader
-	m.set_shader_parameter("shade", Color(0.55, 0.62, 0.78))
+	m.set_shader_parameter("shade", Color(0.6, 0.66, 0.8))
 	m.set_shader_parameter("sparkle", 0.0)
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -368,7 +368,8 @@ func hill_point(x: float) -> Vector3:
 
 func _hill_y(x: float) -> float:
 	if x < 0.0:
-		return -x * tan(INRUN_ANGLE) - 2.5
+		# under the in-run the hillside falls away, so the track stands on a real tower
+		return -x * tan(INRUN_ANGLE) - 2.5 - (-x) * 0.32
 	if x <= 125.0:
 		return SkiJump.profile(x)
 	var y125 := SkiJump.profile(125.0)
@@ -377,21 +378,21 @@ func _hill_y(x: float) -> float:
 
 
 func _build_hill() -> void:
-	# the terrain: the landing hill and the outrun down the middle, rising banks on both sides
+	# the terrain: the landing hill and the outrun down the middle, forested banks rising on both sides
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var xs := []
-	var x := -90.0
-	while x <= 230.0:
+	var x := -100.0
+	while x <= 240.0:
 		xs.append(x)
 		x += 2.5
 	var zs := []
-	for k in 41:
-		zs.append(-80.0 + k * 4.0)
+	for k in 49:
+		zs.append(-96.0 + k * 4.0)
 	var h := func(px: float, pz: float) -> float:
 		var y: float = _hill_y(minf(px, 170.0))
-		var bank := maxf(0.0, absf(pz) - 18.0)
-		return y + bank * bank * 0.02 + bank * 0.25
+		var bank := maxf(0.0, absf(pz) - 17.0)
+		return y + minf(bank * 0.28 + bank * bank * 0.006, 24.0)  # gentle banks, not walls
 	for i in xs.size() - 1:
 		for k in zs.size() - 1:
 			var p := []
@@ -404,51 +405,132 @@ func _build_hill() -> void:
 	terrain.mesh = st.commit()
 	var m := ShaderMaterial.new()
 	m.shader = _snow_mat.shader
+	m.set_shader_parameter("shade", Color(0.84, 0.88, 0.95))
 	m.set_shader_parameter("mark_tex", _markings())
 	m.set_shader_parameter("mark_rect", Vector4(JUMP.x + 40.0, JUMP.z - 15.0, 100.0, 30.0))
 	terrain.material_override = m
 	add_child(terrain)
-	# the in-run track with its rails, the take-off table and the start gate
-	var ice_track := _flat(Color(0.85, 0.9, 0.98), 0.15)
-	var len := SkiJump.INRUN + 2.0
-	var mid := inrun_point(SkiJump.INRUN * 0.5)
-	var track := _box(self, mid + Vector3(0, 0.3, 0), Vector3(len, 0.4, 3.0), ice_track)
-	track.rotation.z = -INRUN_ANGLE
-	for zz in [-1.6, 1.6]:
-		var rail := _box(self, mid + Vector3(0, 0.9, zz), Vector3(len, 1.0, 0.15), _flat(Color(0.9, 0.2, 0.2), 0.4))
-		rail.rotation.z = -INRUN_ANGLE
-	var under := _box(self, mid + Vector3(0, -1.2, 0), Vector3(len, 2.6, 3.4), _flat(Color(0.45, 0.47, 0.52), 0.6))
-	under.rotation.z = -INRUN_ANGLE
-	_box(self, JUMP + Vector3(-2.0, -0.1, 0), Vector3(4.0, 0.6, 3.2), Pbr.material("planks", Color(0.7, 0.5, 0.35), 2.0))
+	var steel := Pbr.material("metal", Color(0.55, 0.58, 0.62), 1.0, 0.8, 0.5)
+	var red := _flat(Color(0.8, 0.12, 0.12), 0.45)
+	var concrete := Pbr.material("rock", Color(0.8, 0.8, 0.82), 0.5)
+	# the in-run: a U-shaped channel with ski grooves and lamps, on steel pillars with cross braces
+	var len := SkiJump.INRUN + 3.0
+	var mid := inrun_point(SkiJump.INRUN * 0.5 - 1.0)
+	var along_basis := Basis(Vector3.BACK, -INRUN_ANGLE)
+	var track := _box(self, mid + Vector3(0, 0.2, 0), Vector3(len, 0.4, 3.0), _flat(Color(0.9, 0.93, 0.98), 0.12))
+	track.basis = along_basis
+	for zz in [-0.35, 0.35]:
+		var groove := _box(self, mid + Vector3(0, 0.41, zz), Vector3(len, 0.02, 0.14), _flat(Color(0.55, 0.62, 0.72), 0.05))
+		groove.basis = along_basis
+	for zz in [-1.55, 1.55]:  # low rails with a white cap
+		var wall := _box(self, mid + Vector3(0, 0.45, zz), Vector3(len, 0.5, 0.1), red)
+		wall.basis = along_basis
+		var cap := _box(self, mid + Vector3(0, 0.72, zz), Vector3(len, 0.05, 0.14), _flat(Color(0.95, 0.95, 0.95), 0.4))
+		cap.basis = along_basis
+	var beam := _box(self, mid + Vector3(0, -0.45, 0), Vector3(len, 0.9, 3.6), steel)
+	beam.basis = along_basis
+	var lamp := _flat(Color(1.0, 0.95, 0.8), 0.3, 3.0)
+	var a := 0.0
+	while a <= SkiJump.INRUN:
+		var p := inrun_point(a)
+		var ground := JUMP.y + _hill_y(p.x - JUMP.x)
+		var top := p.y - 0.9
+		if top - ground > 0.5:
+			for zz in [-1.5, 1.5]:
+				_box(self, Vector3(p.x, (top + ground) * 0.5, p.z + zz), Vector3(0.35, top - ground, 0.35), steel)
+			var brace := _box(self, Vector3(p.x, (top + ground) * 0.5, p.z), Vector3(0.12, (top - ground) * 1.02, 0.12), steel)
+			brace.rotation.x = atan2(3.0, top - ground)
+			if top - ground > 6.0:
+				_box(self, Vector3(p.x, ground + (top - ground) * 0.5, p.z), Vector3(0.2, 0.2, 3.2), steel)
+		for zz in [-1.7, 1.7]:
+			_box(self, p + Vector3(0, 0.85, zz), Vector3(0.07, 0.07, 0.07), lamp)
+		a += 7.0
+	# the start house at the top, the take-off table at the lip
+	var top_p := inrun_point(-2.0)
+	var house := _box(self, top_p + Vector3(-5.5, 2.5, 0), Vector3(6.0, 5.0, 6.0), concrete)
+	_box(self, house.position + Vector3(0, 2.8, 0), Vector3(6.8, 0.5, 6.8), red)
+	_box(self, house.position + Vector3(2.99, 0.6, 0), Vector3(0.1, 1.2, 4.0), _flat(Color(1.0, 0.85, 0.55), 0.3, 1.5))
 	var gate := _scene("start_gate")
-	gate.position = inrun_point(0.0) + Vector3(0, 0.5, 0)
+	gate.position = inrun_point(0.0) + Vector3(0, 0.45, 0)
 	gate.rotation.y = PI * 0.5
 	add_child(gate)
-	# distance boards along the hill, spectators and flags along the outrun, floodlights
+	var table := _box(self, JUMP + Vector3(-3.0, -0.25, 0), Vector3(6.0, 0.7, 3.2), Pbr.material("planks", Color(0.75, 0.55, 0.38), 1.5))
+	table.basis = Basis(Vector3.BACK, -0.18)
+	# the judges' tower beside the knoll
+	var jt := hill_point(55.0) + Vector3(0, 0, -34.0)
+	jt.y = JUMP.y + h.call(55.0, -34.0)
+	_box(self, jt + Vector3(0, 7.0, 0), Vector3(5.0, 14.0, 5.0), concrete)
+	_box(self, jt + Vector3(0, 13.0, 2.51), Vector3(4.4, 1.6, 0.05), _flat(Color(0.6, 0.85, 1.0), 0.05, 0.6))
+	_box(self, jt + Vector3(0, 14.3, 0), Vector3(5.6, 0.4, 5.6), red)
+	# padded fences along the landing hill, with banners
+	var banners := [Color(0.95, 0.8, 0.2), Color(0.2, 0.45, 0.9), Color(0.9, 0.3, 0.3), Color(0.3, 0.75, 0.45), Color(1, 1, 1)]
+	var fx := 8.0
+	var bi := 0
+	while fx < 175.0:
+		for zz in [-16.5, 16.5]:
+			var p0 := hill_point(fx)
+			var p1 := hill_point(fx + 6.0)
+			var mp := (p0 + p1) * 0.5 + Vector3(0, 0.55, zz)
+			var seg := _box(self, mp, Vector3(6.05, 1.1, 0.3), _flat(banners[bi % banners.size()], 0.6))
+			seg.basis = Basis(Vector3.BACK, atan2(p1.y - p0.y, 6.0))
+			bi += 1
+		fx += 6.0
+	# the outrun: a curved barrier, flags and the crowd
+	for i in 13:
+		var ang := -1.0 + i * (2.0 / 12.0)
+		var bp := hill_point(200.0) + Vector3(cos(ang) * 6.0 - 6.0, 0.6, sin(ang) * 18.0)
+		var b := _box(self, bp, Vector3(0.4, 1.2, 3.2), red)
+		b.rotation.y = -ang
+	for i in 8:
+		var pole := _scene("flagpole")
+		var fzz := -26.0 + i * 7.4
+		pole.position = hill_point(205.0) + Vector3(8.0, 0, fzz)
+		pole.position.y = JUMP.y + h.call(213.0, fzz)
+		add_child(pole)
+		var flag := MeshInstance3D.new()
+		var pm := PlaneMesh.new()
+		pm.size = Vector2(2.0, 1.3)
+		pm.subdivide_width = 12
+		pm.orientation = PlaneMesh.FACE_Z
+		flag.mesh = pm
+		var fm := ShaderMaterial.new()
+		fm.shader = load("res://games/frostpeak/shaders/flag.gdshader")
+		var cols: Array = Competition.NATIONS[i % Competition.NATIONS.size()]["flag"]
+		fm.set_shader_parameter("c0", cols[0])
+		fm.set_shader_parameter("c1", cols[1])
+		fm.set_shader_parameter("c2", cols[2])
+		flag.material_override = fm
+		flag.position = pole.position + Vector3(1.0, 7.2, 0)
+		add_child(flag)
 	for d in range(60, 131, 10):
 		var lb := Label3D.new()
 		lb.text = str(d)
 		lb.font = HudKit.font(true)
 		lb.font_size = 220
 		lb.modulate = Color(0.9, 0.15, 0.15) if d == 90 else Color(0.15, 0.25, 0.8)
-		lb.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-		lb.position = hill_point(d) + Vector3(0, 2.5, -17.0)
-		lb.rotation.y = 0.0
+		lb.position = hill_point(d) + Vector3(0, 2.6, -16.4)
 		add_child(lb)
 	var fans: Array[Transform3D] = []
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 9
-	for i in 500:
-		var fx := rng.randf_range(150.0, 215.0)
-		var side := -1.0 if i % 2 == 0 else 1.0
-		var fz := side * rng.randf_range(20.0, 34.0)
-		var y: float = h.call(fx, fz)
-		fans.append(Transform3D(Basis(Vector3.UP, PI * 0.5 * side + rng.randf_range(-0.4, 0.4) + PI), JUMP + Vector3(fx, y, fz)))
+	for i in 700:
+		var fxx := rng.randf_range(205.0, 225.0)
+		var fz := rng.randf_range(-30.0, 30.0)
+		fans.append(Transform3D(Basis(Vector3.UP, -PI * 0.5 + rng.randf_range(-0.4, 0.4)), JUMP + Vector3(fxx, h.call(fxx, fz), fz)))
 	_crowd("spectator", fans, [Color(0.9, 0.2, 0.2), Color(0.2, 0.4, 0.9), Color(0.95, 0.8, 0.2), Color(0.2, 0.7, 0.4), Color(1, 1, 1)])
-	for zz in [-26.0, 26.0]:
+	# the forest on the banks
+	var trees: Array[Transform3D] = []
+	for i in 420:
+		var tx := rng.randf_range(-90.0, 230.0)
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var tz := side * rng.randf_range(24.0, 90.0)
+		trees.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.6, 3.2)), JUMP + Vector3(tx, h.call(tx, tz), tz)))
+	_crowd("snowy_pine", trees, [])
+	for zz in [-28.0, 28.0]:
 		var fl := _scene("floodlight")
 		add_child(fl)
-		fl.position = hill_point(60.0) + Vector3(0, 0, zz)
+		fl.position = hill_point(70.0) + Vector3(0, 0, zz)
+		fl.position.y = JUMP.y + h.call(70.0, zz)
 		fl.rotation.y = 0.0 if zz < 0.0 else PI
 
 
@@ -613,7 +695,7 @@ func _flyby(delta: float) -> void:
 		var a := 0.6 + k * 0.12
 		_move_camera(Vector3(cos(a) * 110.0, 32.0, sin(a) * 90.0), Vector3(0, 0, 0), delta, 1.2)
 	else:
-		_move_camera(JUMP + Vector3(140.0 - k * 10.0, 40.0, 95.0), JUMP + Vector3(20.0, -10.0, 0), delta, 1.2)
+		_move_camera(JUMP + Vector3(150.0 - k * 12.0, 12.0 + k * 2.0, 55.0), JUMP + Vector3(30.0, -15.0, 0), delta, 1.2)
 
 
 func _update_skating(s: SpeedSkating, delta: float) -> void:
@@ -650,7 +732,7 @@ func _update_jump(j: SkiJump, delta: float) -> void:
 			_jumper.basis = Basis(Vector3.UP, PI * 0.5).rotated(Vector3.BACK, -INRUN_ANGLE)
 			_anim(_jumper, "tuck" if j.tuck > 0.5 else "idle")
 			# behind and above, riding down the track with the jumper
-			var cam := inrun_point(maxf(-6.0, j.along - 9.0)) + Vector3(0, 3.2, 3.5)
+			var cam := inrun_point(maxf(-2.0, j.along - 9.0)) + Vector3(0, 3.2, 3.5)
 			var ahead := inrun_point(minf(SkiJump.INRUN, j.along + 8.0))
 			if j.phase == WinterEvent.Phase.READY and j.phase_left > 2.7:
 				_snap_camera(cam, ahead)
