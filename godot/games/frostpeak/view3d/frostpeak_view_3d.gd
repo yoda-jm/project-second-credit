@@ -347,6 +347,52 @@ func _build_oval() -> void:
 	var coats: Array[Color] = [Color(0.9, 0.2, 0.2), Color(0.2, 0.4, 0.9), Color(0.95, 0.8, 0.2), Color(0.2, 0.7, 0.4),
 		Color(0.95, 0.95, 0.95), Color(0.6, 0.3, 0.8), Color(1.0, 0.5, 0.2)]
 	_crowd("spectator", seats, coats)
+	# the grandstand's roof on pillars, and its back wall
+	var steel := Pbr.material("metal", Color(0.55, 0.58, 0.62), 1.0, 0.8, 0.5)
+	var roof := _box(self, Vector3(0, 12.5, RADIUS + 18.0), Vector3(STRAIGHT + 24.0, 0.4, 12.0), _flat(Color(0.85, 0.2, 0.2), 0.5))
+	roof.rotation.x = -0.12
+	_box(self, Vector3(0, 6.0, RADIUS + 23.5), Vector3(STRAIGHT + 24.0, 12.0, 0.5), _flat(Color(0.25, 0.27, 0.32), 0.7))
+	for i in 9:
+		var px := -STRAIGHT * 0.5 - 10.0 + i * (STRAIGHT + 20.0) / 8.0
+		_box(self, Vector3(px, 6.0, RADIUS + 12.8), Vector3(0.35, 12.0, 0.35), steel)
+	# bright banners on the boards
+	var bcols := [Color(0.95, 0.8, 0.2), Color(0.2, 0.45, 0.9), Color(0.95, 0.95, 0.95), Color(0.3, 0.75, 0.45), Color(0.9, 0.3, 0.3)]
+	var per_b := 2.0 * STRAIGHT + TAU * (RADIUS + 10.3)
+	for i in 60:
+		var t := oval_point(per_b * (i + 0.5) / 60.0, 10.3)
+		var b := _box(self, t.origin + Vector3(0, 0.55, 0), Vector3(0.05, 0.7, per_b / 60.0 - 0.3), _flat(bcols[i % bcols.size()], 0.5))
+		b.basis = t.basis
+	# nation flags along the back straight
+	for i in 12:
+		var fx := -STRAIGHT * 0.5 + i * STRAIGHT / 11.0
+		var pole := _scene("flagpole")
+		pole.position = Vector3(fx, 0, -RADIUS - 16.0)
+		add_child(pole)
+		var flag := MeshInstance3D.new()
+		var pm := PlaneMesh.new()
+		pm.size = Vector2(2.0, 1.3)
+		pm.subdivide_width = 12
+		pm.orientation = PlaneMesh.FACE_Z
+		flag.mesh = pm
+		var fm := ShaderMaterial.new()
+		fm.shader = load("res://games/frostpeak/shaders/flag.gdshader")
+		var cols: Array = Competition.NATIONS[i % Competition.NATIONS.size()]["flag"]
+		fm.set_shader_parameter("c0", cols[0])
+		fm.set_shader_parameter("c1", cols[1])
+		fm.set_shader_parameter("c2", cols[2])
+		flag.material_override = fm
+		flag.position = pole.position + Vector3(1.0, 7.2, 0)
+		add_child(flag)
+	# the games' name painted in the infield snow
+	var name_lb := Label3D.new()
+	name_lb.text = "FROSTPEAK"
+	name_lb.font = HudKit.font(true)
+	name_lb.font_size = 900
+	name_lb.pixel_size = 0.02
+	name_lb.modulate = Color(0.2, 0.45, 0.9, 0.8)
+	name_lb.rotation.x = -PI * 0.5
+	name_lb.position = Vector3(0, 0.05, 0)
+	add_child(name_lb)
 	for x in [-STRAIGHT * 0.5 - 20.0, STRAIGHT * 0.5 + 20.0]:
 		for z in [-RADIUS - 25.0, RADIUS + 25.0]:
 			var fl := _scene("floodlight")
