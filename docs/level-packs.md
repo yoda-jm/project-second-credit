@@ -42,6 +42,13 @@ Where packs load from:
 - the user folder `user://packs/` (Godot's per-user data dir)
 - a pack path given on the command line
 
+## Downloading known collections
+
+The game menu will offer to download well-known community collections (for example GDash's cave sets or the
+big BDCFF archives) straight into `user://packs/`. The player asks for it, the files come from their usual
+home, and nothing is copied into this repo. That way we don't duplicate what others already maintain.
+Each entry in the list records its source URL and, when known, its licence. Planned for game 1.
+
 ## Per game
 
 | Game | Native or foreign formats to support | Importer from original files |

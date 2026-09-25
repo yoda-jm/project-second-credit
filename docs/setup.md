@@ -37,6 +37,7 @@ once everything is there. To upgrade, change the version variables at the top of
 | Blender Lab MCP (add-on + `blender-mcp` server) | 1.0.3 | projects.blender.org/lab/blender_mcp | GPL-3.0-or-later |
 | gh (GitHub CLI) | 2.101.0 | github.com/cli/cli releases | MIT |
 | git-lfs | 3.8.0 | github.com/git-lfs/git-lfs releases | MIT |
+| GDash source (reference engine for game 1, read-only in `.tools/ref/gdash`) | commit 545308a | github.com/meonwax/gdash | MIT |
 | uv | 0.12.19 | github.com/astral-sh/uv releases | MIT / Apache-2.0 |
 
 Nothing is written outside the repo:
@@ -80,6 +81,7 @@ The Godot project is `godot/` (one project: the shared core plus a folder per ga
 or an agent check the work without opening the editor:
 
 ```bash
+tools/check.sh                      # parse every GDScript file, show errors
 tools/test.sh                       # GdUnit4 tests in godot/tests (exit code 0 = pass); reports in godot/reports/
 tools/capture.sh -f 120 -e 30       # run the main scene for 2 s and keep 4 PNGs in captures/<timestamp>/
 tools/capture.sh -r 960x540         # smaller frames, quicker to look at

@@ -10,7 +10,8 @@ BLENDER=5.2.2
 GH=2.101.0
 GITLFS=3.8.0
 UV=0.12.19
-BLENDER_MCP=1.0.3   # Blender Lab MCP (GPL-3.0): add-on + blender-mcp server
+BLENDER_MCP=1.0.3
+GDASH_COMMIT=545308a   # GDash (MIT), reference engine for game 1; its cave files are never committed   # Blender Lab MCP (GPL-3.0): add-on + blender-mcp server
 
 T=.tools; mkdir -p "$T/dl" "$T/bin"
 fetch() { [ -s "$T/dl/$2" ] || { curl -fsSL --retry 3 -o "$T/dl/$2.part" "$1" && mv "$T/dl/$2.part" "$T/dl/$2"; }; }
@@ -85,6 +86,12 @@ bpy.ops.wm.save_userpref()"
 fi
 # Register once per clone: claude mcp add --scope local blender -- "$PWD/.tools/blender-mcp-venv/bin/blender-mcp"
 # Start Blender normally (the add-on auto-starts on port 9876), or headless: blender -b --command blender_mcp
+
+# Reference sources (read-only, git-ignored): the ported engine's tests compare against them.
+if [ ! -d "$T/ref/gdash/.git" ]; then
+  git clone -q https://github.com/meonwax/gdash.git "$T/ref/gdash"
+  git -C "$T/ref/gdash" checkout -q "$GDASH_COMMIT"
+fi
 
 rm -rf "$T/dl"
 for b in godot blender gh git-lfs uv; do printf '%-8s ' "$b"; "$T/bin/$b" --version 2>/dev/null | head -1 || echo MISSING; done

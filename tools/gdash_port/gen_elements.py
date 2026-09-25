@@ -2,7 +2,7 @@
 """Generate godot/games/rocks/engine/cave_elements.gd from the GDash sources (MIT).
 
 Usage: python3 tools/gdash_port/gen_elements.py [path/to/gdash]   (default: .tools/ref/gdash)
-The GDash checkout is not part of the repo; see docs/games/rocks-engine.md.
+The GDash checkout is not part of the repo; see tools/gdash_port/README.md.
 """
 import re, sys, pathlib
 
@@ -112,7 +112,7 @@ L.append("")
 L.append(f"const COUNT := {o_max}  ## elements that can be in a cave (O_MAX)")
 L.append("")
 def arr(kind, vals):
-    return f"const {kind} := " + "[" + ", ".join(vals) + "]"
+    return f"const {kind} = " + "[" + ", ".join(vals) + "]"
 L.append(arr("PAIR: Array[int]", [str(rows[i]["pair"]) for i in range(o_max)]))
 L.append(arr("FLAGS: Array[int]", [str(rows[i]["flags"]) for i in range(o_max)]))
 L.append(arr("CKDELAY: Array[int]", [str(rows[i]["ckdelay"]) for i in range(o_max)]))
