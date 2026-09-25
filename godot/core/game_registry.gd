@@ -59,7 +59,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Ice, snow and a medal ceremony. Up to four players.",
 		"inspired_by": "Winter Games (1985)",
 		"scene": "res://games/frostpeak/scenes/frostpeak_game.tscn",
-		"card": "",
+		"card": "res://core/ui/cards/frostpeak.png",
 		"accent": Color(0.6, 0.85, 1.0),
 		"props": [["res://games/frostpeak/art/models/snowy_pine.glb", "model", 0.3],
 			["res://games/frostpeak/art/models/podium.glb", "model", 0.2],
