@@ -35,6 +35,13 @@ decisions below are settled unless the owner reopens them.
 - Descriptions in `catalog/desc_*.json` and `docs/games/` were drafted from memory. Verify numbers (level
   counts, timings) against the originals in an emulator before relying on them.
 
+- **Construction movie:** the owner will make a step-by-step movie of the build from git history. Keep commits
+  small, tested and runnable. The main scene must always show the current state, with a demo mode (recorded input,
+  fixed seeds, fixed fps) so `tools/capture.sh` shows movement without a player. Tag milestones (`m1-...`) and
+  write commit subjects that work as captions. Don't rewrite pushed history.
+- **Long agent runs:** keep the Godot editor and Blender closed. Edit files and check with `tools/test.sh` and
+  `tools/capture.sh`. Use the Godot and Blender MCP only when the owner opens those apps for interactive work.
+
 ## Repo map
 
 - Remote: https://github.com/yoda-jm/project-second-credit (branch `main`)
