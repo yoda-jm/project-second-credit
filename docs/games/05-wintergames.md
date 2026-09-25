@@ -1,4 +1,4 @@
-# 4. Winter Games (1985)
+# 5. Winter Games (1985)
 
 *Original: Epyx · C64 / Apple II · Sports / Party. Remake effort: medium. Free-version gap: **wide open**.*
 

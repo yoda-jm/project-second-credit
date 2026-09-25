@@ -9,19 +9,20 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: planning. No game code yet.
+> Status: game 1, **Glimmerdeep**, is playable (3D, sound, music); game 2 is next.
 
 ## Build order
 
 | # | Inspired by | Adds to the stack |
 |---|---|---|
-| 1 | Boulder Dash (1984) | Shared core, grid engine, level packs (BDCFF), editor, procedural props, the AI test loop |
-| 2 | Fruity Frank (1984) | Rigged characters, enemy AI, deformable soil |
-| 3 | Alley Cat (1984) | Platformer physics, character animation, multiple scenes |
-| 4 | Winter Games (1985) | Outdoor environments, event framework, advanced input, hot-seat play |
-| 5 | Cannon Fodder (1993) | Top-down terrain, squads, pathfinding, map importer |
-| 6 | Double Dragon (1987) | Melee combat, co-op |
-| 7 | Z (1996) | RTS layer, Zod Engine map compatibility |
+| 1 | Boulder Dash (1984): **Glimmerdeep** | Shared core, grid engine, level packs (BDCFF), editor, procedural props, the AI test loop |
+| 2 | Rampart (1990) | Real-time phases, wall-piece placement, cannon battles, local versus |
+| 3 | Fruity Frank (1984) | Rigged characters, enemy AI, deformable soil |
+| 4 | Alley Cat (1984) | Platformer physics, character animation, multiple scenes |
+| 5 | Winter Games (1985) | Outdoor environments, event framework, advanced input, hot-seat play |
+| 6 | Cannon Fodder (1993) | Top-down terrain, squads, pathfinding, map importer |
+| 7 | Double Dragon (1987) | Melee combat, co-op |
+| 8 | Z (1996) | RTS layer, Zod Engine map compatibility |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 
@@ -29,14 +30,14 @@ Each remake will get its own original name. The names above only refer to the in
 
 - [docs/vision.md](docs/vision.md): goals and principles
 - [docs/roadmap.md](docs/roadmap.md): build order and reasoning
-- [docs/catalog.md](docs/catalog.md): all 49 candidate games, with loop, pitch and remake ideas
+- [docs/catalog.md](docs/catalog.md): all the candidate games (51), with loop, pitch and remake ideas
 - [docs/games/](docs/games/): a brief for each game (gameplay, levels, challenge, map compatibility, existing free versions)
 - [docs/level-packs.md](docs/level-packs.md): level packs and map compatibility
 - [docs/stack.md](docs/stack.md): tools and pipeline (open-source, no paid services)
 - [docs/setup.md](docs/setup.md): development setup (system packages, portable tools, MCP servers)
 - [docs/legal.md](docs/legal.md): licensing and what never goes in the repo
 - [research/](research/): raw research (stack report, survey of existing free versions)
-- [catalog/](catalog/): source for the candidate catalog page (49 games)
+- [catalog/](catalog/): source for the candidate catalog page (51 games)
 
 ## Licence
 

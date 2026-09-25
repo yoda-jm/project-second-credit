@@ -11,3 +11,6 @@ extends Node
 func _ready() -> void:
 	var demo := OS.get_cmdline_user_args().has("--demo")
 	game.load_cave(cave_file, cave_index, demo)
+	var pause := PauseMenu.new()
+	add_child(pause)
+	pause.restart_requested.connect(game.restart)

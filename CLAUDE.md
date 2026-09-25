@@ -6,8 +6,8 @@ decisions below are settled unless the owner reopens them.
 
 ## Settled decisions
 
-- **Build order** ([docs/roadmap.md](docs/roadmap.md)): Boulder Dash → Fruity Frank → Alley Cat → Winter Games →
-  Cannon Fodder → Double Dragon → Z. It's a *stack ladder*: game 1 must look and play great on the simplest
+- **Build order** ([docs/roadmap.md](docs/roadmap.md)): Boulder Dash (*Glimmerdeep*) → Rampart → Fruity Frank →
+  Alley Cat → Winter Games → Cannon Fodder → Double Dragon → Z. (Rampart moved to game 2 at the owner's request.) It's a *stack ladder*: game 1 must look and play great on the simplest
   pipeline, and each later game adds a few new capabilities. We build the stack while building the games.
   There is no throwaway prototype.
 - **Maps:** if maps or levels exist for a game, we **must** be compatible (BDCFF for Boulder Dash, Open Fodder
@@ -47,11 +47,14 @@ decisions below are settled unless the owner reopens them.
 - Remote: https://github.com/yoda-jm/project-second-credit (branch `main`)
 - `docs/`: vision, roadmap, level packs, stack, setup, legal, the readable candidate list (`catalog.md`) and a
   brief per game (`docs/games/`)
-- `godot/`: the single Godot project (shared core plus one folder per game); vendored add-ons in `godot/addons/`,
+- `godot/`: the single Godot project: `core/` (launcher, settings autoload, pause menu, fonts, UI sounds) plus one
+  folder per game in `games/`; vendored add-ons in `godot/addons/`,
   the capture scene in `godot/tools/capture/`
-- `tools/`: `fetch-tools.sh` (portable tools), `test.sh`, `capture.sh`
+- `tools/`: `fetch-tools.sh` (portable tools), `test.sh`, `check.sh`, `capture.sh`, `movie_clip.sh <game>` and
+  `make_movie.py <game>` (construction movie per game), `stats.py` (tokens and time), `blender/` and `audio/`
+  (asset generators)
 - `research/`: `stack-report.md` (full tool research with sources, including rejected paid options) and
-  `existing_{A,B,C}.json` (survey of existing free versions for all 49 catalog games)
+  `existing_{A,B,C}.json` (survey of existing free versions for the first 49 catalog games)
 - `catalog/`: the candidate catalog page. `python3 build.py` (run in `catalog/`) builds `index.html`.
   `python3 catalog/tools/make_briefs.py` (run from the repo root) regenerates `docs/games/` and `docs/catalog.md`. Data: `games.json`,
   `desc_*.json`, `map_compat.json`, `shots_meta.json`.

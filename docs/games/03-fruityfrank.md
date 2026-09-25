@@ -1,4 +1,4 @@
-# 2. Fruity Frank (1984)
+# 3. Fruity Frank (1984)
 
 *Original: Kuma Computers · Amstrad CPC · Maze / Dig. Remake effort: small. Free-version gap: **wide open**.*
 

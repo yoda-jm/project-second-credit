@@ -1,4 +1,4 @@
-# 6. Double Dragon (1987)
+# 7. Double Dragon (1987)
 
 *Original: Technōs Japan · Arcade · Beat 'em up. Remake effort: medium. Free-version gap: **partly covered**.*
 

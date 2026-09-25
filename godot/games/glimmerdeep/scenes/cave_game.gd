@@ -74,8 +74,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			restart()
 		_tapped_dir = dir
 		_tapped_fire = _fire_held()
-	elif event is InputEventKey and event.keycode == KEY_ESCAPE and not playing_demo:
-		_suicide = true
 
 
 func _fire_held() -> bool:

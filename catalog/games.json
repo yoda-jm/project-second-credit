@@ -43,7 +43,7 @@
   "complexity": 3,
   "modern": "Cannon Fodder 3 (2011, poorly received) — the space is open",
   "source": "claude",
-  "roadmap": 5,
+  "roadmap": 6,
   "adds": "Top-down 3D terrain, squads, pathfinding, destructibles, vehicles, first binary map importer."
  },
  {
@@ -73,7 +73,7 @@
   "complexity": 2,
   "modern": "None notable",
   "source": "claude",
-  "roadmap": 3,
+  "roadmap": 4,
   "adds": "Platformer physics, a character with many animations, multiple scenes, 2.5D camera."
  },
  {
@@ -426,7 +426,7 @@
   "pitch": "A fast, aggressive RTS with a ton of personality (the sarcastic robots Brad and Allan, cutscenes). Modern tilt-shift battlefields, destructible terrain, great unit animation. Its compact ruleset suits a solo or AI-driven project better than a full RTS.",
   "complexity": 4,
   "modern": "Z: Steel Soldiers (2001), mobile ports; no premium remake",
-  "roadmap": 7,
+  "roadmap": 8,
   "adds": "RTS layer: territory capture, production, unit AI, fog, minimap, Zod Engine maps."
  },
  {
@@ -441,7 +441,9 @@
   "loop": "Build walls from Tetris-like pieces to enclose castles, place cannons inside your territory, bombard ships or rivals, repeat.",
   "pitch": "A three-phase loop in one sentence. Modern destruction physics, splashing water and 4-player online play would give it a lot of room to grow. ChatGPT's favourite.",
   "complexity": 2,
-  "modern": "Rampart (GBA/Xbox Live Arcade ports), no real remake"
+  "modern": "Rampart (GBA/Xbox Live Arcade ports), no real remake",
+  "roadmap": 2,
+  "adds": "Real-time phases (build, battle, repair) on a shared clock, polyomino wall pieces with rotation, territory enclosure by flood fill, cannon ballistics with aiming, ship AI, local versus for 2-3 players, water and a coastal diorama."
  },
  {
   "id": "northsouth",
@@ -666,7 +668,7 @@
   "pitch": "A lush vegetable-garden diorama: soft soil you carve through, glossy fruit, cartoon monsters. Shares its dig-and-crush tech with Boulder Dash and Dig Dug, so it's cheap once one of those exists.",
   "complexity": 2,
   "modern": "None",
-  "roadmap": 2,
+  "roadmap": 3,
   "adds": "First rigged and animated character, enemy AI in dug tunnels, deformable soil."
  },
  {
@@ -682,7 +684,7 @@
   "pitch": "Neon-soaked 80s streets, rain, weapon physics and meaty hit-stop. Two-player co-op is the draw. The combat has to feel heavy, which is animation work more than rules work.",
   "complexity": 3,
   "modern": "Double Dragon Neon (2012), Double Dragon Gaiden (2023)",
-  "roadmap": 6,
+  "roadmap": 7,
   "adds": "Melee combat, hit-stop, grabs and throws, weapon physics, co-op."
  },
  {
@@ -698,7 +700,35 @@
   "pitch": "The controls were the fun, so a remake should lean on today's inputs: triggers, gyro aiming, rumble and online play in turn. Snow, ice and alpine lighting are easy wins for modern rendering.",
   "complexity": 3,
   "modern": "None faithful; Olympic licensed games are a different style",
-  "roadmap": 4,
+  "roadmap": 5,
   "adds": "Outdoor snow and ice environments, event framework, analogue, gyro and rumble input, hot-seat multiplayer."
+ },
+ {
+  "id": "magiccarpet",
+  "name": "Magic Carpet / Magic Carpet 2",
+  "year": 1994,
+  "platform": "DOS",
+  "dev": "Bullfrog",
+  "genre": "Action / Strategy (3D)",
+  "wiki": "Magic Carpet (video game)",
+  "source": "you",
+  "loop": "Fly a magic carpet over deformable 3D landscapes, cast spells to kill monsters and rival wizards, and gather the scattered mana with your castle's balloons to restore the world's balance.",
+  "pitch": "One of the first fully deformable 3D worlds: craters, volcanoes and rising land. Today's GPUs can make its terrain spells, water and fire spectacular, and its mix of shooter and light strategy is still rare.",
+  "complexity": 5,
+  "modern": "None; the originals are sold on GOG"
+ },
+ {
+  "id": "bigredracing",
+  "name": "Big Red Racing",
+  "year": 1996,
+  "platform": "DOS",
+  "dev": "Big Red Software / Domark",
+  "genre": "Racing (arcade, comic)",
+  "wiki": "Big Red Racing",
+  "source": "you",
+  "loop": "Arcade races across wildly mixed vehicles (buggies, jeeps, hovercraft, jets, even a moon buggy) on bumpy 3D tracks, with a cartoon, self-mocking tone and split-screen for two.",
+  "pitch": "A daft, joyful racer that swaps vehicles and terrain every race. A remake could keep the humour and split-screen and add proper physics, destructible props and online races.",
+  "complexity": 4,
+  "modern": "None"
  }
 ]

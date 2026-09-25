@@ -1,4 +1,4 @@
-# 5. Cannon Fodder (1993)
+# 6. Cannon Fodder (1993)
 
 *Original: Sensible Software · Amiga / DOS · Action / Tactics. Remake effort: medium. Free-version gap: **wide open**.*
 

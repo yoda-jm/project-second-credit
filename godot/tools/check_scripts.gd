@@ -3,7 +3,18 @@ extends SceneTree
 ## Run: godot --headless --path godot -s res://tools/check_scripts.gd [-- res://folder ...]
 
 
-func _init() -> void:
+var _done := false
+
+
+func _process(_delta: float) -> bool:
+	# run on the first frame: autoload singletons (like Settings) are registered by then
+	if not _done:
+		_done = true
+		_check()
+	return false
+
+
+func _check() -> void:
 	var roots := OS.get_cmdline_user_args()
 	if roots.is_empty():
 		roots = PackedStringArray(["res://games", "res://boot", "res://tools"])

@@ -19,5 +19,19 @@
   "challenge": "Each event is a separate motor-skill test, from stamina-heavy waggling to split-second timing and memorised routines. Mastery comes from practising the exact rhythm of each control.",
   "unique": "The fun came from how the controls were built. Each event turned the joystick into a physical performance, and the multiplayer hot-seat made it a living-room party game long before that was a genre.",
   "remake_hooks": "Motion controls, trigger pressure and rumble for each event. Snow and ice shaders, alpine lighting, crowd atmosphere, and online or couch tournaments with national anthems."
+ },
+ "magiccarpet": {
+  "gameplay": "The player is a wizard on a flying carpet in a first-person 3D world. Spells (fireball, lightning, meteor, earthquake, raise land, crater...) are found or granted per level and fight monsters and enemy wizards. Killed creatures leave mana balls; claiming them and ferrying them home with the balloons of your castle is the real goal, while rivals try to steal them. Castles grow with the mana they hold and can be attacked.",
+  "levels": "Many worlds (around fifty in the first game, drafted from memory), each a varied island landscape; the sequel adds night levels, more spells and more creatures.",
+  "challenge": "Juggling combat, mana collection and defending your castle at the same time, against aggressive wizards and flying monsters. Terrain spells reshape the battle.",
+  "unique": "Real-time deformable terrain in 1994, and a hybrid of shooter and territory strategy that few games copied.",
+  "remake_hooks": "Heightmap terrain with GPU deformation, volumetric fire and water, big spell effects, flight controls on gamepad, co-op or versus wizards online."
+ },
+ "bigredracing": {
+  "gameplay": "Arcade racing where each event changes the vehicle and the terrain: off-road buggies, 4x4s, snowmobiles, speedboats, hovercraft, aircraft and a lunar vehicle. Tracks are short, bumpy and full of jumps; the presentation is a comic parody with silly commentary.",
+  "levels": "A handful of championships over many tracks and vehicle types (counts to check against the original).",
+  "challenge": "Mastering very different handling from race to race, and bumpy physics that punishes bad landings.",
+  "unique": "The sheer variety of vehicles in one light-hearted racer, plus two-player split-screen in 1996.",
+  "remake_hooks": "Proper vehicle physics per class, destructible scenery, split-screen and online races, a track editor and a cheeky presentation."
  }
 }

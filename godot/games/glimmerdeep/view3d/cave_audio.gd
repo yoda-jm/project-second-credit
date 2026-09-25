@@ -22,6 +22,7 @@ func _ready() -> void:
 		_streams[name] = load(SFX + name + ".wav")
 	for i in 16:
 		var p := AudioStreamPlayer.new()
+		p.bus = "SFX"
 		add_child(p)
 		_players.append(p)
 	_music = AudioStreamPlayer.new()
@@ -29,6 +30,7 @@ func _ready() -> void:
 	theme.loop = true
 	_music.stream = theme
 	_music.volume_db = music_volume_db
+	_music.bus = "Music"
 	add_child(_music)
 	game.frame_done.connect(_on_frame)
 	game.cave_started.connect(func(_e): if not _music.playing: _music.play())

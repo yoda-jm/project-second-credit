@@ -1,6 +1,6 @@
 # Candidate catalog
 
-All 49 games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the inspiration only; every remake gets an original title.
+All 51 games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the inspiration only; every remake gets an original title.
 
 ## Roadmap
 
@@ -16,9 +16,21 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** Boulder Dash 30th Anniversary (2014) — pleasant but flat; room for a truly premium take
 
-### 2. Fruity Frank
+### 2. Rampart
 
-*1984 · Kuma Computers · Amstrad CPC · Maze / Dig · remake effort: small · free-version gap: wide open* · [brief](games/02-fruityfrank.md)
+*1990 · Atari Games · Arcade · Puzzle / Strategy · remake effort: small · free-version gap: wide open* · [brief](games/02-rampart.md)
+
+**Loop.** Build walls from Tetris-like pieces to enclose castles, place cannons inside your territory, bombard ships or rivals, repeat.
+
+**Why remake it.** A three-phase loop in one sentence. Modern destruction physics, splashing water and 4-player online play would give it a lot of room to grow. ChatGPT's favourite.
+
+**Remake ideas.** Detailed medieval coastlines with dynamic water, cannon smoke, fire and physically crumbling stone walls would make battles spectacular. Online multiplayer and a readable, tactile building phase would keep the core rules intact.
+
+**Modern takes.** Rampart (GBA/Xbox Live Arcade ports), no real remake
+
+### 3. Fruity Frank
+
+*1984 · Kuma Computers · Amstrad CPC · Maze / Dig · remake effort: small · free-version gap: wide open* · [brief](games/03-fruityfrank.md)
 
 **Loop.** Frank tunnels through his garden collecting fruit, drops apples on the monsters and throws a bouncing ball to stop them.
 
@@ -28,9 +40,9 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** None
 
-### 3. Alley Cat
+### 4. Alley Cat
 
-*1984 · Synapse Software (Bill Williams) · IBM PC · Action / Platform · remake effort: small · free-version gap: wide open* · [brief](games/03-alleycat.md)
+*1984 · Synapse Software (Bill Williams) · IBM PC · Action / Platform · remake effort: small · free-version gap: wide open* · [brief](games/04-alleycat.md)
 
 **Loop.** A stray cat leaps between fences, trash cans and clotheslines, jumps through open windows into mini-rooms (fishbowl, mice in cheese, sleeping dogs) to win the heart of a lady cat.
 
@@ -40,9 +52,9 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** None notable
 
-### 4. Winter Games
+### 5. Winter Games
 
-*1985 · Epyx · C64 / Apple II · Sports / Party · remake effort: medium · free-version gap: wide open* · [brief](games/04-wintergames.md)
+*1985 · Epyx · C64 / Apple II · Sports / Party · remake effort: medium · free-version gap: wide open* · [brief](games/05-wintergames.md)
 
 **Loop.** A set of winter sports events (ski jump, biathlon, speed skating, figure skating, hot dog aerials, bobsled), each with its own joystick timing or rhythm control, played in turn by up to 8 players.
 
@@ -52,9 +64,9 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** None faithful; Olympic licensed games are a different style
 
-### 5. Cannon Fodder
+### 6. Cannon Fodder
 
-*1993 · Sensible Software · Amiga / DOS · Action / Tactics · remake effort: medium · free-version gap: wide open* · [brief](games/05-cannonfodder.md)
+*1993 · Sensible Software · Amiga / DOS · Action / Tactics · remake effort: medium · free-version gap: wide open* · [brief](games/06-cannonfodder.md)
 
 **Loop.** Guide a tiny squad with mouse clicks: left to move, right to shoot; grenades and rockets for buildings; recruits die permanently.
 
@@ -64,9 +76,9 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** Cannon Fodder 3 (2011, poorly received) — the space is open
 
-### 6. Double Dragon
+### 7. Double Dragon
 
-*1987 · Technōs Japan · Arcade · Beat 'em up · remake effort: medium · free-version gap: partly covered* · [brief](games/06-doubledragon.md)
+*1987 · Technōs Japan · Arcade · Beat 'em up · remake effort: medium · free-version gap: partly covered* · [brief](games/07-doubledragon.md)
 
 **Loop.** Billy and Jimmy Lee fight through a city gang to rescue Marian, with punches, kicks, throws and weapons picked up from enemies.
 
@@ -76,9 +88,9 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** Double Dragon Neon (2012), Double Dragon Gaiden (2023)
 
-### 7. Z
+### 8. Z
 
-*1996 · The Bitmap Brothers · DOS / Mac · RTS · remake effort: large · free-version gap: partly covered* · [brief](games/07-z.md)
+*1996 · The Bitmap Brothers · DOS / Mac · RTS · remake effort: large · free-version gap: partly covered* · [brief](games/08-z.md)
 
 **Loop.** No base building: capture territory flags and every factory, radar and gun in the sector becomes yours. More territory means faster production. Robot armies fight for the map.
 
@@ -402,18 +414,6 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 
 **Modern takes.** Tetris Effect: Connected
 
-### Rampart
-
-*1990 · Atari Games · Arcade · Puzzle / Strategy · remake effort: small · free-version gap: wide open*
-
-**Loop.** Build walls from Tetris-like pieces to enclose castles, place cannons inside your territory, bombard ships or rivals, repeat.
-
-**Why remake it.** A three-phase loop in one sentence. Modern destruction physics, splashing water and 4-player online play would give it a lot of room to grow. ChatGPT's favourite.
-
-**Remake ideas.** Detailed medieval coastlines with dynamic water, cannon smoke, fire and physically crumbling stone walls would make battles spectacular. Online multiplayer and a readable, tactile building phase would keep the core rules intact.
-
-**Modern takes.** Rampart (GBA/Xbox Live Arcade ports), no real remake
-
 ### North & South
 
 *1989 · Infogrames · Amiga / Atari ST · Strategy / Action · remake effort: medium · free-version gap: wide open*
@@ -593,3 +593,27 @@ All 49 games considered for remakes, generated from `catalog/` by `catalog/tools
 **Remake ideas.** Detailed, photorealistic household environments with depth-of-field and physics for toys and obstacles would enhance the tiny scale, and online multiplayer would suit the head-to-head mode.
 
 **Modern takes.** Micro Machines World Series (2017, poorly received)
+
+### Magic Carpet / Magic Carpet 2
+
+*1994 · Bullfrog · DOS · Action / Strategy (3D) · remake effort: very large*
+
+**Loop.** Fly a magic carpet over deformable 3D landscapes, cast spells to kill monsters and rival wizards, and gather the scattered mana with your castle's balloons to restore the world's balance.
+
+**Why remake it.** One of the first fully deformable 3D worlds: craters, volcanoes and rising land. Today's GPUs can make its terrain spells, water and fire spectacular, and its mix of shooter and light strategy is still rare.
+
+**Remake ideas.** Heightmap terrain with GPU deformation, volumetric fire and water, big spell effects, flight controls on gamepad, co-op or versus wizards online.
+
+**Modern takes.** None; the originals are sold on GOG
+
+### Big Red Racing
+
+*1996 · Big Red Software / Domark · DOS · Racing (arcade, comic) · remake effort: large*
+
+**Loop.** Arcade races across wildly mixed vehicles (buggies, jeeps, hovercraft, jets, even a moon buggy) on bumpy 3D tracks, with a cartoon, self-mocking tone and split-screen for two.
+
+**Why remake it.** A daft, joyful racer that swaps vehicles and terrain every race. A remake could keep the humour and split-screen and add proper physics, destructible props and online races.
+
+**Remake ideas.** Proper vehicle physics per class, destructible scenery, split-screen and online races, a track editor and a cheeky presentation.
+
+**Modern takes.** None

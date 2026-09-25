@@ -1,4 +1,4 @@
-# 3. Alley Cat (1984)
+# 4. Alley Cat (1984)
 
 *Original: Synapse Software (Bill Williams) · IBM PC · Action / Platform. Remake effort: small. Free-version gap: **wide open**.*
 

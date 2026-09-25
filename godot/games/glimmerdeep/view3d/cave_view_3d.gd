@@ -291,7 +291,7 @@ func _on_frame_done(engine: CaveEngine, _frame_ms: float) -> void:
 		_fx.on_event(ev, engine)
 		if ev[0] == "effect" and ev[4]:
 			_landed[int(ev[3]) * engine.w + int(ev[2])] = _time
-		if ev[0] == "explosion":
+		if ev[0] == "explosion" and Settings.camera_shake:
 			_trauma = minf(1.0, _trauma + 0.55)
 
 
