@@ -67,8 +67,7 @@ func _build_world() -> void:
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.45
+	Look.sky_ambient(env, Color(0.6, 0.65, 0.75), 0.45)
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.95
 	env.tonemap_white = 6.0
@@ -77,9 +76,7 @@ func _build_world() -> void:
 	env.glow_hdr_threshold = 1.0
 	env.ssao_enabled = true
 	env.ssao_intensity = 2.5
-	env.fog_enabled = true
-	env.fog_light_color = Color(0.8, 0.85, 0.95)
-	env.fog_density = 0.0015
+	Look.fog(env, Color(0.8, 0.85, 0.95), 0.0015)
 	env.adjustment_enabled = true
 	env.adjustment_saturation = 1.25
 	env.adjustment_contrast = 1.1
@@ -428,8 +425,19 @@ func _on_event(kind: String, d: Dictionary) -> void:
 				var n: Node3D = _apple_nodes[d["id"]]
 				_apple_nodes.erase(d["id"])
 				_fx.splat(n.position, Color(0.95, 0.85, 0.55))
-				n.queue_free()
 				_shake = 0.5
+				# the apple splits in two halves that tumble apart and fade
+				for side in [-1, 1]:
+					var half := n.duplicate() as Node3D
+					_board.add_child(half)
+					half.position = n.position
+					half.scale = Vector3(0.6, 1.1, 1.1)
+					var tw := create_tween().set_parallel()
+					tw.tween_property(half, "position", n.position + Vector3(0.45 * side, -0.15, 0.1), 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+					tw.tween_property(half, "rotation", Vector3(0, 0, 1.4 * side), 0.35)
+					tw.chain().tween_property(half, "scale", Vector3.ZERO, 0.4).set_delay(0.5)
+					tw.chain().tween_callback(half.queue_free)
+				n.queue_free()
 		"apple_land":
 			_shake = 0.3
 			if _apple_nodes.has(d["id"]):
@@ -557,14 +565,18 @@ func _update_apples(e: FruitburrowEngine) -> void:
 		var n: Node3D = _apple_nodes.get(a["id"])
 		if n == null:
 			continue
-		var p := Vector3(a["cell"].x, -a["y"], 0.45 if a["state"] == E.Apple.REST and e.at(a["cell"]) == T.SOIL else 0.05)
+		# resting or wobbling, the apple sits half out of the soil face; falling, it slides into the tunnel
+		var in_soil: bool = a["state"] != E.Apple.FALL and e.at(a["cell"]) == T.SOIL
+		var z := 0.45 if in_soil else 0.05
+		var p := Vector3(a["cell"].x, -a["y"], z)
 		if a["state"] == E.Apple.WOBBLE:
 			n.rotation.z = sin(_time * 38.0) * 0.18
+			p.x += sin(_time * 38.0) * 0.04
 		elif a["state"] == E.Apple.FALL:
 			n.rotation.z += 0.05
 		else:
-			n.rotation.z = 0.0
-		n.position = n.position.lerp(p, 0.5) if a["state"] != E.Apple.FALL else p
+			n.rotation.z = lerpf(n.rotation.z, 0.0, 0.2)
+		n.position = Vector3(p.x, p.y, lerpf(n.position.z, p.z, 0.15)) if a["state"] == E.Apple.FALL else n.position.lerp(p, 0.5)
 
 
 func _update_ball(e: FruitburrowEngine) -> void:
