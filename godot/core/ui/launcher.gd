@@ -98,7 +98,9 @@ func _prop_material(kind: String) -> Material:
 	if kind == "model":
 		return null
 	if kind == "stone":
-		return Pbr.material("stone_bricks", Color(1.0, 0.96, 0.9), 1.4)
+		var st := Pbr.material("stone_bricks", Color(1.0, 0.96, 0.9), 1.4).duplicate() as StandardMaterial3D
+		st.uv1_world_triplanar = false  # the texture must travel and spin with each floating brick
+		return st
 	if kind == "gem":
 		var m := ShaderMaterial.new()
 		m.shader = load("res://games/glimmerdeep/shaders/gem.gdshader")
@@ -169,14 +171,17 @@ func _process(delta: float) -> void:
 	_morph_t += delta
 	for i in _seeds.size():
 		var s := _seeds[i]
-		var p := Vector3(s.x + sin(_time * 0.2 + s.w * 9.0) * 0.6, s.y + fmod(_time * (0.15 + s.w * 0.2) + s.w * 20.0, 14.0) - 7.0, s.z)
+		# rise through a band taller than the view; shrink away near its ends so nothing pops in or out
+		var rise := fmod(s.y + 8.0 + _time * (0.15 + s.w * 0.2) + s.w * 20.0, 18.0) - 9.0
+		var p := Vector3(s.x + sin(_time * 0.2 + s.w * 9.0) * 0.6, rise, s.z)
+		var edge := smoothstep(0.0, 2.5, 9.0 - absf(rise))
 		# morph: each object shrinks, swaps shape and pops back, with a small stagger between objects
 		var k := clampf((_morph_t - s.w * 0.45) / 0.35, 0.0, 1.0)
 		var key := _prop_for(_selected, i) if k >= 0.5 else _prop_for(_previous, i)
 		var grow := absf(k * 2.0 - 1.0)
 		grow = 1.0 - pow(1.0 - grow, 3.0)
 		var spin := _time * (0.3 + s.w) + k * TAU
-		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), spin).scaled(Vector3.ONE * (0.6 + s.w * 0.8) * maxf(grow, 0.001))
+		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), spin).scaled(Vector3.ONE * (0.6 + s.w * 0.8) * maxf(grow * edge, 0.001))
 		var mm: MultiMesh = _prop_mm[key].multimesh
 		mm.set_instance_transform(_prop_count[key], Transform3D(b, p))
 		_prop_count[key] += 1
