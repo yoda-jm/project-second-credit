@@ -16,7 +16,7 @@ CaveTime=150 140 130 120 110
 DiamondValue=10 15
 CaveScheduling=ms
 FrameTime=150 140 130 120 110
-HatchingDelay=21
+HatchingDelay=6
 Colors=Black Black Orange Brown White
 [map]
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
@@ -48,7 +48,7 @@ RandomSeed=0
 Player=DemoBot
 Score=256
 Success=true
-Movements=.21 r6 d2 r d5 r u r u r u2 r3 u r u2 r11 d7 r3 d r2 d r7 u r u4 l u r u2 d10 l2 d2 r d3 u2 r3
+Movements=.6 r7 d2 r d5 r u r u r u2 r3 u r u2 r11 d7 r3 d r2 d r7 u r u4 l u r u2 d10 l2 d2 r d3 u2 r3
 [/replay]
 [/cave]
 [/game]

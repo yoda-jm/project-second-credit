@@ -53,7 +53,10 @@ var got_pneumatic_hammer := false
 var pneumatic_hammer_active_delay: int = 0
 var voodoo_touched := false
 var score: int = 0  ## score collected in the last frame
+var cave_hatching_frames: int = 0  ## initial hatching delay, for countdown displays
+var cave_hatching_ms: int = 0
 var events: Array = []  ## sounds and visual effects of the last frame (see the class comment)
+var moves: Array[Vector3i] = []  ## objects that moved one cell in the last frame: (from x, from y, direction)
 
 ## Elements that do something when scanned (the rest are skipped quickly).
 static var _active := PackedByteArray()
@@ -103,6 +106,8 @@ func setup_for_game() -> void:
 	amoeba_time *= timing_factor
 	amoeba_2_time *= timing_factor
 	hatching_delay_time *= timing_factor
+	cave_hatching_frames = hatching_delay_frame
+	cave_hatching_ms = hatching_delay_time
 	if hammered_walls_reappear:
 		hammered_reappear.resize(w * h)
 		hammered_reappear.fill(0)
@@ -177,8 +182,8 @@ func time_visible(internal_time: int = -1) -> int:
 
 # --- events (no effect on the game state) ---
 
-func _effect(element: int, x: int, y: int, dir: int = D.STILL, _particles: bool = true) -> void:
-	events.append(["effect", element, x + D.DX[dir], y + D.DY[dir]])
+func _effect(element: int, x: int, y: int, dir: int = D.STILL, particles: bool = true) -> void:
+	events.append(["effect", element, x + D.DX[dir], y + D.DY[dir], particles])
 
 
 func _eat(element: int, x: int, y: int) -> void:
@@ -263,6 +268,7 @@ func _store_dir(x: int, y: int, dir: int, element: int) -> void:
 func _move(x: int, y: int, dir: int, element: int) -> void:
 	_store_dir(x, y, dir, element)
 	_store(x, y, E.SPACE)
+	moves.append(Vector3i(x, y, dir))
 
 
 func _next(x: int, y: int) -> void:
@@ -678,6 +684,7 @@ func _do_fall_roll_or_stop(x: int, y: int, fall_dir: int, bouncing: int) -> void
 ## One cave frame. Returns the player move actually used (diagonals removed when not allowed).
 func iterate(player_move: int, player_fire: bool, suicide: bool) -> int:
 	events.clear()
+	moves.clear()
 	var grav_compat: int = gravity if gravity_affects_all else D.DOWN
 
 	if not diagonal_movements:

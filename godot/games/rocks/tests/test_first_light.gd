@@ -22,3 +22,11 @@ func test_scene_plays_the_demo() -> void:
 	await runner.simulate_frames(150, 66)  # ~10 s of game time
 	var engine: CaveEngine = runner.scene().engine
 	assert_int(engine.diamonds_collected).is_greater(0)
+
+
+func test_3d_game_scene_runs() -> void:
+	var runner := scene_runner("res://games/rocks/scenes/rocks_game.tscn")
+	await runner.simulate_frames(20, 100)
+	var game: CaveGame = runner.find_child("Game")
+	assert_object(game.engine).is_not_null()
+	assert_bool(game.engine.hatched).is_true()
