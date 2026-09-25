@@ -82,6 +82,9 @@ func _build_world() -> void:
 	sun.light_energy = 1.1
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 80.0
+	sun.shadow_bias = 0.08
+	sun.shadow_normal_bias = 2.5  # the steep cone roofs otherwise shimmer with shadow acne
+	sun.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY  # no sun disc in the sky: no hard blob reflected in the sea
 	add_child(sun)
 	_camera = Camera3D.new()
 	_camera.fov = 40
@@ -476,7 +479,7 @@ func _update_ships(e: BastionEngine, delta: float) -> void:
 		var pos := Vector3(s["pos"].x, 0.12 + 0.05 * sin(_time * 2.0 + s["id"]), s["pos"].y)
 		var heading: Vector2 = s["target"] - s["pos"]
 		if heading.length() > 0.05:
-			var want := atan2(-heading.x, -heading.y)
+			var want := atan2(heading.x, heading.y)  # ships face +Z (Blender's -Y)
 			node.rotation.y = lerp_angle(node.rotation.y, want, 1.0 - exp(-delta * 3.0))
 		node.rotation.z = 0.06 * sin(_time * 1.7 + s["id"])
 		node.position = pos
@@ -497,6 +500,7 @@ func _update_ships(e: BastionEngine, delta: float) -> void:
 		entry[1] += delta
 		node.position.y -= delta * 0.5
 		node.rotation.x += delta * 0.4
+		node.visible = node.position.y > -0.9  # gone once under the surface (no glow through the water)
 		if entry[1] > 3.0:
 			node.queue_free()
 			_sinking.erase(entry)
@@ -510,7 +514,8 @@ func _update_holes(e: BastionEngine) -> void:
 		var pulse := 0.55 + 0.45 * sin(_time * 7.0)
 		for c in e.castle_holes:
 			var holes: Array = e.castle_holes[c]
-			if holes.size() > BastionEngine.HOLE_LIMIT:
+			# beacons for the home castle, and for other castles only once they are close to sealed
+			if holes.size() > BastionEngine.HOLE_LIMIT or (c != e.home_castle and holes.size() > 6):
 				continue
 			for h in holes:
 				if n >= 64:
@@ -539,11 +544,8 @@ func _make_wake() -> CPUParticles3D:
 	q.size = Vector2(0.35, 0.35)
 	q.orientation = PlaneMesh.FACE_Y
 	p.mesh = q
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.vertex_color_use_as_albedo = true
-	p.material_override = m
+	p.material_override = Fx.material("flat", Color(1, 1, 1, 0.7))
+	p.scale_amount_curve = Fx.size_curve(true)
 	var fade := Gradient.new()
 	fade.set_color(0, Color(1, 1, 1, 0.8))
 	fade.set_color(1, Color(1, 1, 1, 0))
@@ -614,6 +616,7 @@ func _update_cannons(e: BastionEngine) -> void:
 			var aim: Vector2 = e.cursor - (Vector2(c["pos"]) + Vector2(0.5, 0.5))
 			if game.demo and not e.ships.is_empty():
 				aim = e.ships[0]["pos"] - (Vector2(c["pos"]) + Vector2(0.5, 0.5))
-			node.rotation.y = lerp_angle(node.rotation.y, atan2(-aim.x, -aim.y), 0.15)
+			# the models face +Z (Blender's -Y), hence the half turn
+			node.rotation.y = lerp_angle(node.rotation.y, atan2(aim.x, aim.y), 0.15)
 		for mi in node.find_children("*", "MeshInstance3D", true, false):
 			(mi as MeshInstance3D).transparency = 0.0 if c["active"] else 0.5

@@ -88,7 +88,7 @@ sail = lambda: mat("sail", (0.93, 0.9, 0.82), 0.9)
 flag = lambda: mat("flag", (1.0, 0.75, 0.15), 0.5, 0.0, 0.4)
 hull = lambda: mat("hull", (0.22, 0.13, 0.07), 0.7)
 paint = lambda: mat("paint", (0.7, 0.08, 0.06), 0.5)
-lamp = lambda: mat("lamp", (1.0, 0.8, 0.35), 0.4, 0.0, 6.0)
+lamp = lambda: mat("lamp", (1.0, 0.8, 0.35), 0.4, 0.0, 1.2)
 enemy = lambda: mat("enemy", (0.75, 0.12, 0.12), 0.6)
 
 
