@@ -11,6 +11,7 @@ const P = BastionEngine.Phase
 
 var engine: BastionEngine
 var demo := false
+var demo_locked := false  ## captures: the demo cannot be taken over by input
 var view: Node  ## set by the view: provides screen_to_cell(Vector2) -> Vector2 (or null)
 var game_over_time := 0.0
 var _acc := 0.0
@@ -51,7 +52,8 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if engine == null or demo:
-		if demo and event.is_pressed() and not event.is_echo() and (event is InputEventKey or event is InputEventMouseButton):
+		if demo and not demo_locked and event.is_pressed() and not event.is_echo() \
+				and (event is InputEventKey or event is InputEventMouseButton):
 			if not event.is_action("ui_cancel"):
 				demo = false  # a key press takes over
 				start()

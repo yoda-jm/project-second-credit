@@ -25,6 +25,7 @@ func _ready() -> void:
 		var l := OmniLight3D.new()
 		l.light_energy = 0.0
 		l.omni_range = 6.0
+		l.light_specular = 0.08  # light the scene, but no hard glare on the glossy sea
 		add_child(l)
 		_lights.append(l)
 

@@ -19,6 +19,7 @@ func _ready() -> void:
 			demo = true
 			demo_index = int(arg.substr(7))
 	game.load_cave(cave_file, cave_index, demo, demo_index)
+	game.demo_locked = demo and OS.get_cmdline_user_args().has("--locked")
 	var pause := PauseMenu.new()
 	add_child(pause)
 	pause.restart_requested.connect(game.restart)

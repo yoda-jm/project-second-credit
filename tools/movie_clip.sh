@@ -10,7 +10,7 @@ game=${1:?usage: movie_clip.sh <game> [seconds] [resolution]}
 secs=${2:-14}
 res=${3:-1280x720}
 scene="res://games/$game/scenes/${game}_game.tscn"
-extra=(${DEMO_ARG:---demo})   # DEMO_ARG=--demo=1 records the cave's second demo (the hero gets crushed)
+extra=(${DEMO_ARG:---demo} --locked)   # DEMO_ARG=--demo=1 records the cave's second demo (the hero gets crushed)
 if [ "$game" = launcher ]; then  # the collection's front end, switching cards to show the morph
   scene="res://core/ui/launcher.tscn"
   extra=(--select=1)

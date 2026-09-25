@@ -36,7 +36,7 @@ mkdir -p "$out"; out=$(cd "$out" && pwd)
 log=$(mktemp); trap 'rm -f "$log"' EXIT
 
 cmd=("$GODOT" --path "$here/../godot" --audio-driver Dummy --fixed-fps 60 --resolution "$res")
-user=(res://tools/capture/capture.tscn -- --demo ${CAPTURE_ARGS:-} --frames="$frames" --every="$every" --out="$out")
+user=(res://tools/capture/capture.tscn -- --demo --locked ${CAPTURE_ARGS:-} --frames="$frames" --every="$every" --out="$out")
 [ -n "$scene" ] && user+=(--scene="$scene")
 rc=0
 if [ $gpu -eq 1 ]; then

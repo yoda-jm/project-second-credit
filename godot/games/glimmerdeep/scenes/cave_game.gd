@@ -22,6 +22,7 @@ var engine: CaveEngine
 var level := 0
 var demo: CaveReplay
 var playing_demo := false
+var demo_locked := false  ## captures: the demo cannot be taken over by input
 var score := 0
 var bonus_pending := false
 var finished := false
@@ -69,9 +70,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action("ui_left"): dir = D.LEFT
 	elif event.is_action("ui_right"): dir = D.RIGHT
 	if dir != D.STILL:
-		if playing_demo:
+		if playing_demo and not demo_locked:
 			demo = null
 			restart()
+		elif playing_demo:
+			return
 		_tapped_dir = dir
 		_tapped_fire = _fire_held()
 
