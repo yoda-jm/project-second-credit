@@ -80,7 +80,7 @@ func _draw() -> void:
 		draw_circle(bc + Vector2(0, 6), 11.0, HudKit.GOLD, true, -1.0, true)
 		draw_circle(bc + Vector2(0, 6), 17.0, Color(HudKit.GOLD, 0.2), true, -1.0, true)
 	else:
-		var k := 1.0 - clampf(e.ball_regrow / FruitburrowEngine.BALL_REGROW, 0.0, 1.0) if e.ball.is_empty() else 0.0
+		var k := 1.0 - clampf(e.ball_regrow / e.regrow_time(), 0.0, 1.0) if e.ball.is_empty() else 0.0
 		HudKit.ring(self, bc + Vector2(0, 6), 12.0, k, Color(HudKit.GOLD, 0.8), 4.0)
 	# right: score
 	HudKit.panel(self, Rect2(vp.x - 324, 16, 300, 84), HudKit.GOLD)

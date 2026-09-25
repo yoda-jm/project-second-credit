@@ -172,11 +172,26 @@ func test_same_seed_and_inputs_replay_identically() -> void:
 	assert_array(scores[0]).is_equal(scores[1])
 
 
-func test_demo_bot_picks_fruit() -> void:
+func test_demo_bot_clears_the_first_garden() -> void:
 	var g := GardenMap.load_pack("res://games/fruitburrow/gardens/orchard.gdn")[0]
 	var e := FruitburrowEngine.new(g, 11)
 	var bot := GardenBot.new()
-	for i in int(40.0 / E.TICK):
+	for i in int(120.0 / E.TICK):
 		bot.drive(e)
 		e.tick()
-	assert_int(e.fruit.size()).is_less(g.fruit.size() - 5)
+		if e.level_done():
+			break
+	assert_bool(e.level_done()).is_true()
+	assert_int(e.lives).is_greater(0)
+
+
+func test_ball_grows_back_slower_after_each_throw() -> void:
+	var e := _engine("P...\nN##c")
+	e.player["face"] = Vector2i.RIGHT
+	e.fire()
+	_run(e, E.BALL_LIFE + 0.1)
+	var first := e.ball_regrow
+	_run(e, E.BALL_MAX_REGROW)
+	e.fire()
+	_run(e, E.BALL_LIFE + 0.1)
+	assert_float(e.ball_regrow).is_greater(first)

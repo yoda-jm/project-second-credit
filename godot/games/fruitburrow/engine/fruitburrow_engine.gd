@@ -33,7 +33,9 @@ const DIGGER_SPEED := 1.8
 const SPEEDUP_PER_LEVEL := 0.06
 const BALL_SPEED := 11.0
 const BALL_LIFE := 3.0
-const BALL_REGROW := 2.0
+const BALL_REGROW := 2.0  ## seconds for the first throw of a garden; each further throw adds BALL_REGROW_STEP
+const BALL_REGROW_STEP := 1.0
+const BALL_MAX_REGROW := 8.0
 const APPLE_WOBBLE := 0.7
 const APPLE_FALL_SPEED := 7.5
 const SPAWN_FIRST := 1.5
@@ -60,6 +62,7 @@ var player := {}  ## {cell, to, t, face, dig}
 var ball := {}  ## empty unless flying: {cell, to, t, dir, life, flip}
 var has_ball := true
 var ball_regrow := 0.0
+var throws := 0  ## this garden
 var phase := Phase.READY
 var phase_left := READY_SECONDS
 var score := 0
@@ -96,6 +99,7 @@ func load_garden(m: GardenMap, lvl: int) -> void:
 		apples.append({"cell": c, "state": Apple.REST, "t": 0.0, "y": float(c.y), "fell": 0, "id": _new_id(), "kills": 0})
 	spawned = 0
 	killed = 0
+	throws = 0
 	_reset_actors()
 	_set_phase(Phase.READY, READY_SECONDS)
 
@@ -279,6 +283,7 @@ func _throw() -> void:
 		ball = {}
 		return
 	has_ball = false
+	throws += 1
 	event.emit("throw", {"cell": c, "dir": dir})
 
 
@@ -335,7 +340,12 @@ func _move_ball(dt: float) -> void:
 func _lose_ball(why: String) -> void:
 	event.emit("ball_lost", {"pos": pos_of(ball), "why": why})
 	ball = {}
-	ball_regrow = BALL_REGROW
+	ball_regrow = regrow_time()
+
+
+## How long the ball takes to grow back after the current throw.
+func regrow_time() -> float:
+	return minf(BALL_MAX_REGROW, BALL_REGROW + BALL_REGROW_STEP * float(maxi(0, throws - 1)))
 
 
 # ------------------------------------------------------------------ apples
