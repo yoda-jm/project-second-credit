@@ -21,12 +21,12 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # tags, for the version in file names
 
       - name: Cache portable Godot and export templates
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .tools
           key: tools-godot-templates-${{ hashFiles('tools/fetch-tools.sh') }}
@@ -35,7 +35,7 @@ jobs:
         run: tools/fetch-tools.sh godot templates
 
       - name: Cache Godot's imported assets
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: godot/.godot
           key: godot-import-${{ runner.os }}-${{ hashFiles('godot/project.godot', 'godot/**/*.import', 'godot/**/*.jpg', 'godot/**/*.png', 'godot/**/*.glb', 'godot/**/*.obj', 'godot/**/*.wav', 'godot/**/*.ogg', 'godot/**/*.ttf') }}
@@ -45,7 +45,7 @@ jobs:
         run: tools/export.sh
 
       - name: Upload builds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: second-credit-builds
           path: build/dist/*

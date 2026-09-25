@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: System packages (virtual display, software OpenGL), cached
         uses: awalsh128/cache-apt-pkgs-action@v1
@@ -21,7 +21,7 @@ jobs:
           version: 1.0
 
       - name: Cache portable Godot
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .tools
           key: tools-godot-${{ hashFiles('tools/fetch-tools.sh') }}
@@ -30,7 +30,7 @@ jobs:
         run: tools/fetch-tools.sh godot
 
       - name: Cache Godot's imported assets
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: godot/.godot
           key: godot-import-${{ runner.os }}-${{ hashFiles('godot/project.godot', 'godot/**/*.import', 'godot/**/*.jpg', 'godot/**/*.png', 'godot/**/*.glb', 'godot/**/*.obj', 'godot/**/*.wav', 'godot/**/*.ogg', 'godot/**/*.ttf') }}
@@ -44,7 +44,7 @@ jobs:
 
       - name: Test report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-report
           path: godot/reports/
