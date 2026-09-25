@@ -1,0 +1,36 @@
+; Neon Knuckles stages. Designed for Second Credit. Licence CC BY-SA 4.0.
+; Format: see godot/games/knuckles/engine/brawl_level.gd
+
+[stage]
+name=Neon Row
+theme=street
+length=96
+item=bat, 20, 0.8
+item=crate, 44, -1.2
+wave=12: thug, thug
+wave=30: thug, knifer, thug:left
+wave=50: thug, thug, knifer
+wave=70: bruiser, thug:left
+wave=88: boss, thug, knifer:left
+
+[stage]
+name=The Docks
+theme=docks
+length=110
+item=knife, 16, -0.6
+item=bat, 58, 1.0
+wave=14: knifer, thug, thug:left
+wave=36: bruiser, thug
+wave=58: thug, thug, knifer, thug:left
+wave=80: bruiser, knifer:left
+wave=102: boss, bruiser, thug:left
+
+[stage]
+name=Rooftops
+theme=rooftops
+length=90
+item=bat, 30, 0.0
+wave=12: thug, knifer, knifer:left
+wave=34: bruiser, bruiser
+wave=56: thug, thug, thug:left, knifer
+wave=82: boss, boss:left
