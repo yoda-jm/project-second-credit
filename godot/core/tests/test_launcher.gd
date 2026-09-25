@@ -7,7 +7,8 @@ func test_launcher_lists_the_games() -> void:
 	await runner.simulate_frames(10, 50)
 	var launcher = runner.scene()
 	assert_int(launcher._cards.size()).is_equal(GameRegistry.GAMES.size())
-	assert_int(launcher._selected).is_equal(0)
+	# the launcher comes back on the game played last
+	assert_str(GameRegistry.GAMES[launcher._selected]["id"]).is_equal(Settings.last_game if Settings.last_game != "" else GameRegistry.GAMES[0]["id"])
 
 
 func test_every_playable_game_scene_exists() -> void:

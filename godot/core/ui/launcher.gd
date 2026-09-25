@@ -42,7 +42,14 @@ func _ready() -> void:
 	_build_backdrop()
 	_build_ui()
 	_load_sounds()
-	_select_game(0, false)
+	var start := 0
+	for gi in GameRegistry.GAMES.size():
+		if GameRegistry.GAMES[gi]["id"] == Settings.last_game:
+			start = gi
+	_selected = start
+	_previous = start
+	_card_box.position.x = CARD_ROW_X - start * 414.0  # back on the game played last, without sliding
+	_select_game(start, false)
 	_focus_menu(0, false)
 	_fade_from_black()
 	for arg in OS.get_cmdline_user_args():
@@ -534,6 +541,9 @@ func _select_game(i: int, sound: bool = true) -> void:
 		_previous = _selected
 		_morph_t = 0.0
 	_selected = i
+	if Settings.last_game != GameRegistry.GAMES[i]["id"]:
+		Settings.last_game = GameRegistry.GAMES[i]["id"]
+		Settings.save_settings()
 	for a in _arrows:
 		a.queue_redraw()
 	var tw := create_tween()

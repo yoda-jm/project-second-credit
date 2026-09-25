@@ -12,6 +12,7 @@ var fullscreen := false
 var vsync := true
 var camera_shake := true  ## explosions shake the camera (turn off to reduce motion)
 var show_fps := false
+var last_game := ""  ## the game selected in the launcher, so it comes back selected
 
 var _fps_label: Label
 var _fonts: Array[Font] = []  ## kept alive for the whole session (see _warm_fonts)
@@ -81,6 +82,7 @@ func save_settings() -> void:
 	cf.set_value("display", "vsync", vsync)
 	cf.set_value("display", "show_fps", show_fps)
 	cf.set_value("comfort", "camera_shake", camera_shake)
+	cf.set_value("launcher", "last_game", last_game)
 	cf.save(PATH)
 
 
@@ -94,3 +96,4 @@ func load_settings() -> void:
 	vsync = cf.get_value("display", "vsync", vsync)
 	show_fps = cf.get_value("display", "show_fps", show_fps)
 	camera_shake = cf.get_value("comfort", "camera_shake", camera_shake)
+	last_game = cf.get_value("launcher", "last_game", last_game)
