@@ -41,6 +41,15 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Athletes and venue props are built by `tools/blender/frostpeak_athletes.py` and `frostpeak_models.py`; the ice
   oval, the jump hill and the mountains are built in the game from the events' own geometry.
 
+## Game 6 (Muddy Boots, working title)
+
+- Inspired by *Cannon Fodder* (Sensible Software, 1993). None of its code, graphics, sounds or maps are in this repo.
+  The game reads the player's own original map files locally (`godot/games/boots/engine/cf_import.gd`).
+- **Open Fodder** (GPL-3.0, <https://github.com/OpenFodder/openfodder>) documents the original map, sprite and
+  terrain-table formats that the importer reads; no Open Fodder code is copied.
+- Soldiers, huts, crates and the jungle are built by `tools/blender/boots_models.py` on the shared humanoid rig
+  (`tools/blender/humanoid.py`); sound effects and the field march are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

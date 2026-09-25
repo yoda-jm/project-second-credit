@@ -81,6 +81,10 @@ decisions below are settled unless the owner reopens them.
 7. Game 5, **Frostpeak Games** (working title, `godot/games/frostpeak/`): playable with speed skating and the
    ski jump, 1-4 players in hot seat, CPU rivals, podium and medal table. `--event=N` starts a capture at an event.
    Open items: biathlon, bobsled, hot dog, figure skating; the opening ceremony.
-8. Next: game 6 (Cannon Fodder), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)).
-9. Construction movies (`tools/movie_clip.sh`, `tools/make_movie.py`) need GPU captures with the monitor awake: do
+8. Game 6, **Muddy Boots** (working title, `godot/games/boots/`): playable campaign of three missions; squad
+   orders, grenades, rockets, huts, hostages, mines; importer for the original map files (`engine/cf_import.gd`).
+   Open items: vehicles, helicopters, the recruits hill, a menu to load the player's original missions.
+9. Next: game 7 (Double Dragon), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)),
+   and a launcher view to browse many games by style.
+10. Construction movies (`tools/movie_clip.sh`, `tools/make_movie.py`) need GPU captures with the monitor awake: do
    Fruitburrow, Whisker Alley and Frostpeak when the owner is back (software captures stand in on the website).
