@@ -28,10 +28,11 @@ func start_setup() -> void:
 	_set_stage(Stage.SETUP)
 
 
-func start(seed: int = -1) -> void:
+func start(seed: int = -1, first_event := 0) -> void:
 	_seed = seed if seed >= 0 else randi()
 	var players: Array = setup_players if not demo else [{"name": "DEMO", "nation": 0}]
 	comp = Competition.new(players, 5 - players.size(), _seed)
+	comp.current = first_event  # captures can start at a later event
 	athlete = 0
 	_set_stage(Stage.INTRO)
 

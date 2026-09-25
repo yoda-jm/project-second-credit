@@ -32,7 +32,11 @@ var _land_press := -1.0
 
 
 func hill_y(x: float) -> float:
-	## Height of the landing hill below the lip (negative), a smooth knoll then a steady slope.
+	return profile(x)
+
+
+## Height of the landing hill below the lip (negative), a smooth knoll then a steady slope.
+static func profile(x: float) -> float:
 	return -(3.0 + x * HILL_SLOPE - 18.0 * exp(-x / 25.0) + 18.0) * 0.5
 
 
