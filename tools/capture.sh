@@ -42,7 +42,7 @@ user=(res://tools/capture/capture.tscn -- --demo --locked ${CAPTURE_ARGS:-} --fr
 [ -n "$scene" ] && user+=(--scene="$scene")
 rc=0
 if [ $gpu -eq 1 ]; then
-  "${cmd[@]}" "${user[@]}" >"$log" 2>&1 || rc=$?
+  "${cmd[@]}" --disable-vsync "${user[@]}" >"$log" 2>&1 || rc=$?  # no vsync: works with the monitor asleep
 else
   with_xvfb "${cmd[@]}" --rendering-method gl_compatibility "${user[@]}" >"$log" 2>&1 || rc=$?
   [ $rc -eq 127 ] && { echo "Xvfb not installed; use --gpu" >&2; exit 1; }

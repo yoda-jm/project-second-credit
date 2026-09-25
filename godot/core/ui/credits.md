@@ -18,6 +18,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Inspired by *Rampart* (Atari Games, 1990). None of its code, graphics, sounds or maps are in this repo; the
   rules are rewritten from how the game plays.
 
+## Game 3 (Fruitburrow, working title)
+
+- Inspired by *Fruity Frank* (Kuma Computers, 1984), itself in the family of Universal's *Mr. Do!* (1982). None of
+  its code, graphics, sounds or levels are in this repo; the rules are rewritten from how the game plays, and the
+  gardens are our own (`godot/games/fruitburrow/gardens/`, CC BY-SA 4.0).
+- The gardener, fruit and monsters are built by scripts in `tools/blender/` (the gardener is the collection's first
+  rigged and animated character); sound effects and the garden theme are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

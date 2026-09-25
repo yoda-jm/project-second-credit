@@ -28,6 +28,10 @@ var _stone: MultiMeshInstance3D
 var _soil_index := {}  ## Vector2i -> instance index
 var _soil_scale := {}  ## Vector2i -> current scale (shrinks to 0 when dug)
 var _board := Node3D.new()
+var _pebbles: MultiMeshInstance3D
+var _roots: MultiMeshInstance3D
+var _pebble_of := {}  ## Vector2i -> pebble instance indices
+var _root_of := {}  ## Vector2i -> root instance index
 var _fruit_nodes := {}  ## Vector2i -> Node3D
 var _apple_nodes := {}  ## apple id -> Node3D
 var _monster_nodes := {}  ## monster id -> Node3D
@@ -114,6 +118,8 @@ func _on_garden(e: FruitburrowEngine) -> void:
 	_monster_nodes.clear()
 	_soil_index.clear()
 	_soil_scale.clear()
+	_pebble_of.clear()
+	_root_of.clear()
 	if not e.event.is_connected(_on_event):
 		e.event.connect(_on_event)
 	_set_time_of_day(e.level)
@@ -157,6 +163,7 @@ func _build_board(e: FruitburrowEngine) -> void:
 	_block(Vector3(w * 0.5 - 0.5, -h - 1.5, -2.0), Vector3(w + 16, 4, 5), frame_mat)
 	_block(Vector3(w * 0.5 - 0.5, 0.65, -9.5), Vector3(w + 40, 0.3, 20), grass_mat)
 	_decorate(e)
+	_soil_details(e, soil_cells)
 	# fruit and apples
 	for c in e.fruit:
 		var n := _fruit_node(e.fruit[c])
@@ -175,7 +182,7 @@ func _build_board(e: FruitburrowEngine) -> void:
 	_board.add_child(_player)
 	_anim = _player.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if _anim:
-		_player.scale = Vector3.ONE * 1.2
+		_player.scale = Vector3.ONE * 1.4
 	_model_offset = 0.0 if _anim else -0.2
 	if _anim:
 		for a in ["idle", "walk", "dig", "cheer"]:
@@ -204,6 +211,50 @@ func _decorate(e: FruitburrowEngine) -> void:
 		n.rotation.y = rng.randf() * TAU
 		n.scale = Vector3.ONE * rng.randf_range(0.8, 1.4)
 		_board.add_child(n)
+
+
+## Small stones and roots set into the soil face, so it reads as a real cross-section. They belong to their cell
+## and vanish with it when it is dug.
+func _soil_details(e: FruitburrowEngine, cells: Array[Vector2i]) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = e.level * 31 + 7
+	var pebble := SphereMesh.new()
+	pebble.radius = 0.5
+	pebble.height = 1.0
+	pebble.radial_segments = 10
+	pebble.rings = 6
+	var root := CylinderMesh.new()
+	root.top_radius = 0.5
+	root.bottom_radius = 0.25
+	root.height = 1.0
+	root.radial_segments = 6
+	var stones: Array[Transform3D] = []
+	var roots: Array[Transform3D] = []
+	for c in cells:
+		if e.fruit.has(c):
+			continue
+		for k in rng.randi_range(0, 3):
+			var p := _cell_pos(c) + Vector3(rng.randf_range(-0.4, 0.4), rng.randf_range(-0.4, 0.4), 0.5)
+			var sz := Vector3(rng.randf_range(0.1, 0.2), rng.randf_range(0.08, 0.15), rng.randf_range(0.08, 0.12))
+			stones.append(Transform3D(Basis(Vector3.FORWARD, rng.randf() * TAU).scaled(sz), p))
+			_details_of(c).append(stones.size() - 1)
+		if c.y <= 1 and rng.randf() < 0.5:  # roots hang from the grass into the top rows
+			var p := _cell_pos(c) + Vector3(rng.randf_range(-0.4, 0.4), 0.1, 0.5)
+			var b := Basis(Vector3.FORWARD, rng.randf_range(-0.5, 0.5)).scaled(Vector3(0.05, rng.randf_range(0.5, 0.9), 0.05))
+			roots.append(Transform3D(b, p))
+			_root_of[c] = roots.size() - 1
+	_pebbles = _multimesh(pebble, Pbr.material("rock", Color(1.1, 1.05, 0.98), 3.0), stones.size())
+	for i in stones.size():
+		_pebbles.multimesh.set_instance_transform(i, stones[i])
+	_roots = _multimesh(root, Pbr.material("planks", Color(0.5, 0.36, 0.24), 3.0), roots.size())
+	for i in roots.size():
+		_roots.multimesh.set_instance_transform(i, roots[i])
+
+
+func _details_of(c: Vector2i) -> Array:
+	if not _pebble_of.has(c):
+		_pebble_of[c] = []
+	return _pebble_of[c]
 
 
 func _cell_pos(c: Vector2) -> Vector3:
@@ -430,6 +481,11 @@ func _update_soil(e: FruitburrowEngine, delta: float) -> void:
 			_soil_scale[c] = k
 			var b := Basis().scaled(Vector3(k, k, 1.0) if k > 0.0 else Vector3.ZERO)
 			_soil.multimesh.set_instance_transform(_soil_index[c], Transform3D(b, _cell_pos(c)))
+			if k == 0.0:
+				for i in _pebble_of.get(c, []):
+					_pebbles.multimesh.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
+				if _root_of.has(c):
+					_roots.multimesh.set_instance_transform(_root_of[c], Transform3D(Basis().scaled(Vector3.ZERO), Vector3.ZERO))
 
 
 func _update_player(e: FruitburrowEngine, delta: float) -> void:

@@ -69,7 +69,8 @@ Each entry in the list records its source URL and, when known, its licence. Plan
 | Game | Native or foreign formats to support | Importer from original files |
 |---|---|---|
 | Boulder Dash | BDCFF (read and write) | C64/Atari images → BDCFF (GDash has converters to study) |
-| Fruity Frank | our text-grid format | CPC disk image (later, optional) |
+| Rampart | our coast maps (`.map`, text grid: water, land, rock, castles) | none |
+| Fruity Frank | our garden packs (`.gdn`, text grid in BDCFF style: several `[garden]` sections per file; spec in `godot/games/fruitburrow/engine/garden_map.gd`) | CPC disk image (later, optional) |
 | Cannon Fodder | original CF1/CF2 `.map` + `.spt` (see Open Fodder), OpenFodder Editor output | user's Amiga/DOS data folder |
 | Z | Zod Engine map format | original Z data (to investigate) |
 | Alley Cat, Winter Games, Double Dragon | none (fixed content) | n/a |

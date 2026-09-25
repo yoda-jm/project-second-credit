@@ -69,6 +69,9 @@ decisions below are settled unless the owner reopens them.
    downloads, the level editor, an optional "responsive timing".
 3. Game 2, **Bastion Coast** (working title, `godot/games/bastion/`): playable (tag `m2-bastion`). Open items:
    grunts landing from ships, more maps, 2-3 player versus, checking timings against the arcade in MAME.
-4. Now: CI on GitHub Actions (tests, then Windows, macOS and Linux AppImage exports as release artifacts) and a
-   GitHub Pages site for the project with its own look and spirit (games, construction movies, how it is made).
-5. Shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), then game 3.
+4. Game 3, **Fruitburrow** (working title, `godot/games/fruitburrow/`): playable, with the first rigged character
+   (`tools/blender/fruitburrow_gardener.py`). Rules are from memory: check speeds, scoring and the ball against the
+   original in an emulator. Open items: more gardens, the day-to-dusk cycle across a longer pack.
+5. CI (`.github/workflows/`: tests, Linux/Windows/macOS builds, a rolling `latest` release) and the website
+   (`site/`, deployed by `pages.yml`) exist: refresh `site/` whenever a game changes a lot.
+6. Next: game 4 (Alley Cat), then the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)).

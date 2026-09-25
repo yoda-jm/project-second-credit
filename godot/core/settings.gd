@@ -68,7 +68,8 @@ func apply() -> void:
 		AudioServer.set_bus_mute(i, v <= 0.001)
 	if not Engine.is_embedded_in_editor() and DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
-		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+		var forced_off := OS.get_cmdline_args().has("--disable-vsync")  # captures: never wait for the display
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync and not forced_off else DisplayServer.VSYNC_DISABLED)
 	changed.emit()
 
 
