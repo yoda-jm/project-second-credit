@@ -20,7 +20,7 @@ const CANNON_SECONDS := 12.0
 const BATTLE_SECONDS := 18.0
 const BUILD_SECONDS := 22.0
 const FIRST_ROUND_CANNONS := 3
-const CANNONS_PER_ROUND := 1
+const CANNONS_PER_ROUND := 2
 const CANNONS_PER_CASTLE := 1
 const CANNON_RELOAD := 1.1
 const BALL_SPEED := 14.0  ## cells per second
@@ -274,7 +274,7 @@ func _place_cannon(at: Vector2i) -> void:
 
 
 func _start_battle() -> void:
-	var count := 2 + round_number
+	var count := 2 + round_number / 2  # a gentle ramp: one more ship every second round
 	for i in count:
 		_spawn_ship()
 	_set_phase(Phase.BATTLE, BATTLE_SECONDS)
@@ -379,6 +379,7 @@ func _impact(b: Dictionary) -> void:
 	var at: Vector2 = b["to"]
 	_emit("impact", {"at": at, "ours": b["ours"]})
 	if b["ours"]:
+		var hit_ship := false
 		for s in ships.duplicate():
 			if s["pos"].distance_to(at) < 0.5 + 0.25 * s["size"]:
 				s["hp"] -= 1
@@ -388,17 +389,26 @@ func _impact(b: Dictionary) -> void:
 					ships_sunk += 1
 					score += 100 * s["size"]
 					_emit("ship_sunk", {"id": s["id"], "at": s["pos"], "size": s["size"]})
-				return
+				hit_ship = true
+				break
+		if not hit_ship:
+			_damage_land(at, false)  # friendly fire: our own walls break too (empty land is not cratered)
 	else:
-		var c := Vector2i(at.round())
-		if map.inside(c.x, c.y) and map.is_land(c.x, c.y) and map.castle_at(c.x, c.y) < 0:
-			var i := c.y * map.w + c.x
-			if cells[i] == Cell.WALL or cells[i] == Cell.EMPTY:
-				var was_wall := cells[i] == Cell.WALL
-				cells[i] = Cell.RUBBLE
-				rubble[i] = RUBBLE_ROUNDS
-				if was_wall:
-					_emit("wall_destroyed", {"at": c})
+		_damage_land(at, true)
+
+
+## A ball lands on the land: a wall there becomes rubble; empty land becomes a crater when `crater`.
+func _damage_land(at: Vector2, crater: bool) -> void:
+	var c := Vector2i(at.round())
+	if not map.inside(c.x, c.y) or not map.is_land(c.x, c.y) or map.castle_at(c.x, c.y) >= 0:
+		return
+	var i := c.y * map.w + c.x
+	if cells[i] == Cell.WALL or (crater and cells[i] == Cell.EMPTY):
+		var was_wall := cells[i] == Cell.WALL
+		cells[i] = Cell.RUBBLE
+		rubble[i] = RUBBLE_ROUNDS
+		if was_wall:
+			_emit("wall_destroyed", {"at": c})
 
 
 # ------------------------------------------------------------------ territory

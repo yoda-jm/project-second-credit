@@ -139,3 +139,14 @@ func test_ships_fire_only_from_the_play_area() -> void:
 		while e.phase == BastionEngine.Phase.BATTLE:
 			e.tick()
 	assert_int(outside[0]).is_equal(0)
+
+
+func test_friendly_fire_breaks_our_wall_but_not_empty_land() -> void:
+	var e := _engine()
+	e.cursor = Vector2(e.map.castles[1])
+	e.act()
+	var wall := e._our_walls()[0]
+	e._impact({"to": Vector2(wall), "ours": true})
+	assert_int(e.cell(wall.x, wall.y)).is_equal(BastionEngine.Cell.RUBBLE)
+	e._impact({"to": Vector2(10, 10), "ours": true})
+	assert_int(e.cell(10, 10)).is_equal(BastionEngine.Cell.EMPTY)

@@ -60,7 +60,7 @@ def boulder():
     reset()
     random.seed(11)
     bm = bmesh.new()
-    for i in range(34):
+    for i in range(90):
         z = random.uniform(-1, 1)
         a = random.uniform(0, 2 * math.pi)
         r = math.sqrt(1 - z * z)
@@ -68,9 +68,13 @@ def boulder():
         bm.verts.new((0.44 * r * math.cos(a) * k, 0.4 * r * math.sin(a) * k, 0.38 * z * k))
     bmesh.ops.convex_hull(bm, input=bm.verts[:])
     obj = bm_to_obj(bm, "boulder")
-    finish(obj, "boulder", bevel=0.03, segments=2)
+    finish(obj, "boulder", bevel=0.02, segments=2)
+    m = obj.modifiers.new("sub", "SUBSURF")
+    m.levels = 1
+    bpy.ops.object.modifier_apply(modifier=m.name)
     for v in obj.data.vertices:
-        v.co += v.normal * 0.012 * noise.noise(v.co * 9.0)
+        v.co += v.normal * (0.018 * noise.noise(v.co * 7.0) + 0.006 * noise.noise(v.co * 23.0))
+    bpy.ops.object.shade_flat()
     export("boulder")
 
 

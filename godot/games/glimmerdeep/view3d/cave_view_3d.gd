@@ -98,18 +98,28 @@ func _build_environment() -> void:
 	var plane := QuadMesh.new()
 	plane.size = Vector2(200, 120)
 	_backdrop.mesh = plane
-	var bmat := ShaderMaterial.new()
-	bmat.shader = load("res://games/glimmerdeep/shaders/backdrop.gdshader")
-	_backdrop.material_override = bmat
+	_backdrop.material_override = Pbr.material("dark_rock", Color(0.35, 0.33, 0.36), 0.35)
 	add_child(_backdrop)
 
 
 func _material(kind: int) -> Material:
 	match kind:
 		Kind.DIRT:
-			var m := ShaderMaterial.new()
-			m.shader = load("res://games/glimmerdeep/shaders/dirt.gdshader")
-			return m
+			return Pbr.material("soil", Color(0.62, 0.5, 0.4), 1.0, 0.0, 1.0)
+		Kind.BRICK:
+			return Pbr.material("stone_bricks", Color(1.0, 0.45, 0.32), 1.0)
+		Kind.STEEL:
+			return Pbr.material("metal", Color(0.72, 0.78, 0.88), 1.0, 0.9, 0.6)
+		Kind.BOULDER:
+			return Pbr.material("rock", Color(0.95, 0.92, 0.88), 1.5, 0.0, 1.0, true)
+		Kind.GATE:
+			return Pbr.material("rock", Color(0.8, 0.78, 0.8), 1.5)
+		Kind.MAGIC:
+			var mm: StandardMaterial3D = Pbr.material("stone_bricks", Color(0.7, 0.5, 0.95), 1.0).duplicate()
+			mm.emission_enabled = true
+			mm.emission = Color(0.6, 0.2, 1.0)
+			mm.emission_energy_multiplier = 0.4
+			return mm
 		Kind.DIAMOND:
 			var m := ShaderMaterial.new()
 			m.shader = load("res://games/glimmerdeep/shaders/gem.gdshader")

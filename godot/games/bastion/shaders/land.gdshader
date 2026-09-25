@@ -1,25 +1,30 @@
 shader_type spatial;
-// Land tiles: grass inland, sand near the sea (per-instance COLOR.r = shore blend), soft noise variation.
-uniform vec3 grass : source_color = vec3(0.2, 0.42, 0.14);
-uniform vec3 grass2 : source_color = vec3(0.3, 0.5, 0.17);
-uniform vec3 sand : source_color = vec3(0.78, 0.66, 0.42);
-uniform vec3 rock : source_color = vec3(0.45, 0.43, 0.42);
+// Land tiles with CC0 PBR textures (ambientCG): grass inland, sand at the shore (instance COLOR.r), rock where
+// COLOR.g, territory tint from COLOR.b. World-space top mapping, so neighbouring tiles join seamlessly.
+uniform sampler2D grass_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D grass_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sand_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sand_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D rock_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D rock_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform float scale = 0.35;
 varying vec3 world_pos;
-varying vec4 inst;
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vnoise(vec2 p) {
-	vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
-	return mix(mix(hash(i), hash(i + vec2(1,0)), f.x), mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
+varying vec3 world_normal;
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
-void vertex() { world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz; inst = INSTANCE_CUSTOM; }
 void fragment() {
-	float n = vnoise(world_pos.xz * 1.7) * 0.6 + vnoise(world_pos.xz * 6.0) * 0.4;
-	vec3 g = mix(grass, grass2, n);
-	vec3 c = mix(g, sand, clamp(COLOR.r, 0.0, 1.0));
-	c = mix(c, rock * (0.8 + 0.4 * n), COLOR.g);
-	// territory tint (COLOR.b) and the sides of the tiles darker
-	c = mix(c, c * vec3(0.75, 0.85, 1.25) + vec3(0.02, 0.04, 0.1), COLOR.b * 0.55);
-	float side = 1.0 - abs(NORMAL.y);
-	ALBEDO = c * (1.0 - 0.35 * step(0.5, abs((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).x) + abs((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).z)));
-	ROUGHNESS = 0.9;
+	vec2 uv = abs(world_normal.y) > 0.5 ? world_pos.xz * scale : (abs(world_normal.x) > 0.5 ? world_pos.zy : world_pos.xy) * scale;
+	vec3 g = texture(grass_albedo, uv).rgb * vec3(0.8, 0.95, 0.7);
+	vec3 s = texture(sand_albedo, uv * 1.3).rgb * vec3(0.85, 0.78, 0.62);
+	vec3 r = texture(rock_albedo, uv).rgb;
+	vec3 c = mix(g, s, clamp(COLOR.r, 0.0, 1.0));
+	c = mix(c, r, COLOR.g);
+	c = mix(c, c * vec3(0.8, 0.9, 1.2) + vec3(0.02, 0.03, 0.08), COLOR.b * 0.5);
+	if (abs(world_normal.y) < 0.5) { c = mix(s, r, 0.35) * 0.75; }  // tile sides: earth and stone
+	ALBEDO = c;
+	vec3 n = mix(texture(grass_normal, uv).rgb, texture(sand_normal, uv * 1.3).rgb, clamp(COLOR.r, 0.0, 1.0));
+	NORMAL_MAP = mix(n, texture(rock_normal, uv).rgb, COLOR.g);
+	ROUGHNESS = 0.92;
 }

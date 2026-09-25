@@ -27,6 +27,13 @@ var _shake := 0.0
 var _cam_base := Vector3.ZERO
 var _cam_look := Vector3.ZERO
 var _land_dirty := true
+var _decor := {}  ## prop name -> MultiMeshInstance3D
+var _sea_mat: ShaderMaterial
+var _zone: MultiMeshInstance3D   ## territory overlay
+var _edge: MultiMeshInstance3D   ## glowing territory border
+var _zone_pulse := 0.0
+var _last_enclosed := 0
+var _wakes := {}  ## ship id -> CPUParticles3D
 
 
 func _ready() -> void:
@@ -86,6 +93,7 @@ func _build_world() -> void:
 	sea.mesh = plane
 	var wm := ShaderMaterial.new()
 	wm.shader = load("res://games/bastion/shaders/water.gdshader")
+	_sea_mat = wm
 	sea.material_override = wm
 	sea.position = Vector3(20, 0.0, 14)
 	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -95,13 +103,12 @@ func _build_world() -> void:
 	tile.size = Vector3(1.0, LAND_H + 0.3, 1.0)
 	var lm := ShaderMaterial.new()
 	lm.shader = load("res://games/bastion/shaders/land.gdshader")
+	for t in [["grass", "grass"], ["sand", "sand"], ["rock", "rock"]]:
+		lm.set_shader_parameter(t[0] + "_albedo", load(Pbr.ROOT + t[1] + "/albedo.jpg"))
+		lm.set_shader_parameter(t[0] + "_normal", load(Pbr.ROOT + t[1] + "/normal.jpg"))
 	_land = _mm(tile, lm, true)
-	var wall_mat := StandardMaterial3D.new()
-	wall_mat.albedo_color = Color(0.78, 0.74, 0.66)
-	wall_mat.roughness = 0.85
-	_walls = _mm(load(MODELS + "wall.obj"), wall_mat, false)
-	var rub := StandardMaterial3D.new()
-	rub.albedo_color = Color(0.3, 0.27, 0.25)
+	_walls = _mm(load(MODELS + "wall.obj"), Pbr.material("stone_bricks", Color(1.0, 0.96, 0.9), 1.4), false)
+	var rub: StandardMaterial3D = Pbr.material("rock", Color(0.35, 0.3, 0.28), 2.0).duplicate()
 	rub.emission_enabled = true
 	rub.emission = Color(1.0, 0.35, 0.05)
 	rub.emission_energy_multiplier = 0.8
@@ -119,6 +126,27 @@ func _build_world() -> void:
 	gbox.size = Vector3(0.94, 0.5, 0.94)
 	_ghost = _mm(gbox, _ghost_mat, false)
 	_ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var zq := QuadMesh.new()
+	zq.size = Vector2(1, 1)
+	zq.orientation = PlaneMesh.FACE_Y
+	var zm := StandardMaterial3D.new()
+	zm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	zm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	zm.vertex_color_use_as_albedo = true
+	zm.albedo_color = Color(0.35, 0.65, 1.0, 1.0)
+	_zone = _mm(zq, zm, false)
+	_zone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var eb := BoxMesh.new()
+	eb.size = Vector3(1.0, 0.06, 0.08)
+	var em := StandardMaterial3D.new()
+	em.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	em.vertex_color_use_as_albedo = true
+	em.albedo_color = Color(1.4, 2.2, 3.5)
+	_edge = _mm(eb, em, false)
+	_edge.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for prop in ["grass_tuft", "bush", "stones", "pine", "tree"]:
+		var mmi := _mm(_mesh_of(MODELS + prop + ".glb"), null, false)
+		_decor[prop] = mmi
 	_cross = MeshInstance3D.new()
 	var torus := TorusMesh.new()
 	torus.inner_radius = 0.55
@@ -141,13 +169,53 @@ func _mm(mesh: Mesh, mat: Material, colors: bool) -> MultiMeshInstance3D:
 	mm.mesh = mesh
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
-	inst.material_override = mat
+	if mat:
+		inst.material_override = mat
 	add_child(inst)
 	return inst
 
 
+static func _mesh_of(path: String) -> Mesh:
+	var root := (load(path) as PackedScene).instantiate()
+	_dress(root)
+	var found: Mesh = null
+	for n in root.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		found = mi.mesh.duplicate()
+		for i in found.get_surface_count():
+			var o := mi.get_surface_override_material(i)
+			if o:
+				found.surface_set_material(i, o)
+		break
+	root.free()
+	return found
+
+
 static func _scene_node(path: String) -> Node3D:
-	return (load(path) as PackedScene).instantiate()
+	var n: Node3D = (load(path) as PackedScene).instantiate()
+	_dress(n)
+	return n
+
+
+## Swaps the flat Blender materials of a model for the shared PBR ones, by material name.
+static func _dress(node: Node) -> void:
+	var swap := {
+		"stone": Pbr.material("stone_bricks", Color(1.0, 0.97, 0.92), 2.0),
+		"dark_stone": Pbr.material("rock", Color(0.6, 0.58, 0.56), 2.0),
+		"wood": Pbr.material("planks", Color(0.62, 0.42, 0.26), 2.0),
+		"hull": Pbr.material("planks", Color(0.42, 0.27, 0.16), 1.6),
+		"iron": Pbr.material("metal", Color(0.3, 0.3, 0.33), 2.0, 0.85, 0.7),
+		"pine": Pbr.material("grass", Color(0.35, 0.55, 0.35), 3.0),
+		"leaves": Pbr.material("grass", Color(0.55, 0.8, 0.45), 3.0),
+		"bush": Pbr.material("grass", Color(0.45, 0.7, 0.4), 3.0),
+		"blade": Pbr.material("grass", Color(0.7, 0.95, 0.55), 4.0),
+	}
+	for mi in node.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		for i in m.mesh.get_surface_count():
+			var mat := m.mesh.surface_get_material(i)
+			if mat and swap.has(mat.resource_name):
+				m.set_surface_override_material(i, swap[mat.resource_name])
 
 
 func _on_started(e: BastionEngine) -> void:
@@ -158,9 +226,15 @@ func _on_started(e: BastionEngine) -> void:
 	_cannons.clear()
 	_ships.clear()
 	var n := e.map.w * e.map.h
-	for inst in [_land, _walls, _rubble, _ghost]:
+	for inst in [_land, _walls, _rubble, _ghost, _zone]:
 		inst.multimesh.instance_count = n
+	_edge.multimesh.instance_count = n * 4
+	_last_enclosed = 0
+	_sea_mat.set_shader_parameter("shore_mask", _shore_mask(e))
+	_sea_mat.set_shader_parameter("map_size", Vector2(e.map.w, e.map.h))
 	_balls.multimesh.instance_count = 64
+	for k in _decor:
+		_decor[k].multimesh.instance_count = n
 	for c in e.map.castles:
 		var node := _scene_node(MODELS + "castle.glb")
 		node.position = Vector3(c.x + 0.5, LAND_H, c.y + 0.5)
@@ -170,6 +244,19 @@ func _on_started(e: BastionEngine) -> void:
 	_land_dirty = true
 	_cam_look = Vector3(e.map.w * 0.5 - 0.5, 0, e.map.h * 0.5 + 1.0)
 	_fit_camera(e)
+
+
+## A small texture of the map (1 = land), blurred, so the sea knows where the shallows and the shore are.
+func _shore_mask(e: BastionEngine) -> ImageTexture:
+	var k := 4
+	var img := Image.create(e.map.w * k, e.map.h * k, false, Image.FORMAT_L8)
+	for y in e.map.h * k:
+		for x in e.map.w * k:
+			img.set_pixel(x, y, Color.WHITE if e.map.at(x / k, y / k) != CoastMap.Terrain.WATER else Color.BLACK)
+	for pass_ in 3:  # cheap blur: shrink and grow back
+		img.resize(e.map.w * k / 2, e.map.h * k / 2, Image.INTERPOLATE_BILINEAR)
+		img.resize(e.map.w * k, e.map.h * k, Image.INTERPOLATE_CUBIC)
+	return ImageTexture.create_from_image(img)
 
 
 ## Pulls the camera back along its viewing direction until the whole map is on screen.
@@ -218,6 +305,10 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_fx.dust(node.position, 14)
 		"wall_placed", "castle_claimed", "enclosed":
 			_land_dirty = true
+			if kind == "enclosed":
+				if d["cells"] > _last_enclosed + 2:
+					_zone_pulse = 1.0  # a new area closed: flash it
+				_last_enclosed = d["cells"]
 			if kind == "wall_placed":
 				for c in d["cells"]:
 					_fx.dust(Vector3(c.x, LAND_H + 0.3, c.y), 5)
@@ -258,6 +349,12 @@ func _process(delta: float) -> void:
 	if _land_dirty:
 		_rebuild_board(e)
 		_land_dirty = false
+	_zone_pulse = maxf(0.0, _zone_pulse - delta * 0.8)
+	var za := 0.16 + 0.06 * sin(_time * 3.0) + 0.45 * _zone_pulse
+	for i in _zone.multimesh.visible_instance_count:
+		_zone.multimesh.set_instance_color(i, Color(0.35, 0.65, 1.0, za))
+	for i in _edge.multimesh.visible_instance_count:
+		_edge.multimesh.set_instance_color(i, Color(1, 1, 1, 1) * (0.8 + 0.4 * sin(_time * 4.0 + i * 0.3) + _zone_pulse))
 	_update_ships(e, delta)
 	_update_balls(e)
 	_update_cursor(e)
@@ -303,8 +400,51 @@ func _rebuild_board(e: BastionEngine) -> void:
 				_rubble.multimesh.set_instance_transform(ri, Transform3D(Basis(Vector3.UP, float(x * 7 + y)), Vector3(x, LAND_H, y)))
 				ri += 1
 	_land.multimesh.visible_instance_count = li
+	_place_decor(e)
+	var zi := 0
+	var ei := 0
+	for y in e.map.h:
+		for x in e.map.w:
+			if not e.is_ours(x, y):
+				continue
+			_zone.multimesh.set_instance_transform(zi, Transform3D(Basis(), Vector3(x, LAND_H + 0.02, y)))
+			zi += 1
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				if not e.is_ours(x + d.x, y + d.y) and e.cell(x + d.x, y + d.y) != BastionEngine.Cell.WALL:
+					var basis := Basis() if d.y != 0 else Basis(Vector3.UP, PI * 0.5)
+					_edge.multimesh.set_instance_transform(ei, Transform3D(basis, Vector3(x + d.x * 0.46, LAND_H + 0.05, y + d.y * 0.46)))
+					ei += 1
+	_zone.multimesh.visible_instance_count = zi
+	_edge.multimesh.visible_instance_count = ei
 	_walls.multimesh.visible_instance_count = wi
 	_rubble.multimesh.visible_instance_count = ri
+
+
+## Grass, flowers, bushes, stones and trees on free land, from a fixed pattern (hidden under anything built).
+func _place_decor(e: BastionEngine) -> void:
+	var counts := {}
+	for k in _decor:
+		counts[k] = 0
+	for y in e.map.h:
+		for x in e.map.w:
+			if not e.map.is_land(x, y) or e.map.castle_at(x, y) >= 0 or e.cell(x, y) != BastionEngine.Cell.EMPTY:
+				continue
+			var h := absi((x * 73856093) ^ (y * 19349663)) % 1000
+			var prop := ""
+			if h < 260: prop = "grass_tuft"
+			elif h < 300: prop = "bush"
+			elif h < 330: prop = "stones"
+			elif h < 355: prop = "pine"
+			elif h < 375: prop = "tree"
+			if prop == "":
+				continue
+			var off := Vector3(float(h % 7) / 7.0 - 0.45, 0, float(h % 11) / 11.0 - 0.45) * 0.5
+			var xf := Transform3D(Basis(Vector3.UP, float(h)).scaled(Vector3.ONE * (0.8 + float(h % 5) * 0.1)),
+				Vector3(x, LAND_H, y) + off)
+			_decor[prop].multimesh.set_instance_transform(counts[prop], xf)
+			counts[prop] += 1
+	for k in _decor:
+		_decor[k].multimesh.visible_instance_count = counts[k]
 
 
 func _update_ships(e: BastionEngine, delta: float) -> void:
@@ -321,6 +461,18 @@ func _update_ships(e: BastionEngine, delta: float) -> void:
 			node.rotation.y = lerp_angle(node.rotation.y, want, 1.0 - exp(-delta * 3.0))
 		node.rotation.z = 0.06 * sin(_time * 1.7 + s["id"])
 		node.position = pos
+		var wake: CPUParticles3D = _wakes.get(s["id"])
+		if wake == null:
+			wake = _make_wake()
+			_wakes[s["id"]] = wake
+		wake.position = pos - node.global_transform.basis.z * -0.6 * float(s["size"])
+		wake.emitting = heading.length() > 0.2
+	for id in _wakes.keys():
+		if not _ships.has(id):  # ship gone: let its wake fade out, then free it
+			var w: CPUParticles3D = _wakes[id]
+			_wakes.erase(id)
+			w.emitting = false
+			get_tree().create_timer(2.5).timeout.connect(w.queue_free)
 	for entry in _sinking.duplicate():
 		var node: Node3D = entry[0]
 		entry[1] += delta
@@ -329,6 +481,35 @@ func _update_ships(e: BastionEngine, delta: float) -> void:
 		if entry[1] > 3.0:
 			node.queue_free()
 			_sinking.erase(entry)
+
+
+func _make_wake() -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.amount = 40
+	p.lifetime = 2.2
+	p.local_coords = false
+	p.direction = Vector3(0, 1, 0)
+	p.spread = 30.0
+	p.initial_velocity_min = 0.05
+	p.initial_velocity_max = 0.2
+	p.gravity = Vector3.ZERO
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.2
+	var q := QuadMesh.new()
+	q.size = Vector2(0.35, 0.35)
+	q.orientation = PlaneMesh.FACE_Y
+	p.mesh = q
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.vertex_color_use_as_albedo = true
+	p.material_override = m
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0.8))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	p.color_ramp = fade
+	add_child(p)
+	return p
 
 
 func _update_balls(e: BastionEngine) -> void:

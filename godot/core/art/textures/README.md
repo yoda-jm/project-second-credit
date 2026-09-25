@@ -1,0 +1,17 @@
+# PBR textures (shared)
+
+All from ambientCG (https://ambientcg.com), CC0 1.0, downscaled to 512 px. Thank you, Lennart Demes.
+
+| Folder | ambientCG asset |
+|---|---|
+| grass | Grass004 |
+| sand | Ground054 |
+| soil | Ground048 |
+| rock | Rock030 |
+| dark_rock | Rock035 |
+| stone_bricks | Bricks076C |
+| planks | Planks021 |
+| metal | Metal032 |
+
+Each folder has `albedo.jpg`, `normal.jpg` (OpenGL convention), `roughness.jpg` and `ao.jpg` (when provided).
+Games build triplanar StandardMaterial3D from them with `core/art/pbr.gd`.

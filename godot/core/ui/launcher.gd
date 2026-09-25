@@ -27,6 +27,8 @@ var _camera: Camera3D
 var _time := 0.0
 var _seeds: Array[Vector4] = []
 var _launching := false
+var _arrows: Array[Button] = []
+var _hovered_card := -1
 
 
 func _ready() -> void:
@@ -34,7 +36,7 @@ func _ready() -> void:
 		if arg.begins_with("--game="):
 			var g := GameRegistry.find(arg.substr(7))
 			if not g.is_empty() and g["scene"] != "":
-				get_tree().change_scene_to_file.call_deferred(g["scene"])
+				LoadingScreen.go.call_deferred(g["scene"], g["title"])
 				return
 	_build_backdrop()
 	_build_ui()
@@ -170,10 +172,11 @@ func _process(delta: float) -> void:
 	_camera.position = Vector3(sin(_time * 0.07) * 1.2, cos(_time * 0.05) * 0.5, 9.0)
 	_camera.look_at(Vector3(0, 0, -3))
 	for i in _cards.size():
-		var target := 1.08 if i == _selected else 0.92
+		var target := 1.08 if i == _selected else (0.98 if i == _hovered_card else 0.92)
 		var c := _cards[i]
 		c.scale = c.scale.lerp(Vector2.ONE * target, 1.0 - exp(-delta * 10.0))
-		c.modulate.a = lerpf(c.modulate.a, 1.0 if i == _selected else 0.55, 1.0 - exp(-delta * 8.0))
+		c.modulate.a = lerpf(c.modulate.a, 1.0 if i == _selected else (0.8 if i == _hovered_card else 0.55),
+			1.0 - exp(-delta * 8.0))
 
 
 # ------------------------------------------------------------------ UI
@@ -257,7 +260,9 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		b.add_theme_stylebox_override("hover", focus)
 		b.add_theme_stylebox_override("focus", focus)
 		b.pressed.connect(_on_menu.bind(i))
-		b.mouse_entered.connect(func(): _focus_menu(i))
+		b.mouse_entered.connect(func():
+			if not _settings.visible and not _credits.visible:
+				_focus_menu(i))
 		menu.add_child(b)
 		_buttons.append(b)
 
@@ -273,6 +278,22 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		var card := _make_card(GameRegistry.GAMES[i], i)
 		_card_box.add_child(card)
 		_cards.append(card)
+
+	for side in [-1, 1]:
+		var arrow := Button.new()
+		arrow.text = "<" if side < 0 else ">"
+		arrow.flat = true
+		arrow.focus_mode = Control.FOCUS_NONE
+		arrow.custom_minimum_size = Vector2(90, 150)
+		arrow.position = Vector2(540 if side < 0 else 1810, 700)
+		arrow.add_theme_font_override("font", _font(false))
+		arrow.add_theme_font_size_override("font_size", 96)
+		arrow.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
+		arrow.add_theme_color_override("font_hover_color", GOLD)
+		arrow.add_theme_color_override("font_pressed_color", Color.WHITE)
+		arrow.pressed.connect(func(): _select_game(_selected + side))
+		_ui.add_child(arrow)
+		_arrows.append(arrow)
 
 	_settings = _build_settings()
 	_settings.visible = false
@@ -295,6 +316,8 @@ func _make_card(g: Dictionary, index: int) -> Control:
 	card.custom_minimum_size = Vector2(380, 430)
 	card.pivot_offset = Vector2(190, 215)
 	card.add_theme_stylebox_override("panel", _panel_style(accent if playable else Color(0.4, 0.4, 0.5)))
+	card.mouse_entered.connect(func(): _hovered_card = index)
+	card.mouse_exited.connect(func(): if _hovered_card == index: _hovered_card = -1)
 	card.gui_input.connect(func(ev):
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
 			if _selected == index:
@@ -499,15 +522,28 @@ func _on_menu(i: int) -> void:
 		0:
 			_launch()
 		1:
-			_play("ui_select")
-			_settings.visible = true
+			_open_panel(_settings)
 		2:
-			_play("ui_select")
-			_credits.visible = true
+			_open_panel(_credits)
 		3:
 			_play("ui_back")
 			Settings.save_settings()
 			get_tree().quit()
+
+
+func _open_panel(panel: Control) -> void:
+	_play("ui_select")
+	panel.visible = true
+	panel.modulate.a = 0.0
+	create_tween().tween_property(panel, "modulate:a", 1.0, 0.2)
+	_show_cards(false)
+	for b in _buttons:
+		b.focus_mode = Control.FOCUS_NONE
+	# keyboard focus goes to the first control of the panel
+	for c in panel.find_children("*", "Control", true, false):
+		if (c is Slider or c is BaseButton or c is RichTextLabel) and (c as Control).focus_mode != Control.FOCUS_NONE:
+			(c as Control).grab_focus()
+			break
 
 
 func _close_panels() -> void:
@@ -515,7 +551,20 @@ func _close_panels() -> void:
 	Settings.save_settings()
 	_settings.visible = false
 	_credits.visible = false
+	_show_cards(true)
+	for b in _buttons:
+		b.focus_mode = Control.FOCUS_ALL
 	_focus_menu(_menu_index, false)
+
+
+func _show_cards(show: bool) -> void:
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(_card_box, "modulate:a", 1.0 if show else 0.0, 0.25)
+	for a in _arrows:
+		a.visible = show
+	_card_box.mouse_filter = Control.MOUSE_FILTER_PASS if show else Control.MOUSE_FILTER_IGNORE
+	for c in _cards:
+		c.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
 
 
 func _launch() -> void:
@@ -533,7 +582,7 @@ func _launch() -> void:
 	var tw := create_tween()
 	tw.tween_property(_fade, "color:a", 1.0, 0.6)
 	tw.parallel().tween_property(_music, "volume_db", -40.0, 0.6)
-	tw.tween_callback(func(): get_tree().change_scene_to_file(g["scene"]))
+	tw.tween_callback(func(): LoadingScreen.go(g["scene"], g["title"]))
 
 
 func _fade_from_black() -> void:

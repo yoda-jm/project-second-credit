@@ -111,7 +111,7 @@ func _restart() -> void:
 
 func _quit() -> void:
 	_resume()
-	get_tree().change_scene_to_file(LAUNCHER)
+	LoadingScreen.go(LAUNCHER, "Second Credit")
 
 
 func _sound(s: AudioStream) -> void:
