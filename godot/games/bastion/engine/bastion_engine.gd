@@ -28,6 +28,7 @@ const RUBBLE_ROUNDS := 1  ## rubble blocks building during the next repair phase
 const SHIP_SPEED := 1.6
 const SHIP_FIRE_EVERY := 2.4
 const SHIP_RANGE := 11.0
+const PLAY_MARGIN := 2  ## ships only anchor and fire inside the map minus this margin (always on screen)
 const HOME_RING := 3  ## the first walls are raised this far around the home castle (room for cannons)
 
 var map: CoastMap
@@ -317,14 +318,14 @@ func _ship_anchor() -> Vector2:
 	# a water cell within range of one of our walls
 	var walls := _our_walls()
 	for attempt in 60:
-		var x := rng.randi_range(0, map.w - 1)
-		var y := rng.randi_range(0, map.h - 1)
+		var x := rng.randi_range(PLAY_MARGIN, map.w - 1 - PLAY_MARGIN)
+		var y := rng.randi_range(PLAY_MARGIN, map.h - 1 - PLAY_MARGIN)
 		if map.at(x, y) != CoastMap.Terrain.WATER:
 			continue
 		for w in walls:
 			if Vector2(w).distance_to(Vector2(x, y)) < SHIP_RANGE * 0.8:
 				return Vector2(x, y)
-	return Vector2(rng.randi_range(0, map.w - 1), 0)
+	return Vector2(rng.randi_range(PLAY_MARGIN, map.w - 1 - PLAY_MARGIN), PLAY_MARGIN)
 
 
 func _our_walls() -> Array[Vector2i]:
@@ -349,7 +350,7 @@ func _tick_battle() -> void:
 			else:
 				s["target"] = _ship_anchor()
 		s["fire_in"] -= TICK
-		if s["fire_in"] <= 0.0 and phase_left > 0.5:
+		if s["fire_in"] <= 0.0 and phase_left > 0.5 and _in_play_area(s["pos"]):
 			s["fire_in"] = SHIP_FIRE_EVERY * rng.randf_range(0.8, 1.3)
 			var walls := _our_walls()
 			var in_range: Array[Vector2i] = []
@@ -440,6 +441,10 @@ func _compute_territory(final: bool) -> void:
 	if final:
 		score += cells_owned * 2 + enclosed_castles.size() * 250
 	_emit("enclosed", {"castles": enclosed_castles.duplicate(), "cells": cells_owned, "final": final})
+
+
+func _in_play_area(p: Vector2) -> bool:
+	return p.x >= PLAY_MARGIN and p.y >= PLAY_MARGIN and p.x <= map.w - 1 - PLAY_MARGIN and p.y <= map.h - 1 - PLAY_MARGIN
 
 
 ## Cells the outside can flow through: anything but walls and rocks.

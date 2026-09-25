@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://games/bastion/scenes/bastion_game_main.gd" id="1"]
 [ext_resource type="Script" path="res://games/bastion/scenes/bastion_game.gd" id="2"]
 [ext_resource type="Script" path="res://games/bastion/view3d/bastion_view_3d.gd" id="3"]
 [ext_resource type="Script" path="res://games/bastion/ui/bastion_hud.gd" id="4"]
+[ext_resource type="Script" path="res://games/bastion/view3d/bastion_audio.gd" id="5"]
 
 [node name="BastionCoast" type="Node"]
 script = ExtResource("1")
@@ -24,3 +25,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("4")
 game = NodePath("../../Game")
+
+[node name="Audio" type="Node" parent="." node_paths=PackedStringArray("game")]
+script = ExtResource("5")
+game = NodePath("../Game")

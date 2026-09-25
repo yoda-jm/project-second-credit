@@ -168,8 +168,30 @@ func _on_started(e: BastionEngine) -> void:
 		_castles.append(node)
 	e.event.connect(_on_event)
 	_land_dirty = true
-	_cam_look = Vector3(e.map.w * 0.5 - 0.5, 0, e.map.h * 0.5)
-	_cam_base = _cam_look + Vector3(0, 21, 17)
+	_cam_look = Vector3(e.map.w * 0.5 - 0.5, 0, e.map.h * 0.5 + 1.0)
+	_fit_camera(e)
+
+
+## Pulls the camera back along its viewing direction until the whole map is on screen.
+func _fit_camera(e: BastionEngine) -> void:
+	var dir := Vector3(0, 21, 17).normalized()
+	var corners := [Vector3(-0.5, 0, -0.5), Vector3(e.map.w - 0.5, 0, -0.5), Vector3(-0.5, 0, e.map.h - 0.5),
+		Vector3(e.map.w - 0.5, 0, e.map.h - 0.5)]
+	var dist := 12.0
+	var vp := get_viewport().get_visible_rect().size
+	while dist < 80.0:
+		_camera.position = _cam_look + dir * dist
+		_camera.look_at(_cam_look)
+		var ok := true
+		for c in corners:
+			var sp := _camera.unproject_position(c)
+			if _camera.is_position_behind(c) or sp.x < 0 or sp.y < 60 or sp.x > vp.x or sp.y > vp.y - 50:
+				ok = false
+				break
+		if ok:
+			break
+		dist += 0.5
+	_cam_base = _cam_look + dir * dist
 
 
 ## Map cell under a screen position (null when off the board).

@@ -113,3 +113,29 @@ func test_rubble_clears_after_one_repair_phase() -> void:
 	assert_int(e.cells[i]).is_equal(BastionEngine.Cell.RUBBLE)
 	e._start_cannons()  # next round
 	assert_int(e.cells[i]).is_equal(BastionEngine.Cell.EMPTY)
+
+
+func test_game_scene_runs_the_demo() -> void:
+	var runner := scene_runner("res://games/bastion/scenes/bastion_game.tscn")
+	var game: BastionGame = runner.find_child("Game")
+	game.demo = true
+	game.start(7)
+	await runner.simulate_frames(80, 250)  # 20 s: castle chosen, cannons placed, battle under way
+	assert_int(game.engine.home_castle).is_greater_equal(0)
+	assert_int(game.engine.cannons.size()).is_greater(0)
+
+
+func test_ships_fire_only_from_the_play_area() -> void:
+	var e := _engine()
+	e.cursor = Vector2(e.map.castles[1])
+	e.act()
+	var outside := [0]
+	e.event.connect(func(kind, d):
+		if kind == "shot" and not d["ours"] and not e._in_play_area(d["from"]):
+			outside[0] += 1)
+	for round in 3:
+		while e.phase != BastionEngine.Phase.BATTLE and e.phase != BastionEngine.Phase.GAME_OVER:
+			e.tick()
+		while e.phase == BastionEngine.Phase.BATTLE:
+			e.tick()
+	assert_int(outside[0]).is_equal(0)
