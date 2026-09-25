@@ -25,3 +25,19 @@ func test_settings_save_and_load() -> void:
 	assert_float(Settings.volume["Music"]).is_equal_approx(0.35, 0.001)
 	Settings.volume["Music"] = before
 	Settings.save_settings()
+
+
+func test_pause_menu_is_on_screen() -> void:
+	var host := Node.new()
+	add_child(host)
+	var pause := PauseMenu.new()
+	host.add_child(pause)
+	await get_tree().process_frame
+	pause._open()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var panel: Control = pause._buttons[0].get_parent().get_parent()
+	var screen := Rect2(Vector2.ZERO, pause.get_viewport().get_visible_rect().size)
+	assert_bool(screen.encloses(panel.get_global_rect())).is_true()
+	pause._resume()
+	host.queue_free()
