@@ -16,3 +16,12 @@ build/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Portable tools (tools/fetch-tools.sh)
+.tools/
+
+# GdUnit4 reports
+godot/reports/
+
+# Screenshots from tools/capture.sh
+captures/

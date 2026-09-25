@@ -19,8 +19,7 @@ including paid options we rejected, is in [../research/stack-report.md](../resea
 | Reference capture | MAME, VICE, FS-UAE/Amiberry, DOSBox Staging (all packaged on Linux) | For timings, behaviours and missing screenshots |
 | Hosting | GitHub (+ git-lfs for binaries), itch.io, Godot web export | |
 
-## Setup still to do
+## Setup
 
-- Install Godot 4.7, Blender 5, the emulators, FluidSynth and git-lfs.
-- Register the MCP servers with Claude Code (`claude mcp add ...`; see the research report for commands).
-- Write the capture script (Xvfb + viewport PNG) so the agent can check its own work visually.
+See [setup.md](setup.md). Still to do: the Godot MCP (comes with the Godot project) and the capture script
+(Xvfb + viewport PNG) so the agent can check its own work visually.

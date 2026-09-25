@@ -37,17 +37,22 @@ decisions below are settled unless the owner reopens them.
 
 ## Repo map
 
-- `docs/`: vision, roadmap, level packs, stack, legal, and a brief per game (`docs/games/`)
+- Remote: https://github.com/yoda-jm/project-second-credit (branch `main`)
+- `docs/`: vision, roadmap, level packs, stack, setup, legal, the readable candidate list (`catalog.md`) and a
+  brief per game (`docs/games/`)
+- `godot/`: the single Godot project (shared core plus one folder per game); vendored add-ons in `godot/addons/`,
+  the capture scene in `godot/tools/capture/`
+- `tools/`: `fetch-tools.sh` (portable tools), `test.sh`, `capture.sh`
 - `research/`: `stack-report.md` (full tool research with sources, including rejected paid options) and
   `existing_{A,B,C}.json` (survey of existing free versions for all 49 catalog games)
 - `catalog/`: the candidate catalog page. `python3 build.py` (run in `catalog/`) builds `index.html`.
-  `python3 catalog/tools/make_briefs.py` (run from the repo root) regenerates `docs/games/`. Data: `games.json`,
+  `python3 catalog/tools/make_briefs.py` (run from the repo root) regenerates `docs/games/` and `docs/catalog.md`. Data: `games.json`,
   `desc_*.json`, `map_compat.json`, `shots_meta.json`.
 
 ## Next steps
 
-1. Create the GitHub remote and push (the local git repo already exists).
-2. Install Godot 4.7, Blender 5, FluidSynth, git-lfs and the emulators (VICE for Boulder Dash). Register the
-   Godot and Blender MCP servers with Claude Code.
-3. Write the Xvfb capture script plus GdUnit4 setup, so the agent can see and test its own work.
-4. Game 1: BDCFF parser + exact Boulder Dash rules (reference: GDash, MIT), then the presentation.
+1. Setup is in [docs/setup.md](docs/setup.md) (portable tools in `.tools/` via `tools/fetch-tools.sh`; prepend
+   `.tools/bin` to `PATH`). The Blender MCP is registered. Still to do: connect the Godot MCP from the editor
+   dock (`godot --path godot -e`, Configure, local scope).
+2. Check your work with `tools/test.sh` (GdUnit4) and `tools/capture.sh` (PNG screenshots).
+3. Game 1: BDCFF parser + exact Boulder Dash rules (reference: GDash, MIT), then the presentation.
