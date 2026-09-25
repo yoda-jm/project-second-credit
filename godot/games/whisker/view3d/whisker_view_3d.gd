@@ -315,6 +315,34 @@ func _enter_room_set(e: WhiskerEngine) -> void:
 	_moon.visible = false
 
 
+## An eel that is easy to spot: bigger, with crackling sparks and a flickering blue glow.
+func _make_eel() -> Node3D:
+	var n := _scene("eel")
+	n.scale = Vector3.ONE * 2.0
+	var sparks := CPUParticles3D.new()
+	sparks.amount = 24
+	sparks.lifetime = 0.25
+	sparks.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	sparks.emission_box_extents = Vector3(0.6, 0.1, 0.1)
+	sparks.spread = 180.0
+	sparks.initial_velocity_min = 0.5
+	sparks.initial_velocity_max = 1.5
+	sparks.gravity = Vector3.ZERO
+	var q := QuadMesh.new()
+	q.size = Vector2(0.08, 0.08)
+	sparks.mesh = q
+	sparks.material_override = Fx.material("glow", Color(0.6, 0.85, 1.0))
+	sparks.scale_amount_curve = Fx.size_curve(false)
+	n.add_child(sparks)
+	var glow := OmniLight3D.new()
+	glow.light_color = Color(0.5, 0.8, 1.0)
+	glow.light_energy = 1.5
+	glow.omni_range = 2.2
+	glow.name = "Glow"
+	n.add_child(glow)
+	return n
+
+
 func _reset_room_things(r: WhiskerRoom) -> void:
 	var t := _room_things
 	match r.kind:
@@ -323,8 +351,9 @@ func _reset_room_things(r: WhiskerRoom) -> void:
 			for pool in ["fish", "eels"]:
 				var need: int = fr.fish.size() if pool == "fish" else fr.eels.size()
 				while t[pool].size() < need:
-					var n := _scene("goldfish" if pool == "fish" else "eel")
-					n.scale = Vector3.ONE * (1.6 if pool == "fish" else 1.3)
+					var n := _scene("goldfish") if pool == "fish" else _make_eel()
+					if pool == "fish":
+						n.scale = Vector3.ONE * 1.6
 					_room_set.add_child(n)
 					t[pool].append(n)
 				for i in t[pool].size():
@@ -418,8 +447,7 @@ func _build_room_set(r: WhiskerRoom) -> Dictionary:
 				_room_things["fish"].append(n)
 			_room_things["eels"] = []
 			for eel in fr.eels:
-				var n := _scene("eel")
-				n.scale = Vector3.ONE * 1.3
+				var n := _make_eel()
 				_room_set.add_child(n)
 				_room_things["eels"].append(n)
 		E.RoomKind.MICE:
@@ -719,6 +747,9 @@ func _update_room(e: WhiskerEngine, delta: float) -> void:
 					n.position = Vector3(fr.eels[i]["pos"].x, fr.eels[i]["pos"].y, 0.1)
 					n.rotation.y = PI if cos(fr.eels[i]["phase"]) * fr.eels[i]["dir"] > 0 else 0.0
 					n.rotation.x = sin(_time * 9.0) * 0.3
+					var glow := n.get_node_or_null("Glow") as OmniLight3D
+					if glow:
+						glow.light_energy = 1.0 + 1.2 * absf(sin(_time * 23.0 + i * 3.0) * sin(_time * 7.0))  # crackling
 		E.RoomKind.MICE:
 			var mr := r as MiceRoom
 			var nodes: Dictionary = _room_things["mice"]
