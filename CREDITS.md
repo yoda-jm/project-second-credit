@@ -6,7 +6,7 @@ Second Credit stands on the work of many people. Everything below is free and op
 
 - **GDash** by Czirkos Zoltan and contributors, MIT licence: <https://bitbucket.org/czirkoszoltan/gdash>
   (mirror used: <https://github.com/meonwax/gdash>). The rules engine, the BDCFF loader, the cave objects and the
-  element table are ports of GDash; the notice is in `godot/games/rocks/engine/GDASH_LICENSE.txt`. GDash's
+  element table are ports of GDash; the notice is in `godot/games/glimmerdeep/engine/GDASH_LICENSE.txt`. GDash's
   replays are what prove our engine exact.
 - **BDCFF**, the Boulder Dash Common File Format, designed by the Boulder Dash fan community, which also keeps
   thousands of caves alive.

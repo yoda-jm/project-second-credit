@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate godot/games/rocks/engine/cave_properties.gd from GDash (MIT): the BDCFF cave properties, their
+"""Generate godot/games/glimmerdeep/engine/cave_properties.gd from GDash (MIT): the BDCFF cave properties, their
 types and their default values (CaveStored::descriptor and CaveStored::set_gdash_defaults).
 
 Usage: python3 tools/gdash_port/gen_properties.py [path/to/gdash]   (default: .tools/ref/gdash)
@@ -139,7 +139,7 @@ func copy_properties_from(other: CaveProperties) -> void:
 		var v = other.get(m)
 		set(m, v.duplicate() if v is Array else v)
 """.strip("\n"))
-out = pathlib.Path("godot/games/rocks/engine/cave_properties.gd")
+out = pathlib.Path("godot/games/glimmerdeep/engine/cave_properties.gd")
 out.write_text("\n".join(L) + "\n")
 missing = [m for m in members if m not in values]
 print(f"wrote {out}: {len(members)} properties, {len(desc)} descriptor rows; no default for: {missing}")

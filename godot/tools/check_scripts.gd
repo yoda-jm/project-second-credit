@@ -11,6 +11,8 @@ func _init() -> void:
 	var count := 0
 	for r in roots:
 		for path in _scripts(r):
+			if path == (get_script() as Script).resource_path:
+				continue  # reloading the running script would crash
 			count += 1
 			var s = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 			if s == null or not (s as Script).can_instantiate():

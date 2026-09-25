@@ -60,8 +60,8 @@ decisions below are settled unless the owner reopens them.
 
 1. Setup is in [docs/setup.md](docs/setup.md). Check work with `tools/check.sh`, `tools/test.sh` and
    `tools/capture.sh`.
-2. Game 1 (`godot/games/rocks/`, working name "rocks"): the engine is a port of GDash, exact on all 306 GDash
-   replays (`ROCKS_REFERENCE=1 tools/test.sh`, see `tools/gdash_port/README.md`). `m1-grid` plays our first
+2. Game 1 (`godot/games/glimmerdeep/`, Glimmerdeep): the engine is a port of GDash, exact on all 306 GDash
+   replays (`GLIMMERDEEP_REFERENCE=1 tools/test.sh`, see `tools/gdash_port/README.md`). `m1-grid` plays our first
    free cave with a flat debug view and a demo replay. Next: speed up the engine loop, the 3D presentation
    (diorama, lighting, particles, sound), menus, cave-pack browser and the in-game download of known cave
    collections ([docs/level-packs.md](docs/level-packs.md)), the level editor, and more free caves.
