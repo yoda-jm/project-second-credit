@@ -46,7 +46,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Moonlit fences, open windows and a cat with nine lives.",
 		"inspired_by": "Alley Cat (1984)",
 		"scene": "res://games/whisker/scenes/whisker_game.tscn",
-		"card": "",
+		"card": "res://core/ui/cards/whisker.png",
 		"accent": Color(0.75, 0.55, 1.0),
 		"props": [["res://games/whisker/art/models/trash_can.glb", "model", 0.3],
 			["res://games/whisker/art/models/goldfish.glb", "model", 0.25],

@@ -13,6 +13,7 @@
   --teal: #4fd6e8;
   --orange: #ff8a3d;
   --leaf: #8cff66;
+  --violet: #c08cff;
   --head: "Future", "Arial Black", "Helvetica Neue", Arial, sans-serif;
   --label: "Future Narrow", "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
   --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -100,7 +101,9 @@ h2::before { content: "▸ "; color: var(--gold); }
 }
 .game.glimmer { --accent: var(--teal); }
 .game.bastion { --accent: var(--orange); grid-template-columns: 1fr 1.25fr; }
-.game.fruit { --accent: var(--leaf); }
+.game.fruit { --accent: var(--leaf); grid-template-columns: 1.25fr 1fr; }
+.game.cat { --accent: var(--violet); grid-template-columns: 1fr 1.25fr; }
+.game.cat video { order: 2; }
 .game.bastion video { order: 2; }
 .game:hover { border-color: var(--accent); }
 .game video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: #000; }
@@ -138,7 +141,7 @@ footer {
 
 @media (max-width: 820px) {
   .game, .game.bastion { grid-template-columns: 1fr; }
-  .game.bastion video { order: 0; }
+  .game.bastion video, .game.cat video { order: 0; }
   .ladder li { grid-template-columns: 36px 1fr auto; }
   .ladder i { display: none; }
 }
