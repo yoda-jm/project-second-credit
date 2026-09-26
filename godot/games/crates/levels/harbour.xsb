@@ -1,0 +1,93 @@
+; Crate Keeper puzzles. Designed for Second Credit. Licence CC BY-SA 4.0.
+; Standard Sokoban text format; each puzzle has a Title, its par (moves of the best solution) and that solution.
+
+#######
+#     #
+# @$ .#
+#     #
+#######
+Title: First Crate
+; par=2
+; solution=RR
+
+########
+#      #
+# .$$. #
+#  @   #
+#      #
+########
+Title: Two by Two
+; par=18
+; solution=luurDurrddlLdlUruR
+
+  ##### 
+###   # 
+#.@$  # 
+### $.# 
+#.##$ # 
+# # . ##
+#$ *$$.#
+#   .  #
+########
+Title: The Bend
+; par=70
+; solution=RurrddddlDRlLurruuuullddRDrddlldllUUddrrurruululuurrdLLLrdrdrddlldlluR
+
+#######
+#.   .#
+# $$$ #
+#  @  #
+# $ $ #
+#.   .#
+#  .  #
+#######
+Title: Corner Store
+; par=37
+; solution=rDullDrdRuullUdrrruullLrDDDDLuurrUluR
+
+##########
+#   ##   #
+# $    $ #
+##.##.## #
+#  $@$ . #
+#  .     #
+##########
+Title: Narrow Aisle
+; par=52
+; solution=drUdllluRRRRdrruuuulldlllulDDDldRuuurrrrurrdLLLLLulD
+
+  ######
+  #    #
+###$$$ #
+#@ $.. #
+# $...##
+####  # 
+   #### 
+Title: Loading Bay
+; par=43
+; solution=dRRRuLrrruullDDldlluRRRuurrddLruulllDDuurrD
+
+ ####### 
+ #  .  # 
+## $#$ ##
+#. $@$ .#
+## $#$ ##
+ #  .  # 
+ ##. .## 
+  #####  
+Title: Dock Office
+; par=41
+; solution=LLrDurRDDuullUluRddrrRllldDuurrruulDDDrdL
+
+#########
+#   #   #
+# $ . $ #
+#  ###  #
+#.  @  .#
+#  ###  #
+# $ . $ #
+#   #   #
+#########
+Title: Rope Store
+; par=56
+; solution=rrdrddlUruuuuLLrddrddlUdllldlluRRluurrrRlllluluurrdLulDD
