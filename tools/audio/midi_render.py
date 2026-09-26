@@ -46,8 +46,9 @@ def write_midi(path, tracks, bpm):
         f.write(b"MThd" + struct.pack(">IHHH", 6, 1, len(chunks), TPB) + b"".join(chunks))
 
 
-def render_loop(tracks, bpm, bars, out_ogg, gain=0.6):
-    """Renders the tracks, folds the reverb tail into the start (seamless loop), writes Ogg and the MIDI."""
+def render_loop(tracks, bpm, bars, out_ogg, gain=0.6, rms_db=None):
+    """Renders the tracks, folds the reverb tail into the start (seamless loop), writes Ogg and the MIDI.
+    Normalised to a -1 dB peak, or, with rms_db, to that RMS level (the peak still capped at -1 dB)."""
     with tempfile.TemporaryDirectory() as tmp:
         mid, raw, loop_wav = (os.path.join(tmp, n) for n in ("m.mid", "raw.wav", "loop.wav"))
         write_midi(mid, tracks, bpm)
@@ -60,7 +61,10 @@ def render_loop(tracks, bpm, bars, out_ogg, gain=0.6):
         y = x[:loop].copy()
         tail = x[loop:loop + SR * 4]
         y[:len(tail)] += tail
-        y *= 0.89 * 32767 / np.max(np.abs(y))
+        scale = 0.89 * 32767 / np.max(np.abs(y))
+        if rms_db is not None:
+            scale = min(scale, 10 ** (rms_db / 20) * 32767 / np.sqrt(np.mean(y ** 2)))
+        y *= scale
         with wave.open(loop_wav, "wb") as w:
             w.setnchannels(ch)
             w.setsampwidth(2)

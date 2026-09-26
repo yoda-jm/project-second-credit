@@ -204,6 +204,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/mossfolk/art/models/mushroom_big.glb", "model", 0.3],
 			["res://games/mossfolk/art/models/crystal_cluster.glb", "model", 0.3]],
 	},
+	{
+		"id": "hopline",
+		"style": "Arcade",
+		"title": "Hopline",
+		"tagline": "Five lanes of traffic, five of canal, five homes.",
+		"inspired_by": "Frogger (1981)",
+		"scene": "res://games/hopline/scenes/hopline_game.tscn",
+		"card": "",
+		"accent": Color(0.45, 0.9, 0.45),
+		"props": [["res://games/hopline/art/models/frog.glb", "model", 0.4],
+			["res://games/hopline/art/models/truck.glb", "model", 0.3],
+			["res://games/hopline/art/models/lilypad.glb", "model", 0.3]],
+	},
 ]
 
 

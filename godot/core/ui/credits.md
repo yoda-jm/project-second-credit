@@ -124,6 +124,13 @@ Second Credit stands on the work of many people. Everything below is free and op
   a shader over the level's pixel mask; sound effects and the three themes are synthesised by
   `tools/audio/mossfolk_sfx.py` and `mossfolk_music.py`.
 
+## Game 16 (Hopline, working title)
+
+- Inspired by *Frogger* (Konami, 1981). None of its code, graphics, sounds or music are in this repo (nor the folk
+  tune it used): the frog, the canal town, the lanes' tuning and the ragtime score are original.
+- Models are built by `tools/blender/hopline_models.py`; sound effects, ambience and both music loops are
+  synthesised by `tools/audio/hopline_sfx.py` and `hopline_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

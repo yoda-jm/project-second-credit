@@ -115,5 +115,7 @@ decisions below are settled unless the owner reopens them.
 17. Game 15, **Mossfolk** (Lemmings-like, `godot/games/mossfolk/`): pixel terrain, eight skills, five levels in
    `levels/*.moss` (our text format, each with a recorded solution the demo plays and a test checks); `--level=N`.
    Open item: an importer for the player's original level files (it needs their graphics sets, read locally).
-18. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+18. Game 16, **Hopline** (Frogger-like, `godot/games/hopline/`): lanes move as pure functions of time, so the
+   autopilot plans through time (a beam search); diving turtles, a crocodile in the bays, fly and lady-frog bonuses.
+19. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
