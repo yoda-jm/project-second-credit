@@ -803,5 +803,7 @@ func _update_jump(j: SkiJump, delta: float) -> void:
 			pos = hill_point(x) + Vector3(0, 0.1, 0)
 			_jumper.basis = Basis(Vector3.UP, PI * 0.5)
 			_anim(_jumper, "fall" if j.fell else ("telemark" if _slide < 20.0 else "celebrate"))
-			_move_camera(pos + Vector3(-6.0, 3.5, 14.0), pos + Vector3(3.0, 0.5, 0), delta, 2.5)
+			# still locked to the jumper while they slide fast, then easing back for the celebration
+			var back := clampf(_slide / 60.0, 0.0, 1.0)
+			_snap_camera(pos + Vector3(-4.0 - back * 3.0, 2.2 + back * 1.5, 8.0 + back * 5.0), pos + Vector3(3.0 - back * 2.0, 0.6, 0))
 	_jumper.position = pos
