@@ -124,6 +124,9 @@ h2::before { content: "▸ "; color: var(--gold); }
 .game.inkstorm { --accent: var(--gold); grid-template-columns: 1fr 1.25fr; }
 .game.inkstorm video { order: 2; }
 .game.mossfolk { --accent: var(--leaf); grid-template-columns: 1.25fr 1fr; }
+.game.hopline { --accent: var(--leaf); grid-template-columns: 1fr 1.25fr; }
+.game.hopline video { order: 2; }
+.game.slipfloe { --accent: var(--ice); grid-template-columns: 1.25fr 1fr; }
 .game.bastion video { order: 2; }
 .game:hover { border-color: var(--accent); }
 .game video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: #000; }
