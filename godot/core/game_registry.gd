@@ -230,6 +230,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/slipfloe/art/models/gem_block.glb", "model", 0.3],
 			["res://games/slipfloe/art/models/mite.glb", "model", 0.3]],
 	},
+	{
+		"id": "fizzlings",
+		"style": "Arcade",
+		"title": "Fizzlings",
+		"tagline": "Blow bubbles, trap toys, pop them into treats.",
+		"inspired_by": "Bubble Bobble (1986)",
+		"scene": "res://games/fizzlings/scenes/fizzlings_game.tscn",
+		"card": "",
+		"accent": Color(1.0, 0.62, 0.72),
+		"props": [["res://games/fizzlings/art/models/axolotl.glb", "model", 0.4],
+			["res://games/fizzlings/art/models/bubble.glb", "model", 0.3],
+			["res://games/fizzlings/art/models/treat_cupcake.glb", "model", 0.3]],
+	},
 ]
 
 

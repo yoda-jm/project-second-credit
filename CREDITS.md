@@ -138,6 +138,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Models are built by `tools/blender/slipfloe_models.py`; sound effects and both music loops are synthesised by
   `tools/audio/slipfloe_sfx.py` and `slipfloe_music.py`.
 
+## Game 18 (Fizzlings, working title)
+
+- Inspired by *Bubble Bobble* (Taito, 1986). None of its code, graphics, sounds, music or rounds are in this repo:
+  the axolotls, the tin toys, the toybox levels and the score are original.
+- Models are built by `tools/blender/fizzlings_models.py`; the levels by a script (in the scratchpad history) into
+  `godot/games/fizzlings/levels/toybox.fizz`; sound effects and music are synthesised by
+  `tools/audio/fizzlings_sfx.py` and `fizzlings_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

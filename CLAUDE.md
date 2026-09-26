@@ -119,5 +119,7 @@ decisions below are settled unless the owner reopens them.
    autopilot plans through time (a beam search); diving turtles, a crocodile in the bays, fly and lady-frog bonuses.
 19. Game 17, **Slipfloe** (Pengo-like, `godot/games/slipfloe/`): a maze of ice generated per stage, sliding and
    shattering blocks, eggs, wall shakes, three gem blocks; the autopilot looks for blocks with mites in their lane.
-20. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+20. Game 18, **Fizzlings** (Bubble Bobble-like, `godot/games/fizzlings/`): one or two heroes (W/F joins), six
+   toybox levels in `levels/*.fizz` (32 x 26 text grids), bubble chains, treats, hurry and the ghost, two autopilots.
+21. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
