@@ -108,6 +108,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - The bricks, paddle, frame, drones and backdrop are built by `tools/blender/prism_models.py`; sound effects and the
   theme are synthesised by `tools/audio/prism_sfx.py` and `prism_music.py`.
 
+## Game 14 (Inkstorm, working title)
+
+- Inspired by *Qix* (Taito, 1981). None of its code, graphics, sounds or music are in this repo: the painted map,
+  the ink storm, the sparks and the sounds are original.
+- The marker, sparks, map props, frame and inkwell are built by `tools/blender/inkstorm_models.py`; the relief is a
+  shader (`godot/games/inkstorm/shaders/ink_board.gdshader`); sound effects and both music loops are synthesised by
+  `tools/audio/inkstorm_sfx.py` and `inkstorm_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

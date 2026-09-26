@@ -178,6 +178,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/prism/art/models/ball.glb", "model", 0.25],
 			["res://games/prism/art/models/drone_1.glb", "model", 0.3]],
 	},
+	{
+		"id": "inkstorm",
+		"style": "Arcade",
+		"title": "Inkstorm",
+		"tagline": "Fence off the map, one line at a time.",
+		"inspired_by": "Qix (1981)",
+		"scene": "res://games/inkstorm/scenes/inkstorm_game.tscn",
+		"card": "",
+		"accent": Color(1.0, 0.75, 0.35),
+		"props": [["res://games/inkstorm/art/models/marker.glb", "model", 0.4],
+			["res://games/inkstorm/art/models/windmill.glb", "model", 0.3],
+			["res://games/inkstorm/art/models/inkwell.glb", "model", 0.3]],
+	},
 ]
 
 
