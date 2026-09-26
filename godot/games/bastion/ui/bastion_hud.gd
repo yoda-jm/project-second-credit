@@ -39,6 +39,8 @@ func _on_event(kind: String, d: Dictionary) -> void:
 				P.BUILD: _show("REPAIR!", "CLOSE THE WALLS AROUND A CASTLE")
 		"game_over":
 			_show("THE COAST IS LOST")
+		"island_held":
+			_show("ISLAND HELD")
 
 
 func _show(text: String, sub := "") -> void:
@@ -86,7 +88,12 @@ func _draw() -> void:
 		draw_rect(Rect2(vp.x * 0.5 - 140, 98, 280 * frac, 4), col)
 	# top right: score
 	HudKit.panel(self, Rect2(vp.x - 324, 16, 300, 84), HudKit.GOLD)
-	HudKit.stat(self, vp.x - 48, 20, "SCORE", "%07d" % e.score, HudKit.GOLD, HudKit.RIGHT)
+	HudKit.stat(self, vp.x - 48, 20, "SCORE", "%07d" % game.total_score(), HudKit.GOLD, HudKit.RIGHT)
+	if game.pack:  # campaign: which island, and how long to hold it
+		HudKit.panel(self, Rect2(vp.x - 324, 108, 300, 44), Color(1, 1, 1, 0.2), 14, 0.9)
+		var left := maxi(0, e.map.rounds - maxi(0, e.round_number - 1))  # a round counts once its repair ends
+		HudKit.text(self, Vector2(vp.x - 304, 138), "ISLAND %d / %d" % [game.island + 1, game.pack.levels.size()], 18, HudKit.INK, HudKit.label_font())
+		HudKit.text(self, Vector2(vp.x - 44, 138), "HOLD %d MORE" % left if not e.won else "HELD", 18, HudKit.GOLD, HudKit.label_font(), HudKit.RIGHT)
 	# castle status: sealed or how many holes are left
 	if e.phase != P.CHOOSE and not over and not e.castle_holes.is_empty():
 		var castles: Array = e.castle_holes.keys()
@@ -127,8 +134,13 @@ func _draw() -> void:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 34), msg, 24, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
 	elif not over:
 		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 30), HINTS.get(e.phase, []))
-	if over:
+	if over and e.won:
+		var title := "THE COASTLINE IS OURS" if game.campaign_done else "ISLAND HELD"
+		HudKit.banner(self, vp, vp.y * 0.45, title, "%s   -   SCORE %d" % [e.map.name.to_upper(), game.total_score()], HudKit.GOOD, 1.0)
+		if game.campaign_done and not game.demo:
+			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.45 + 150), [["ENTER", "play again"], ["ESC", "menu"]])
+	elif over:
 		draw_rect(Rect2(Vector2.ZERO, vp), Color(0, 0, 0, 0.45))
-		HudKit.banner(self, vp, vp.y * 0.45, "GAME OVER", "SCORE %d   -   %d ROUNDS   -   %d SHIPS SUNK" % [e.score,
+		HudKit.banner(self, vp, vp.y * 0.45, "THE ISLAND FALLS" if game.pack else "GAME OVER", "SCORE %d   -   %d ROUNDS   -   %d SHIPS SUNK" % [game.total_score(),
 			e.round_number, e.ships_sunk], HudKit.GOLD, 1.0)
-		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.45 + 150), [["ESC", "menu"]])
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.45 + 150), [["ENTER", "try the island again"], ["ESC", "menu"]] if game.pack and not game.demo else [["ESC", "menu"]])

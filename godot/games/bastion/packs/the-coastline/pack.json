@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "game": "bastion",
+  "id": "the-coastline",
+  "name": "The Coastline",
+  "version": "1.0.0",
+  "author": "Second Credit",
+  "licence": "CC-BY-SA-4.0",
+  "description": "Five islands to hold, one after the other, each for a few rounds more than the last.",
+  "levels": ["first-shore.map", "twin-coves.map", "the-narrows.map", "rock-garden.map", "last-light.map"],
+  "intro": {
+    "title": "The Coastline",
+    "text": "The fleet has been sighted off the coast. The old castles are still standing, but the walls between them are long gone.\nPick a castle, raise the walls, place your cannons. Hold First Shore for three rounds, and we sail on."
+  },
+  "story": [
+    {"level": 1, "title": "Twin Coves",
+     "text": "First Shore held. The fleet slipped round the headland to the twin coves, where two bays give their ships two ways in.\nHold it four rounds. Mind both beaches."},
+    {"level": 2, "title": "The Narrows",
+     "text": "Two lobes of land and a thin neck of sand between them. Whoever holds the neck holds the island, and the fleet knows it.\nFive rounds."},
+    {"level": 3, "title": "Rock Garden",
+     "text": "Nothing grows here but stone. The rocks will not take a wall, so plan every piece around them.\nFive rounds, and the ships are getting bolder."},
+    {"level": 4, "title": "Last Light",
+     "text": "The last island before open sea, with its lighthouse still burning. Five castles, and every one of them worth keeping.\nHold it six rounds and the fleet turns for home."}
+  ],
+  "outro": {
+    "title": "The Fleet Turns",
+    "text": "On the sixth night the sails on the horizon turn away, one by one, until the sea is empty.\nThe lighthouse keeper climbs down for the first time in a week. The walls can wait until morning."
+  }
+}

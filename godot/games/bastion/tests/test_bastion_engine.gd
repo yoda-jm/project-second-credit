@@ -1,7 +1,7 @@
 extends GdUnitTestSuite
 ## Bastion Coast rules: map parsing, wall pieces, enclosure and the round loop.
 
-const MAP := "res://games/bastion/maps/first-shore.map"
+const MAP := "res://games/bastion/packs/the-coastline/first-shore.map"
 
 
 func _engine() -> BastionEngine:
@@ -198,3 +198,33 @@ func test_a_sealed_pocket_without_castle_is_not_territory() -> void:
 	e._compute_territory(false)
 	assert_bool(e.is_ours(27, 15)).is_false()
 	assert_bool(e.is_ours(e.map.castles[1].x, e.map.castles[1].y)).is_true()
+
+
+func test_the_coastline_pack_and_every_island_can_be_held() -> void:
+	# the autopilot holds each island of the campaign for its rounds, with one of a few seeds
+	var p := Pack.find("bastion", "the-coastline")
+	assert_object(p).is_not_null()
+	assert_int(p.levels.size()).is_equal(5)
+	for i in p.levels.size():
+		var m := CoastMap.load_file(p.levels[i])
+		assert_int(m.rounds).is_greater(0)
+		var held := false
+		for seed in [7, 8, 9]:
+			var g := BastionGame.new()
+			g.demo = true
+			g.pack = p
+			g.island = i
+			g._seed = seed
+			add_child(g)
+			g._start_island()
+			g.set_process(false)
+			var n := 0
+			while g.engine.phase != BastionEngine.Phase.GAME_OVER and n < 60 * 600:
+				g._bot(BastionEngine.TICK)
+				g.engine.tick()
+				n += 1
+			held = g.engine.won
+			g.queue_free()
+			if held:
+				break
+		assert_bool(held).override_failure_message("island %d (%s) is not held by the bot" % [i + 1, m.name]).is_true()

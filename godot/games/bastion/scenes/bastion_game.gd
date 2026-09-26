@@ -2,12 +2,14 @@ class_name BastionGame
 extends Node
 ## Runs a Bastion Coast game in real time: fixed 60 Hz ticks of the engine, player input (keys with repeat,
 ## mouse aiming via the view), the demo autopilot, restarts. The view and HUD read `engine` and its events.
+## Campaign mode plays a pack's islands in order (core/packs/pack.gd): hold each for its rounds to sail on to the
+## next, with the pack's story cards between; a lost island is tried again (Enter), the score carries on.
 
 signal started(engine: BastionEngine)
 
 const P = BastionEngine.Phase
 
-@export_file("*.map") var map_file := "res://games/bastion/maps/first-shore.map"
+@export_file("*.map") var map_file := "res://games/bastion/packs/the-coastline/first-shore.map"
 
 var engine: BastionEngine
 var demo := false
@@ -20,22 +22,74 @@ var _repeat_t := 0.0
 var _bot_t := 0.0
 var _bot_plan := {}
 var _seed := 1
+# campaign
+var pack: Pack
+var island := 0
+var banked := 0  ## score of the islands already held
+var story_open := false
+var campaign_done := false
+var _cards_seen := {}
 
 
 func start(seed: int = -1) -> void:
 	_seed = seed if seed >= 0 else randi()
+	if pack:
+		_start_island()
+		return
 	engine = BastionEngine.new(CoastMap.load_file(map_file), _seed)
 	game_over_time = 0.0
 	_bot_plan = {}
 	started.emit(engine)
 
 
+func start_campaign(p: Pack, seed: int = -1) -> void:
+	pack = p
+	island = 0
+	banked = 0
+	campaign_done = false
+	_cards_seen.clear()
+	start(seed)
+
+
+func _start_island() -> void:
+	for c in get_children():
+		if c is StoryCard:
+			c.queue_free()
+	story_open = false
+	engine = BastionEngine.new(CoastMap.load_file(pack.levels[island]), _seed + island * 17)
+	game_over_time = 0.0
+	_bot_plan = {}
+	started.emit(engine)
+	var card := pack.card_before(island)
+	if not card.is_empty() and not _cards_seen.has(island):
+		_cards_seen[island] = true
+		story_open = true
+		var c := StoryCard.show_card(self, card, Color(0.4, 0.7, 1.0), 7.0 if demo else 0.0)
+		c.closed.connect(func(): story_open = false)
+
+
+func total_score() -> int:
+	return banked + (engine.score if engine else 0)
+
+
 func _process(delta: float) -> void:
-	if engine == null:
+	if engine == null or story_open:
 		return
 	if engine.phase == P.GAME_OVER:
 		game_over_time += delta
-		if game_over_time > (6.0 if demo else 1e9):
+		if pack and engine.won and game_over_time > 4.0 and not campaign_done:
+			banked += engine.score
+			island += 1
+			if island >= pack.levels.size():
+				campaign_done = true
+				if not pack.outro.is_empty():
+					StoryCard.show_card(self, pack.outro, Color(0.4, 0.7, 1.0), 9.0 if demo else 0.0)
+				if demo:
+					get_tree().create_timer(12.0).timeout.connect(func(): start_campaign(pack, _seed + 1))
+			else:
+				_start_island()
+			return
+		if game_over_time > (6.0 if demo else 1e9) and not campaign_done:
 			start(_seed + 1)
 		return
 	if demo:
@@ -51,12 +105,21 @@ func _process(delta: float) -> void:
 # ------------------------------------------------------------------ player input
 
 func _unhandled_input(event: InputEvent) -> void:
+	if pack and engine and engine.phase == P.GAME_OVER and not demo and event.is_action_pressed("ui_accept"):
+		if campaign_done:
+			start_campaign(pack)  # the whole coastline again
+		elif not engine.won:
+			start(_seed + 1)  # the fallen island, again
+		return
 	if engine == null or demo:
 		if demo and not demo_locked and event.is_pressed() and not event.is_echo() \
 				and (event is InputEventKey or event is InputEventMouseButton):
 			if not event.is_action("ui_cancel"):
 				demo = false  # a key press takes over
-				start()
+				if pack:
+					start_campaign(pack)
+				else:
+					start()
 		return
 	if event is InputEventMouseMotion and view != null:
 		var c = view.screen_to_cell(event.position)

@@ -3,6 +3,7 @@ extends RefCounted
 ## A Bastion Coast battlefield: land and water cells, and castle sites (2x2). Our own text format:
 ##
 ##   name=First Shore
+##   rounds=4           (optional) hold the island this many rounds to win it; 0 or absent: play until it falls
 ##   ~~~~....~~~
 ##   ~~..C...~~~        ~ water   . land   C castle (top-left cell of a 2x2 castle)   # rock (land, unbuildable)
 ##
@@ -11,6 +12,7 @@ extends RefCounted
 enum Terrain { WATER, LAND, ROCK }
 
 var name := ""
+var rounds := 0  ## rounds to hold the island (0: endless)
 var w := 0
 var h := 0
 var terrain := PackedByteArray()
@@ -26,8 +28,9 @@ static func parse(text: String) -> CoastMap:
 			continue
 		if rows.is_empty() and line.contains("="):
 			var kv := line.split("=", true, 1)
-			if kv[0].strip_edges() == "name":
-				m.name = kv[1].strip_edges()
+			match kv[0].strip_edges():
+				"name": m.name = kv[1].strip_edges()
+				"rounds": m.rounds = maxi(0, kv[1].to_int())
 			continue
 		rows.append(line)
 	m.h = rows.size()
