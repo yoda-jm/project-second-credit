@@ -15,6 +15,9 @@
   --leaf: #8cff66;
   --violet: #c08cff;
   --ice: #9fdcff;
+  --olive: #a8d86a;
+  --neon: #ff4fa8;
+  --amber: #ffa23a;
   --head: "Future", "Arial Black", "Helvetica Neue", Arial, sans-serif;
   --label: "Future Narrow", "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
   --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -106,6 +109,11 @@ h2::before { content: "▸ "; color: var(--gold); }
 .game.cat { --accent: var(--violet); grid-template-columns: 1fr 1.25fr; }
 .game.cat video { order: 2; }
 .game.winter { --accent: var(--ice); grid-template-columns: 1.25fr 1fr; }
+.game.boots { --accent: var(--olive); grid-template-columns: 1fr 1.25fr; }
+.game.boots video { order: 2; }
+.game.knuckles { --accent: var(--neon); grid-template-columns: 1.25fr 1fr; }
+.game.flags { --accent: var(--amber); grid-template-columns: 1fr 1.25fr; }
+.game.flags video { order: 2; }
 .game.bastion video { order: 2; }
 .game:hover { border-color: var(--accent); }
 .game video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: #000; }
@@ -143,7 +151,7 @@ footer {
 
 @media (max-width: 820px) {
   .game, .game.bastion { grid-template-columns: 1fr; }
-  .game.bastion video, .game.cat video { order: 0; }
+  .game.bastion video, .game.cat video, .game.boots video, .game.flags video { order: 0; }
   .ladder li { grid-template-columns: 36px 1fr auto; }
   .ladder i { display: none; }
 }
