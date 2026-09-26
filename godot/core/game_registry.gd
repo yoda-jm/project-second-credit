@@ -152,6 +152,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/crates/art/models/barrel.glb", "model", 0.3],
 			["res://games/crates/art/models/anchor.glb", "model", 0.3]],
 	},
+	{
+		"id": "nightbite",
+		"style": "Arcade",
+		"title": "Nightbite",
+		"tagline": "Eat the light before the lanterns eat you.",
+		"inspired_by": "Pac-Man (1980)",
+		"scene": "res://games/nightbite/scenes/nightbite_game.tscn",
+		"card": "",
+		"accent": Color(0.75, 0.45, 1.0),
+		"props": [["res://games/nightbite/art/models/power.glb", "model", 0.4],
+			["res://games/nightbite/art/models/fruit_0.glb", "model", 0.3],
+			["res://games/nightbite/art/models/fruit_1.glb", "model", 0.3]],
+	},
 ]
 
 
