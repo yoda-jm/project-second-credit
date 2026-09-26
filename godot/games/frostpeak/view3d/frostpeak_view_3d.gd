@@ -9,7 +9,7 @@ const S := preload("res://games/frostpeak/scenes/frostpeak_game.gd").Stage
 const STRAIGHT := 100.0
 const RADIUS := 30.0
 const LANES: Array[float] = [2.0, 6.0]  ## lane centres, out from the inner radius (player, rival)
-const JUMP := Vector3(700, 0, 0)
+const JUMP := Vector3(700, 56.0, 0)  ## the lip; the outrun, 56 m below, meets the valley floor
 const PLAZA := Vector3(-500, 0, 0)
 const INRUN_ANGLE := deg_to_rad(35.0)
 
@@ -170,7 +170,7 @@ func _build_world() -> void:
 	we.environment = env
 	add_child(we)
 	_sun = DirectionalLight3D.new()
-	_sun.rotation_degrees = Vector3(-24, -65, 0)  # low winter sun from the side: long shadows, relief on the snow
+	_sun.rotation_degrees = Vector3(-34, -65, 0)  # low winter sun from the side: long shadows, relief on the snow
 	_sun.light_color = Color(1.0, 0.95, 0.88)
 	_sun.light_energy = 1.2
 	_sun.shadow_enabled = true
@@ -428,17 +428,20 @@ func _build_hill() -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var xs := []
-	var x := -100.0
-	while x <= 240.0:
+	var x := -180.0
+	while x <= 300.0:
 		xs.append(x)
-		x += 2.5
+		x += 2.5 if x > -100.0 and x < 240.0 else 5.0
 	var zs := []
-	for k in 49:
-		zs.append(-96.0 + k * 4.0)
+	for k in 81:
+		zs.append(-160.0 + k * 4.0)
 	var h := func(px: float, pz: float) -> float:
-		var y: float = _hill_y(minf(px, 170.0))
+		var y: float = _hill_y(clampf(px, -100.0, 170.0))
 		var bank := maxf(0.0, absf(pz) - 17.0)
-		return y + minf(bank * 0.28 + bank * bank * 0.006, 24.0)  # gentle banks, not walls
+		y += minf(bank * 0.28 + bank * bank * 0.006, 24.0)  # gentle banks, not walls
+		# far from the hill the mountainside settles down to the valley floor, with no edge to see
+		var out := maxf(smoothstep(96.0, 160.0, absf(pz)), smoothstep(-110.0, -180.0, px))
+		return lerpf(y, -JUMP.y, out)
 	for i in xs.size() - 1:
 		for k in zs.size() - 1:
 			var p := []
@@ -769,7 +772,6 @@ func _update_skating(s: SpeedSkating, delta: float) -> void:
 
 func _update_jump(j: SkiJump, delta: float) -> void:
 	_jumper.visible = true
-	var cut: bool = j.stage != _jump_stage
 	_jump_stage = j.stage
 	var pos := Vector3.ZERO
 	match j.stage:
@@ -785,11 +787,15 @@ func _update_jump(j: SkiJump, delta: float) -> void:
 			_move_camera(cam, ahead, delta, 6.0)
 		SkiJump.Stage.FLIGHT:
 			pos = JUMP + Vector3(j.fly.x, j.fly.y + 0.3, 0)
+			pos.y = maxf(pos.y, JUMP.y + _hill_y(j.fly.x) + 0.45)  # the coarse hill mesh must never swallow the skis
 			_jumper.basis = Basis(Vector3.UP, PI * 0.5).rotated(Vector3.BACK, -0.15 - j.angle * 0.8)
 			_anim(_jumper, "flight")
-			if cut:  # the TV cut to the side camera at the lip
-				_snap_camera(pos + Vector3(-3.0, 2.0, 13.0), pos + Vector3(5.0, -1.5, 0))
-			_move_camera(pos + Vector3(-3.0, 2.0, 13.0), pos + Vector3(5.0, -1.5, 0), delta, 4.0)
+			# the TV chase camera: locked to the jumper (a smoothed camera would trail far behind at this speed),
+			# beside and a little above, easing out as the flight goes on so the landing hill comes into view
+			var out := clampf(j.fly.x / 90.0, 0.0, 1.0)
+			var cam := pos + Vector3(-2.5 - out * 1.5, 1.4 + out * 1.6, 6.5 + out * 3.0)
+			cam.y = maxf(cam.y, JUMP.y + _hill_y(cam.x - JUMP.x) + 2.5)  # never under the slope behind the jumper
+			_snap_camera(cam, pos + Vector3(2.5 + out * 2.0, -0.4 - out * 0.8, 0))  # aimed at the jumper, a little ahead
 			_landed_x = j.fly.x
 		SkiJump.Stage.LANDED:
 			_slide += delta * maxf(0.0, 22.0 - _slide * 0.2)
