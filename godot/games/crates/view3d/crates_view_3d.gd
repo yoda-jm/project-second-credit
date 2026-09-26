@@ -117,6 +117,7 @@ func _on_puzzle(e: CratesEngine) -> void:
 				if touches:
 					var wn := _scene("window_wall" if (x * 7 + y * 3) % 9 == 0 and y == 0 else "wall_%d" % ((x + y) % 2))
 					wn.position = p
+					wn.scale = Vector3(1, 0.62, 1)  # low walls: the whole room stays in view
 					_board.add_child(wn)
 	for g in lv.goals:
 		var n := _scene("goal")
@@ -137,6 +138,7 @@ func _on_puzzle(e: CratesEngine) -> void:
 		_crate_lit.append(false)
 		_set_lit(i, e.goals.has(e.crates[i]))
 	_keeper = _scene("keeper")
+	_keeper.scale = Vector3.ONE * 1.3
 	_keeper.position = Vector3(e.keeper.x, 0, e.keeper.y)
 	_board.add_child(_keeper)
 	_anim = _keeper.find_child("AnimationPlayer", true, false)
@@ -271,6 +273,7 @@ func _process(delta: float) -> void:
 	if _anim and want != _anim_last and _anim.has_animation(want):
 		_anim_last = want
 		_anim.play(want, 0.1)
+		_anim.speed_scale = {"walk": 1.36, "push": 2.2}.get(want, 1.0)
 	_place_camera(e)
 
 

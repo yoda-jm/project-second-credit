@@ -139,6 +139,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/ingot/art/models/lantern.glb", "model", 0.3],
 			["res://games/ingot/art/models/ladder.glb", "model", 0.3]],
 	},
+	{
+		"id": "crates",
+		"style": "Puzzle",
+		"title": "Crate Keeper",
+		"tagline": "Push, never pull. Think twice.",
+		"inspired_by": "Sokoban (1982)",
+		"scene": "res://games/crates/scenes/crates_game.tscn",
+		"card": "",
+		"accent": Color(0.95, 0.72, 0.35),
+		"props": [["res://games/crates/art/models/crate.glb", "model", 0.4],
+			["res://games/crates/art/models/barrel.glb", "model", 0.3],
+			["res://games/crates/art/models/anchor.glb", "model", 0.3]],
+	},
 ]
 
 

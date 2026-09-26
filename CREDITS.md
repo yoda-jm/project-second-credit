@@ -84,6 +84,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - The runner and the guards are built on the shared humanoid rig by `tools/blender/ingot_characters.py`, the temple
   mine by `tools/blender/ingot_models.py`; sound effects and the theme are synthesised by `tools/audio/`.
 
+## Game 11 (Crate Keeper, working title)
+
+- Inspired by *Sokoban* (Thinking Rabbit, 1982). None of its code, graphics or puzzles are in this repo; our puzzles
+  are our own, proven solvable by a solver script. The game reads the standard Sokoban text format, so players can
+  load the community collections they have, locally.
+- The keeper is built on the shared humanoid rig by `tools/blender/crates_keeper.py`, the warehouse by
+  `tools/blender/crates_models.py`; sound effects, the harbour ambience and the theme are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

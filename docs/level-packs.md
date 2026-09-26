@@ -85,6 +85,7 @@ Each entry in the list records its source URL and, when known, its licence. Plan
 | Cannon Fodder | original CF1/CF2 `.map` + `.spt` + the tileset `.hit` tables (read by `godot/games/boots/engine/cf_import.gd`; format notes in its header, after Open Fodder), OpenFodder Editor output (same format); our campaigns: packs of `.boots` text files | user's Amiga/DOS data folder (local only) |
 | Z | Zod Engine `.map` + planet `.tileinfo`, read locally (`godot/games/flags/engine/zod_import.gd`) | original Z data (to investigate) |
 | Lode Runner | the plain-text tile format of the free remakes (`#` `@` `H` `-` `X` `S` `$` `0` `&`), read by `godot/games/ingot/engine/ingot_level.gd`; our sets use it with `[level]` headers | original disks (later, optional) |
+| Sokoban | the standard text format (`.xsb`/`.sok`: `#` `$` `.` `*` `@` `+`), read by `godot/games/crates/engine/crates_level.gd`; our set adds `par=` and `solution=` comments | n/a |
 | Alley Cat, Winter Games, Double Dragon | none (fixed content) | n/a |
 
 ## Open questions
