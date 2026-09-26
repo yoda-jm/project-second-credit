@@ -269,8 +269,9 @@ func _forest(xforms: Array[Transform3D], seed: int) -> void:
 	var spruces: Array[Transform3D] = []
 	for x in xforms:
 		(pines if rng.randf() < 0.55 else spruces).append(x)
-	_multi("snowy_pine", pines, {"pine_needles": tm})
-	_multi("snowy_spruce", spruces, {"pine_needles": tm})
+	# the forest casts no sun shadows: from a low winter sun they smear across whole slopes
+	for inst in [_multi("snowy_pine", pines, {"pine_needles": tm}), _multi("snowy_spruce", spruces, {"pine_needles": tm})]:
+		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 func _flag(pos: Vector3, cols: Array, size := Vector2(2.0, 1.3), yaw := 0.0) -> MeshInstance3D:
@@ -454,13 +455,16 @@ func _build_world() -> void:
 	we.environment = env
 	add_child(we)
 	_sun = DirectionalLight3D.new()
-	_sun.rotation_degrees = Vector3(-30, -62, 0)  # low winter sun from the side: long shadows, relief on the snow
+	_sun.rotation_degrees = Vector3(-40, -62, 0)  # winter sun from the side: relief on the snow, shadows not streaks
 	_sun.light_color = Color(1.0, 0.94, 0.84)
 	_sun.light_energy = 1.45
-	_sun.light_angular_distance = 0.3
+	_sun.light_angular_distance = 0.5  # soft edges
 	_sun.shadow_enabled = true
-	_sun.shadow_blur = 0.6
-	_sun.directional_shadow_max_distance = 260.0
+	_sun.shadow_blur = 1.4
+	_sun.shadow_normal_bias = 1.6
+	_sun.directional_shadow_blend_splits = true
+	_sun.directional_shadow_max_distance = 140.0  # the shadow map's detail where the camera looks, not across the valley
+	_sun.directional_shadow_fade_start = 0.75
 	add_child(_sun)
 	_camera = Camera3D.new()
 	_camera.fov = 50
