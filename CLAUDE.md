@@ -65,7 +65,7 @@ decisions below are settled unless the owner reopens them.
 1. Setup is in [docs/setup.md](docs/setup.md). Check work with `tools/check.sh`, `tools/test.sh` and
    `tools/capture.sh` (GPU captures if `.tools/capture.conf` has `CAPTURE_GPU=1`).
 2. Game 1, **Glimmerdeep** (`godot/games/glimmerdeep/`): playable. Engine exact to GDash (all 306 replays,
-   `GLIMMERDEEP_REFERENCE=1 tools/test.sh`). Open items: a campaign of our own caves, the cave-pack browser and
+   `GLIMMERDEEP_REFERENCE=1 tools/test.sh`). The Descent campaign (8 caves, `packs/second-credit/`, `--descent=N` for captures) is in. Open items: the cave-pack browser and
    downloads, the level editor, an optional "responsive timing".
 3. Game 2, **Bastion Coast** (working title, `godot/games/bastion/`): playable (tag `m2-bastion`). Open items:
    grunts landing from ships, more maps, 2-3 player versus, checking timings against the arcade in MAME.
@@ -83,7 +83,9 @@ decisions below are settled unless the owner reopens them.
    Open items: biathlon, bobsled, hot dog, figure skating; the opening ceremony.
 8. Game 6, **Muddy Boots** (working title, `godot/games/boots/`): playable campaign of three missions; squad
    orders, grenades, rockets, huts, hostages, mines; importer for the original map files (`engine/cf_import.gd`).
-   Open items: vehicles, helicopters, the recruits hill, a menu to load the player's original missions.
+   Campaign packs (`packs/`: First Tour, The Long Monsoon) with story cards and a chooser (shared: `core/packs/`,
+   `core/ui/story_card.gd`, `core/ui/pack_chooser.gd`). Open items: vehicles, helicopters, the recruits hill, a
+   menu to load the player's original missions.
 9. Game 7, **Neon Knuckles** (working title, `godot/games/knuckles/`): playable, three stages (street, docks,
    rooftops) in `stages/*.brawl`, 1-2 players, grabs, throws, weapons, a boss. `--stage=N` starts a capture at a
    stage. Open items: more enemy moves, a stage 4, checking timings against the arcade in MAME.
