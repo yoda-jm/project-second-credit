@@ -306,6 +306,8 @@ static func _dress(node: Node) -> void:
 			var mat := m.mesh.surface_get_material(i)
 			if mat and swap.has(mat.resource_name):
 				m.set_surface_override_material(i, swap[mat.resource_name])
+			elif mat is BaseMaterial3D and mat.resource_name.ends_with("_vc"):
+				(mat as BaseMaterial3D).vertex_color_use_as_albedo = true  # fur and clothes painted as vertex colours
 
 
 ## Pulls the camera back until the whole garden (and a strip of the surface) fits under the HUD.
