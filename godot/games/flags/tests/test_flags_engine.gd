@@ -38,7 +38,7 @@ func _run(e: FlagsEngine, seconds: float, ais: Array = []) -> void:
 
 func test_campaign_parses_and_every_flag_is_reachable() -> void:
 	var maps := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/packs/first-war/first-war.flags"))
-	assert_int(maps.size()).is_equal(3)
+	assert_int(maps.size()).is_equal(5)
 	for m in maps:
 		assert_int(m.zones.size()).is_greater_equal(6)
 		assert_int(m.count("fort")).is_equal(2)
@@ -214,7 +214,7 @@ func test_computer_battle_is_deterministic_and_moves_on() -> void:
 func test_the_first_war_pack_tells_its_story() -> void:
 	var p := Pack.find("flags", "first-war")
 	assert_object(p).is_not_null()
-	assert_int(FlagsMap.parse_campaign(p.levels_text()).size()).is_equal(3)
-	for i in 3:
+	assert_int(FlagsMap.parse_campaign(p.levels_text()).size()).is_equal(5)
+	for i in 5:
 		assert_bool(p.card_before(i).is_empty()).is_false()
 	assert_bool(p.outro.is_empty()).is_false()
