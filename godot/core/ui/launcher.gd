@@ -20,6 +20,7 @@ var _sfx_player: AudioStreamPlayer
 var _music: AudioStreamPlayer
 const PROP_COUNT := 90
 var _prop_mm := {}  ## mesh path -> MultiMeshInstance3D
+var _prop_norm := {}  ## mesh path -> scale that brings the prop to a common size
 var _prop_count := {}
 var _previous := 0
 var _morph_t := 10.0
@@ -94,7 +95,7 @@ func _build_backdrop() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2026
 	for i in PROP_COUNT:
-		_seeds.append(Vector4(rng.randf_range(-13, 13), rng.randf_range(-7, 7), rng.randf_range(-16, -2), rng.randf()))
+		_seeds.append(Vector4(rng.randf_range(-13, 13), rng.randf_range(-7, 7), rng.randf_range(-17, -4), rng.randf()))
 	# one multimesh per distinct prop of every game; each floating object picks its shape from the selected game
 	for g in GameRegistry.GAMES:
 		for prop in g.get("props", []):
@@ -165,6 +166,8 @@ func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
 	else:
 		mm.mesh = load(path)
 	mm.instance_count = count
+	# every prop floats at about the same size, whatever its size in its own game (a gem, a podium, a tank)
+	_prop_norm[path] = 1.7 / maxf(0.05, mm.mesh.get_aabb().get_longest_axis_size()) if mm.mesh else 1.0
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
 	if mat:
@@ -190,7 +193,7 @@ func _process(delta: float) -> void:
 		var grow := absf(k * 2.0 - 1.0)
 		grow = 1.0 - pow(1.0 - grow, 3.0)
 		var spin := _time * (0.3 + s.w) + k * TAU
-		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), spin).scaled(Vector3.ONE * (0.6 + s.w * 0.8) * maxf(grow * edge, 0.001))
+		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), spin).scaled(Vector3.ONE * (0.6 + s.w * 0.8) * _prop_norm.get(key, 1.0) * maxf(grow * edge, 0.001))
 		var mm: MultiMesh = _prop_mm[key].multimesh
 		mm.set_instance_transform(_prop_count[key], Transform3D(b, p))
 		_prop_count[key] += 1
