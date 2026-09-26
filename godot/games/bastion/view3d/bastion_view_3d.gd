@@ -11,6 +11,8 @@ const PLAYER := Color(0.35, 0.65, 1.0)
 
 var _camera: Camera3D
 var _land: MultiMeshInstance3D
+var _ground: MeshInstance3D  ## the island as one smooth surface: flat where you build, sandy slopes into the sea
+var _ground_key := ""  ## the map the ground was built for
 var _walls: MultiMeshInstance3D
 var _rubble: MultiMeshInstance3D
 var _balls: MultiMeshInstance3D
@@ -123,7 +125,11 @@ func _build_world() -> void:
 		lm.set_shader_parameter(t[0] + "_albedo", load(Pbr.ROOT + t[1] + "/albedo.jpg"))
 		lm.set_shader_parameter(t[0] + "_normal", load(Pbr.ROOT + t[1] + "/normal.jpg"))
 	_land = _mm(tile, lm, true)
-	_walls = _mm(load(MODELS + "wall.obj"), Pbr.material("stone_bricks", Color(1.0, 0.96, 0.9), 1.4), false)
+	_land.visible = false  # replaced by the smooth ground (kept for the ghost and zone layout)
+	_ground = MeshInstance3D.new()
+	_ground.material_override = lm
+	add_child(_ground)
+	_walls = _mm(load(MODELS + "wall.obj"), Pbr.material("stone_bricks", Color(1.75, 1.62, 1.42), 1.4), false)  # pale limestone
 	var rub: StandardMaterial3D = Pbr.material("rock", Color(0.35, 0.3, 0.28), 2.0).duplicate()
 	rub.emission_enabled = true
 	rub.emission = Color(1.0, 0.35, 0.05)
@@ -149,7 +155,7 @@ func _build_world() -> void:
 	zm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	zm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	zm.vertex_color_use_as_albedo = true
-	zm.albedo_color = Color(0.35, 0.65, 1.0, 1.0)
+	zm.albedo_color = Color.WHITE  # the instance colour gives the wash its tint
 	_zone = _mm(zq, zm, false)
 	_zone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var eb := BoxMesh.new()
@@ -227,7 +233,7 @@ static func _scene_node(path: String) -> Node3D:
 ## Swaps the flat Blender materials of a model for the shared PBR ones, by material name.
 static func _dress(node: Node) -> void:
 	var swap := {
-		"stone": Pbr.material("stone_bricks", Color(1.0, 0.97, 0.92), 2.0),
+		"stone": Pbr.material("stone_bricks", Color(1.6, 1.5, 1.35), 2.0),
 		"dark_stone": Pbr.material("rock", Color(0.6, 0.58, 0.56), 2.0),
 		"wood": Pbr.material("planks", Color(0.62, 0.42, 0.26), 2.0),
 		"hull": Pbr.material("planks", Color(0.42, 0.27, 0.16), 1.6),
@@ -398,9 +404,9 @@ func _process(delta: float) -> void:
 		_rebuild_board(e)
 		_land_dirty = false
 	_zone_pulse = maxf(0.0, _zone_pulse - delta * 0.8)
-	var za := 0.3 + 0.08 * sin(_time * 3.0) + 0.45 * _zone_pulse
+	var za := 0.12 + 0.04 * sin(_time * 3.0) + 0.5 * _zone_pulse  # a light wash: the ground itself is tinted
 	for i in _zone.multimesh.visible_instance_count:
-		_zone.multimesh.set_instance_color(i, Color(0.35, 0.65, 1.0, za))
+		_zone.multimesh.set_instance_color(i, Color(1.0, 0.82, 0.4, za))  # your land: a warm golden wash
 	for i in _edge.multimesh.visible_instance_count:
 		_edge.multimesh.set_instance_color(i, Color(1, 1, 1, 1) * (0.8 + 0.4 * sin(_time * 4.0 + i * 0.3) + _zone_pulse))
 	_blocked_t -= delta
@@ -454,6 +460,10 @@ func _rebuild_board(e: BastionEngine) -> void:
 				_rubble.multimesh.set_instance_transform(ri, Transform3D(Basis(Vector3.UP, float(x * 7 + y)), Vector3(x, LAND_H, y)))
 				ri += 1
 	_land.multimesh.visible_instance_count = li
+	var key := "%s/%d" % [e.map.name, e.map.w]  # the ground only changes with the map
+	if key != _ground_key:
+		_ground_key = key
+		_ground.mesh = _ground_mesh(e)
 	_place_decor(e)
 	var zi := 0
 	var ei := 0
@@ -472,6 +482,69 @@ func _rebuild_board(e: BastionEngine) -> void:
 	_edge.multimesh.visible_instance_count = ei
 	_walls.multimesh.visible_instance_count = wi
 	_rubble.multimesh.visible_instance_count = ri
+
+
+## The island as one surface, 4 vertices per cell: land cells stay flat at LAND_H (walls and castles sit on them)
+## except their outer corners, which round off along the coast; around them the ground slopes as sand down under
+## the sea. Vertex colours feed the land shader: sand (r), rock (g), our territory (b).
+func _ground_mesh(e: BastionEngine) -> ArrayMesh:
+	var k := 4
+	var W := e.map.w * k
+	var H := e.map.h * k
+	var land := Image.create(W, H, false, Image.FORMAT_L8)
+	var rock := Image.create(W, H, false, Image.FORMAT_L8)
+	for y in H:
+		for x in W:
+			var t := e.map.at(x / k, y / k)
+			land.set_pixel(x, y, Color.BLACK if t == CoastMap.Terrain.WATER else Color.WHITE)
+			rock.set_pixel(x, y, Color.WHITE if t == CoastMap.Terrain.ROCK else Color.BLACK)
+	var blur := land.duplicate() as Image
+	for pass_ in 2:
+		blur.resize(W / 2, H / 2, Image.INTERPOLATE_BILINEAR)
+		blur.resize(W, H, Image.INTERPOLATE_CUBIC)
+	for pass_ in 1:
+		rock.resize(W / 2, H / 2, Image.INTERPOLATE_BILINEAR)
+		rock.resize(W, H, Image.INTERPOLATE_CUBIC)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for j in H + 1:
+		for i in W + 1:
+			var px := mini(i, W - 1)
+			var py := mini(j, H - 1)
+			# sample the four pixels around the vertex so it sits between cells
+			var b := 0.0
+			var is_land := false
+			var central := false
+			for d in [Vector2i(0, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(-1, -1)]:
+				var q := Vector2i(clampi(i + d.x, 0, W - 1), clampi(j + d.y, 0, H - 1))
+				b += blur.get_pixelv(q).r * 0.25
+				if land.get_pixelv(q).r > 0.5:
+					is_land = true
+			var lx := i % k
+			var lz := j % k
+			central = lx != 0 and lz != 0  # not on a cell's border line
+			var h: float
+			var top := is_land and (b > 0.45 or central)
+			if top:
+				h = LAND_H
+			else:
+				h = lerpf(-0.75, LAND_H - 0.02, smoothstep(0.0, 0.5, b)) + 0.03 * sin(i * 0.9 + j * 0.37) * b
+			var rk := rock.get_pixel(px, py).r
+			h += rk * 0.45
+			var sand := 1.0 if not top else (1.0 - smoothstep(0.5, 0.8, b)) * 0.8
+			st.set_color(Color(sand, clampf(rk * 1.4, 0.0, 1.0), 0.0, 1.0))
+			st.set_uv(Vector2(i, j) / k)
+			st.add_vertex(Vector3(float(i) / k - 0.5, h, float(j) / k - 0.5))
+	for j in H:
+		for i in W:
+			var a := j * (W + 1) + i
+			var b2 := a + 1
+			var c := a + W + 1
+			var d := c + 1
+			st.add_index(a); st.add_index(b2); st.add_index(d)
+			st.add_index(a); st.add_index(d); st.add_index(c)
+	st.generate_normals()
+	return st.commit()
 
 
 ## Grass, flowers, bushes, stones and trees on free land, from a fixed pattern (hidden under anything built).
