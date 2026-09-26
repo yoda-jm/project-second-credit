@@ -78,7 +78,7 @@ func _build_env() -> void:
 	_env.background_mode = Environment.BG_SKY
 	_env.sky = sky
 	_env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	_env.tonemap_exposure = 1.0
+	_env.tonemap_exposure = 0.88
 	_env.glow_enabled = true
 	_env.glow_intensity = 0.7
 	_env.glow_hdr_threshold = 1.0
@@ -133,10 +133,12 @@ func _paint(n: Node, col: Color) -> void:
 
 
 ## Many copies of a model in one draw (its meshes merged, each with its own materials).
-func _multi(model: String, xf: Array[Transform3D]) -> void:
+func _multi(model: String, xf: Array[Transform3D], only := "") -> void:
 	var root := _scene(model)
 	var am := ArrayMesh.new()
 	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		if only != "" and not _under(mi, only):
+			continue
 		var src := (mi as MeshInstance3D).mesh
 		var local := (mi as MeshInstance3D).transform
 		for s_ in src.get_surface_count():
@@ -159,6 +161,43 @@ func _multi(model: String, xf: Array[Transform3D]) -> void:
 	var inst := MultiMeshInstance3D.new()
 	inst.multimesh = mm
 	_board.add_child(inst)
+
+
+## Stone under a bright sky: no clear-coat sheen and a touch darker, so blocks keep their colour from above.
+func _matte(n: Node) -> void:
+	for mi in n.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		for i in m.mesh.get_surface_count():
+			var mat := m.mesh.surface_get_material(i) as StandardMaterial3D
+			if mat == null or mat.emission_enabled:
+				continue
+			if not _team_mats.has(mat):
+				var t := mat.duplicate() as StandardMaterial3D
+				t.clearcoat_enabled = false
+				t.albedo_color = mat.albedo_color * 0.82
+				t.roughness = maxf(mat.roughness, 0.85)
+				t.metallic_specular = 0.25
+				_team_mats[mat] = t
+			m.set_surface_override_material(i, _team_mats[mat])
+
+
+## Keeps only the child named `keep` (and what hangs under it) among a model's top-level variants.
+func _only(n: Node, keep: String) -> void:
+	var found := n.find_child(keep, true, false)
+	if found == null:
+		return
+	for c in found.get_parent().get_children():
+		if c != found and c is Node3D and (c.name.begins_with("crate_") or c.name.begins_with("floor_")):
+			c.queue_free()
+
+
+func _under(n: Node, name_: String) -> bool:
+	var p := n
+	while p:
+		if p.name == name_:
+			return true
+		p = p.get_parent()
+	return false
 
 
 func _box(pos: Vector3, size: Vector3, mat: Material) -> MeshInstance3D:
@@ -201,16 +240,21 @@ func _on_round(e: BlastEngine) -> void:
 	_sky_mat.ground_bottom_color = th["sky"][1].darkened(0.5)
 	Look.sky_ambient(_env, th["ambient"], 0.6)
 	_sun.light_color = th["sun"]
-	_sun.light_energy = 1.3 if not Look.compat() else 0.95
+	_sun.light_energy = 1.0 if not Look.compat() else 0.8
 	var m := e.map
 	# the floor: the theme's tiles, then a ground skirt around the arena
 	var tname := "floor_tile_" + m.theme
 	var tiles: Array[Transform3D] = []
+	var tiles_a: Array[Transform3D] = []
+	var tiles_b: Array[Transform3D] = []
 	for y in m.h:
 		for x in m.w:
-			tiles.append(Transform3D(Basis(Vector3.UP, float((x * 3 + y) % 4) * PI * 0.5), Vector3(x + 0.5, 0, y + 0.5)))
-	if ResourceLoader.exists(M + tname + ".glb"):
-		_multi(tname, tiles)
+			var xf := Transform3D(Basis(Vector3.UP, float((x * 3 + y) % 4) * PI * 0.5), Vector3(x + 0.5, 0, y + 0.5))
+			tiles.append(xf)
+			(tiles_a if (x + y) % 2 == 0 else tiles_b).append(xf)
+	if ResourceLoader.exists(M + tname + ".glb"):  # the file holds two tiles, floor_a and floor_b: a checker
+		_multi(tname, tiles_a, "floor_a")
+		_multi(tname, tiles_b, "floor_b")
 	else:
 		var fa := Pbr.material(th["floor"][0], th["floor"][1], 0.5)
 		for xf in tiles:
@@ -233,9 +277,11 @@ func _on_round(e: BlastEngine) -> void:
 						b.position = Vector3(0, 0.45, 0)
 						b.reparent(n, false)
 					n.position = pos
+					_matte(n)
 					_board.add_child(n)
 				T.CRATE:
 					var cr := _scene("crate_" + m.theme)
+					_only(cr, "crate_%d" % ((x * 7 + y * 3) % 2))  # the file holds two crates on top of each other
 					cr.position = pos
 					cr.rotation.y = float((x + y) % 4) * PI * 0.5
 					_board.add_child(cr)
