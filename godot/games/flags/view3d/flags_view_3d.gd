@@ -561,10 +561,35 @@ func _multi(model: String, xf: Array, tint: Color) -> MultiMeshInstance3D:
 	return inst
 
 
+## Gives a building's plain materials a real surface: light walls become fine plaster, metal parts brushed
+## metal, dark parts rough concrete; colours stay as modelled, team and glowing parts are left alone.
+func _texture(n: Node) -> void:
+	for mi in n.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		for i in m.mesh.get_surface_count():
+			var mat := m.mesh.surface_get_material(i) as StandardMaterial3D
+			if mat == null or mat.albedo_texture != null or mat.emission_enabled or mat.resource_name.to_lower().contains("team"):
+				continue
+			var c := mat.albedo_color
+			var key := [mat.resource_name, c]
+			if not _team_mats.has(key):
+				var lum := c.r * 0.3 + c.g * 0.59 + c.b * 0.11
+				var t: StandardMaterial3D
+				if mat.metallic > 0.5:
+					t = Pbr.local("metal", c * 1.15, 1.2, mat.metallic, 0.9)
+				elif lum > 0.55:  # rendered walls: fine plaster
+					t = Pbr.local("beach_sand", Color(c.r * 1.05, c.g * 1.05, c.b * 1.1), 0.9, 0.0, 1.0)
+				else:  # darker parts: rough concrete
+					t = Pbr.local("rock", c * 1.6, 0.8, 0.0, 1.0)
+				_team_mats[key] = t
+			m.set_surface_override_material(i, _team_mats[key])
+
+
 func _add_building(b: Dictionary) -> void:
 	var n := _scene(b["kind"])
 	n.position = w(Vector2(b["cell"]) + Vector2(b["size"]) * 0.5)
 	_board.add_child(n)
+	_texture(n)
 	_paint(n, b["team"])
 	var dish := n.find_child("dish", true, false)
 	_buildings[b["id"]] = {"node": n, "dish": dish, "team": b["team"], "smoke": 0.0}
