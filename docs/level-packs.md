@@ -15,8 +15,8 @@
 ## Pack layout
 
 Built: `godot/core/packs/pack.gd` loads packs, `godot/core/ui/story_card.gd` shows the story between levels and
-`godot/core/ui/pack_chooser.gd` lets the player pick a campaign. Muddy Boots uses them first
-(`godot/games/boots/packs/`: *First Tour* and *The Long Monsoon*).
+`godot/core/ui/pack_chooser.gd` lets the player pick a campaign. In use: Muddy Boots (*First Tour*, *The Long
+Monsoon*), Glimmerdeep (*The Descent*, eight caves) and Bastion Coast (*The Coastline*, five islands).
 
 ```
 my-pack/                     (folder or .zip)
@@ -79,7 +79,7 @@ Each entry in the list records its source URL and, when known, its licence. Plan
 | Game | Native or foreign formats to support | Importer from original files |
 |---|---|---|
 | Boulder Dash | BDCFF (read and write) | C64/Atari images → BDCFF (GDash has converters to study) |
-| Rampart | our coast maps (`.map`, text grid: water, land, rock, castles) | none |
+| Rampart | our coast maps (`.map`, text grid: water, land, rock, castles; `rounds=N` to hold an island), in packs | none |
 | Fruity Frank | our garden packs (`.gdn`, text grid in BDCFF style: several `[garden]` sections per file; spec in `godot/games/fruitburrow/engine/garden_map.gd`) | CPC disk image (later, optional) |
 | Cannon Fodder | original CF1/CF2 `.map` + `.spt` + the tileset `.hit` tables (read by `godot/games/boots/engine/cf_import.gd`; format notes in its header, after Open Fodder), OpenFodder Editor output (same format); our campaigns: packs of `.boots` text files | user's Amiga/DOS data folder (local only) |
 | Z | Zod Engine `.map` + planet `.tileinfo`, read locally (`godot/games/flags/engine/zod_import.gd`) | original Z data (to investigate) |

@@ -67,8 +67,9 @@ decisions below are settled unless the owner reopens them.
 2. Game 1, **Glimmerdeep** (`godot/games/glimmerdeep/`): playable. Engine exact to GDash (all 306 replays,
    `GLIMMERDEEP_REFERENCE=1 tools/test.sh`). The Descent campaign (8 caves, `packs/second-credit/`, `--descent=N` for captures) is in. Open items: the cave-pack browser and
    downloads, the level editor, an optional "responsive timing".
-3. Game 2, **Bastion Coast** (working title, `godot/games/bastion/`): playable (tag `m2-bastion`). Open items:
-   grunts landing from ships, more maps, 2-3 player versus, checking timings against the arcade in MAME.
+3. Game 2, **Bastion Coast** (working title, `godot/games/bastion/`): playable (tag `m2-bastion`), with The
+   Coastline campaign (5 islands, `packs/the-coastline/`, `rounds=N` per map; `--endless` for the old survival).
+   Open items: grunts landing from ships, 2-3 player versus, checking timings against the arcade in MAME.
 4. Game 3, **Fruitburrow** (working title, `godot/games/fruitburrow/`): playable, with the first rigged character
    (`tools/blender/fruitburrow_gardener.py`). Rules are from memory: check speeds, scoring and the ball against the
    original in an emulator. Open items: more gardens, the day-to-dusk cycle across a longer pack.
