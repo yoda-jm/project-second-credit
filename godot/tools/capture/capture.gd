@@ -31,6 +31,9 @@ func _ready() -> void:
 		get_tree().quit(2)
 		return
 	DirAccess.make_dir_recursive_absolute(_out)
+	var settings := get_node_or_null("/root/Settings")
+	if settings:
+		settings.show_fps = false  # the player's fps counter stays out of captures (not saved)
 	var packed := load(scene_path) as PackedScene
 	if packed == null:
 		push_error("capture: cannot load %s" % scene_path)
