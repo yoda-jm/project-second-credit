@@ -1,5 +1,5 @@
-"""Neon Knuckles props: weapons (bat, knife, crate), street furniture (parked car, oil barrel, trash bags, street lamp),
-rooftop kit (water tank, AC unit) and a shipping container for the docks. Deterministic; output CC BY-SA 4.0;
+"""Neon Knuckles props: weapons (bat, knife, crate), a burning oil barrel and trash bags. The buildings, cars, street
+furniture, docks and rooftop kits are in knuckles_city.py. Deterministic; output CC BY-SA 4.0;
 provenance: this script.
 Run: blender -b --factory-startup -P tools/blender/knuckles_props.py -- godot/games/knuckles/art/models
 """
@@ -115,26 +115,6 @@ def crate():
     export(parts, "crate")
 
 
-def car():
-    paint = mat("car_paint", (0.55, 0.08, 0.12), 0.25, 0.4, coat=1.0)
-    glass = mat("car_glass", (0.05, 0.07, 0.1), 0.05, 0.3, coat=1.0)
-    tyre = mat("tyre", (0.05, 0.05, 0.05), 0.8)
-    chrome = mat("chrome", (0.9, 0.9, 0.92), 0.1, 1.0)
-    head = mat("headlight", (1.0, 0.95, 0.8), 0.2, emit=4.0)
-    tail = mat("taillight", (1.0, 0.1, 0.1), 0.2, emit=3.0)
-    parts = [box((4.2, 1.8, 0.6), (0, 0, 0.55), paint, bevel=0.12), box((2.2, 1.6, 0.55), (-0.2, 0, 1.08), paint, bevel=0.15),
-             box((2.0, 1.62, 0.42), (-0.2, 0, 1.08), glass, bevel=0.1)]
-    for x in (-1.35, 1.35):
-        for y in (-0.85, 0.85):
-            parts.append(cyl(0.34, 0.25, (x, y, 0.34), tyre, rot=(math.pi / 2, 0, 0), verts=20))
-            parts.append(cyl(0.18, 0.27, (x, y, 0.34), chrome, rot=(math.pi / 2, 0, 0), verts=16))
-    for y in (-0.6, 0.6):
-        parts.append(box((0.05, 0.3, 0.12), (2.1, y, 0.62), head, bevel=0.01))
-        parts.append(box((0.05, 0.3, 0.1), (-2.1, y, 0.64), tail, bevel=0.01))
-    parts.append(box((4.3, 1.82, 0.08), (0, 0, 0.32), chrome, bevel=0.02))
-    export(parts, "car")
-
-
 def barrel():
     steel = mat("barrel", (0.2, 0.3, 0.55), 0.5, 0.6)
     ring = mat("barrel_ring", (0.15, 0.2, 0.35), 0.5, 0.6)
@@ -155,52 +135,9 @@ def trash_bags():
     export(parts, "trash_bags")
 
 
-def street_lamp():
-    iron = mat("lamp_iron", (0.08, 0.09, 0.1), 0.45, 0.6)
-    glow = mat("lamp_glow", (1.0, 0.85, 0.55), 0.3, emit=7.0)
-    parts = [cyl(0.07, 5.0, (0, 0, 2.5), iron, verts=12), cyl(0.2, 0.4, (0, 0, 0.2), iron, r2=0.1, verts=12),
-             box((0.1, 1.2, 0.1), (0, 0.55, 5.0), iron), cyl(0.25, 0.2, (0, 1.1, 4.92), iron, r2=0.1, verts=12),
-             sphere(0.14, (0, 1.1, 4.78), glow)]
-    export(parts, "street_lamp")
-
-
-def water_tank():
-    wood = mat("tank_wood", (0.45, 0.32, 0.2), 0.8)
-    iron = mat("tank_iron", (0.2, 0.2, 0.22), 0.5, 0.6)
-    parts = [cyl(1.1, 2.2, (0, 0, 3.1), wood, verts=24), cyl(1.15, 0.5, (0, 0, 4.4), iron, r2=0.1, verts=24)]
-    for z in (2.3, 3.1, 3.9):
-        parts.append(cyl(1.12, 0.05, (0, 0, z), iron, verts=24))
-    for x in (-0.8, 0.8):
-        for y in (-0.8, 0.8):
-            parts.append(box((0.12, 0.12, 2.0), (x, y, 1.0), iron))
-    export(parts, "water_tank")
-
-
-def ac_unit():
-    body = mat("ac_body", (0.7, 0.72, 0.72), 0.5, 0.3)
-    grill = mat("ac_grill", (0.2, 0.2, 0.22), 0.5, 0.5)
-    parts = [box((1.2, 0.8, 0.9), (0, 0, 0.45), body, bevel=0.03), cyl(0.3, 0.05, (0, -0.41, 0.5), grill, rot=(math.pi / 2, 0, 0), verts=24)]
-    export(parts, "ac_unit")
-
-
-def container():
-    colour = [(0.7, 0.2, 0.12), (0.12, 0.35, 0.6), (0.2, 0.5, 0.3), (0.8, 0.6, 0.15)]
-    for i, c in enumerate(colour):
-        steel = mat("container_%d" % i, c, 0.6, 0.4)
-        parts = [box((6.0, 2.4, 2.6), (0, 0, 1.3), steel, bevel=0.03)]
-        for k in range(16):
-            parts.append(box((0.08, 2.44, 2.5), (-2.9 + k * 0.39, 0, 1.3), steel, bevel=0.0))
-        export(parts, "container_%d" % i)
-
-
 reset()
 bat()
 knife()
 crate()
-car()
 barrel()
 trash_bags()
-street_lamp()
-water_tank()
-ac_unit()
-container()

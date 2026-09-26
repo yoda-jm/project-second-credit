@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bcrx1q2qidrim"
-path="res://.godot/imported/car.glb-79b9cab372333f142544bd1f3e91c363.scn"
+uid="uid://dj7yjbcikcqbe"
+path="res://.godot/imported/bollard.glb-1280f9bc7322b01b9eb8fd35d7077486.scn"
 
 [deps]
 
-source_file="res://games/knuckles/art/models/car.glb"
-dest_files=["res://.godot/imported/car.glb-79b9cab372333f142544bd1f3e91c363.scn"]
+source_file="res://games/knuckles/art/models/bollard.glb"
+dest_files=["res://.godot/imported/bollard.glb-1280f9bc7322b01b9eb8fd35d7077486.scn"]
 
 [params]
 

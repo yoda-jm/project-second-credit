@@ -54,8 +54,10 @@ Second Credit stands on the work of many people. Everything below is free and op
 
 - Inspired by *Double Dragon* (Technōs Japan, 1987). None of its code, graphics, sounds, music or stage layouts are
   in this repo; the moves and the stages are rewritten from how the genre plays.
-- The fighters are built by `tools/blender/knuckles_fighters.py` on the shared humanoid rig, the weapons and street
-  props by `tools/blender/knuckles_props.py`; sound effects and the synthwave score are synthesised by `tools/audio/`.
+- The fighters are built by `tools/blender/knuckles_fighters.py` on the shared humanoid rig, the weapons by
+  `tools/blender/knuckles_props.py`, and the city (buildings, shop fronts, neon signs, cars, docks, freighter, rooftops)
+  by `tools/blender/knuckles_city.py`; the sign lettering uses Kenney Future (CC0). The shop and ship names are invented.
+  Sound effects and the synthwave score are synthesised by `tools/audio/`.
 
 ## Game 8 (Iron Flags, working title)
 
