@@ -120,7 +120,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Four bombers, one yard, no hard feelings.",
 		"inspired_by": "Bomberman (1983)",
 		"scene": "res://games/blastyard/scenes/blastyard_game.tscn",
-		"card": "",
+		"card": "res://core/ui/cards/blastyard.png",
 		"accent": Color(1.0, 0.55, 0.2),
 		"props": [["res://games/blastyard/art/models/bomb.glb", "model", 0.4],
 			["res://games/blastyard/art/models/crate.glb", "model", 0.3],

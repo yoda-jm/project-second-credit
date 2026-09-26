@@ -75,9 +75,9 @@ func _draw() -> void:
 			HudKit.text(self, Vector2(x + 20 + k * 66, y + 64), stats[k][0], 12, HudKit.MUTED, HudKit.label_font())
 			HudKit.text(self, Vector2(x + 20 + k * 66, y + 94), str(stats[k][1]), 26, HudKit.INK if p["alive"] else HudKit.MUTED, HudKit.font(true))
 		if p["kick"]:
-			HudKit.text(self, Vector2(x + 262, y + 64), "KICK", 12, HudKit.GOLD, HudKit.label_font(), HudKit.RIGHT)
+			HudKit.text(self, Vector2(x + 262, y + 94), "KICK", 12, HudKit.GOLD, HudKit.label_font(), HudKit.RIGHT)
 		if p["skull"] > 0.0:
-			HudKit.text(self, Vector2(x + 262, y + 94), "CURSED", 12, Color(0.8, 0.4, 1.0), HudKit.label_font(), HudKit.RIGHT)
+			HudKit.text(self, Vector2(x + 262, y + 78), "CURSED", 12, Color(0.8, 0.4, 1.0), HudKit.label_font(), HudKit.RIGHT)
 		if not p["alive"]:
 			HudKit.text(self, Vector2(x + 140, y + 64), "OUT", 22, HudKit.BAD, HudKit.font(true), HudKit.CENTER)
 	# the clock
