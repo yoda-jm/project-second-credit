@@ -43,6 +43,7 @@ var balls: Array[Dictionary] = []    ## {from: Vector2, to: Vector2, t: float, d
 var phase := Phase.CHOOSE
 var phase_left := CHOOSE_SECONDS
 var round_number := 0
+var won := false  ## the map's rounds were held (a campaign island)
 var score := 0
 var home_castle := -1
 var enclosed_castles: Array[int] = []
@@ -199,6 +200,8 @@ func act() -> bool:
 
 
 func fire_at(target: Vector2) -> bool:
+	if not target.is_finite() or phase != Phase.BATTLE or phase_left <= 0.0:
+		return false  # no new shots once the battle clock is out: the round ends when the last balls land
 	# the ready cannon closest to the target fires (one ball in flight per cannon)
 	var best := -1
 	var best_d := INF
@@ -254,6 +257,10 @@ func _end_phase() -> void:
 			if enclosed_castles.is_empty():
 				phase = Phase.GAME_OVER
 				_emit("game_over", {"score": score, "rounds": round_number})
+			elif map.rounds > 0 and round_number >= map.rounds:
+				won = true  # the island is held: the campaign sails on
+				phase = Phase.GAME_OVER
+				_emit("island_held", {"score": score, "rounds": round_number})
 			else:
 				_start_cannons()
 
@@ -404,13 +411,17 @@ func _tick_battle() -> void:
 
 func _tick_balls() -> void:
 	var landed: Array[Dictionary] = []
+	var flying: Array[Dictionary] = []
 	for b in balls:
 		b["t"] += TICK
-		if b["t"] >= b["dur"]:
+		if not (b["t"] < b["dur"]):  # also lands a ball whose flight time is not a number, so no battle waits forever
 			landed.append(b)
+		else:
+			flying.append(b)
+	balls = flying
 	for b in landed:
-		balls.erase(b)
-		_impact(b)
+		if b["to"].is_finite():
+			_impact(b)
 
 
 func _impact(b: Dictionary) -> void:
