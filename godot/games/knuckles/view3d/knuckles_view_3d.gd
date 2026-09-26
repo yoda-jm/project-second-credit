@@ -10,6 +10,10 @@ extends Node3D
 const B = preload("res://games/knuckles/engine/brawl_engine.gd")
 const M := "res://games/knuckles/art/models/"
 const MODEL := {"thug": "thug", "knifer": "knifer", "bruiser": "bruiser", "boss": "boss"}
+## the models' build (knuckles_fighters.py): the jog covers 3.0 m per cycle-second at scale 1, so it is played
+## at the fighter's speed over this
+const BUILD := {"knifer": 0.95, "bruiser": 1.25, "boss": 1.12}
+const JOG_SPEED := 3.0
 const NEON: Array[Color] = [Color(1.0, 0.2, 0.6), Color(0.2, 0.9, 1.0), Color(0.6, 0.3, 1.0), Color(1.0, 0.75, 0.2), Color(0.3, 1.0, 0.5),
 	Color(1.0, 0.3, 0.2)]
 ## street buildings (knuckles_city.py): width in metres
@@ -717,9 +721,9 @@ func _fighter_node(f: Dictionary) -> Dictionary:
 	var slot: BoneAttachment3D = null
 	if skel:
 		slot = BoneAttachment3D.new()
-		slot.bone_name = "forearm.R"
+		slot.bone_name = "hand.R"
 		skel.add_child(slot)
-	return {"node": n, "anim": ap, "slot": slot, "weapon": "", "wnode": null, "last": ""}
+	return {"node": n, "anim": ap, "slot": slot, "weapon": "", "wnode": null, "last": "", "build": BUILD.get(name, 1.0)}
 
 
 func _set_weapon(d: Dictionary, kind: String) -> void:
@@ -731,8 +735,7 @@ func _set_weapon(d: Dictionary, kind: String) -> void:
 	d["weapon"] = kind
 	if kind != "" and d["slot"]:
 		var w := _scene(kind)
-		w.position = Vector3(0, 0.26, -0.02)  # in the hand, at the end of the forearm
-		w.rotation.x = -PI * 0.5
+		w.position = Vector3(-0.012, 0.075, -0.07)  # in the fist: the grip runs along the hand's local +Z
 		d["slot"].add_child(w)
 		d["wnode"] = w
 
@@ -794,7 +797,14 @@ func _process(delta: float) -> void:
 		var ap: AnimationPlayer = d["anim"]
 		if a != d["last"] or (f["state"] == B.S.ATTACK and f["t"] < 0.02):
 			ap.play(a, 0.06, 1.3 if f["state"] == B.S.ATTACK else 1.0)
+			if a == "down" and d["last"] == "thrown":
+				ap.seek(0.4, true)  # a throw lands straight into the fall's landing
 			d["last"] = a
+		if a == "walk":  # the jog's feet keep pace with the ground
+			var v: Vector3 = f["vel"]
+			ap.speed_scale = clampf(Vector2(v.x, v.z).length() / (JOG_SPEED * d["build"]), 0.6, 1.8)
+		else:
+			ap.speed_scale = 1.0
 		_set_weapon(d, f["weapon"])
 		# the fallen fade away; blinking while invulnerable
 		n.visible = f["state"] != B.S.DEAD or ap.is_playing() or fmod(_time, 0.2) < 0.1

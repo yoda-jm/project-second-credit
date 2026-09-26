@@ -8,10 +8,121 @@ import bpy, math, os, sys, random
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from humanoid import *  # mat, sphere, box, limb, BONES, clear, rig_export
+from humanoid import *
 
 out_dir = sys.argv[sys.argv.index("--") + 1] if "--" in sys.argv else "."
 os.makedirs(out_dir, exist_ok=True)
+
+
+SK = Skeleton(proportions())
+FPS = 24
+
+
+def P(base, **kw):
+    d = dict(base)
+    d.update(kw)
+    return d
+
+
+def local_to_rest(bone, p):
+    """A point given in a bone's rest frame, as (left, forward, up) for the pose channels."""
+    q = bone_frame(SK, bone) @ Vector(p)
+    return (q.x, -q.y, q.z)
+
+
+def rifle(gun, stock):
+    """An assault rifle in the right fist (hand.R's frame: the grip runs along +Z, the barrel along the hand, +Y)."""
+    m = -0.012   # the palm's side
+    parts = [box((0.028, 0.035, 0.1), (m, 0.078, 0.0), "hand.R", gun, bevel=0.008),
+             box((0.045, 0.3, 0.066), (m, 0.1, 0.085), "hand.R", gun, bevel=0.01),
+             box((0.052, 0.2, 0.06), (m, 0.33, 0.08), "hand.R", stock, bevel=0.012),
+             box((0.03, 0.05, 0.13), (m, 0.17, 0.0), "hand.R", gun, rot=(0.2, 0, 0), bevel=0.006),
+             box((0.04, 0.24, 0.075), (m, -0.16, 0.07), "hand.R", stock, bevel=0.012),
+             box((0.012, 0.02, 0.03), (m, 0.5, 0.12), "hand.R", gun, bevel=0.003)]
+    bpy.ops.mesh.primitive_cylinder_add(vertices=10, radius=0.011, depth=0.22, location=(m, 0.54, 0.09), rotation=(math.pi / 2, 0, 0))
+    parts.append(tag(active(), "hand.R", gun))
+    place(parts, bone_frame(SK, "hand.R"))
+
+
+GRIP_L = local_to_rest("hand.R", (-0.012, 0.31, 0.02))   # the left hand under the handguard
+
+
+def armed(pose, at, aim):
+    """The rifle: the right hand at `at` (rest space, riding the chest), the barrel along `aim` (yaw, pitch, roll);
+    the left hand on the handguard."""
+    return P(pose, **{"ik_hand.R": at, "ikh.R": 1.0, "hand_dir.R": aim, "hdw.R": 1.0, "ik_hand.L": GRIP_L, "ikh.L": 1.0})
+
+
+HANDS_ON = {"R": "chest", "L": "hand.R"}
+POLES = {"R": (0.9, 0.5, -0.5), "L": (0.5, 0.3, -1.0)}
+STAND = {"ik_foot.L": (0.12, 0.04, 0.09, 0, 10), "ik_foot.R": (-0.12, -0.04, 0.09, 0, 14), "ikw.L": 1.0, "ikw.R": 1.0}
+PORT_AT, PORT_AIM = (-0.13, 0.26, 1.08), (32, 22, 0)
+AIM_AT, AIM_AIM = (-0.1, 0.24, 1.33), (0, 0, 0)
+
+
+def soldier_actions():
+    idle = {}
+    for i in range(0, 61, 6):
+        t = i / 60.0
+        br = math.sin(2 * math.pi * t * 2)
+        look = math.sin(2 * math.pi * t)
+        idle[i + 1] = armed(P(STAND, **{"root": (0.01 * look, 0, -0.03), "hips": (2, 4 * look, -2 * look),
+                                        "chest": (3 + br, -4 * look, 0), "clavicle.L": (4, 0, br), "clavicle.R": (4, 0, br),
+                                        "neck": (0, 16 * math.sin(2 * math.pi * (t - 0.1)), 0),
+                                        "head": (-2, 22 * math.sin(2 * math.pi * (t - 0.12)), 0)}),
+                            PORT_AT, (PORT_AIM[0], PORT_AIM[1] - 8, 0))
+    run = gait(SK, 16, 3.14, 0.32, lift=0.3, lift_at=0.33, strike=8, push=45, bob=-0.04, drop=-0.08, lean=14,
+               arm_swing=0, arm_out=0, elbow=0, elbow_swing=0, pelvis_yaw=10, pelvis_roll=4, shoulder_yaw=4, reach=0.4,
+               base={"head": (-6, 0, 0)})
+    for f, k in run.keys.items():
+        run.keys[f] = armed(k, PORT_AT, PORT_AIM)
+    run.hand_on, run.arm_pole = HANDS_ON, POLES
+    stance = {"ik_foot.L": (0.13, 0.18, 0.09, 0, 12), "ik_foot.R": (-0.14, -0.2, 0.09, 0, 35), "ikw.L": 1.0, "ikw.R": 1.0,
+              "root": (0, 0, -0.07), "hips": (4, -16, 0), "spine": (4, -4, 0), "chest": (4, 0, 0), "neck": (0, 8, 0),
+              "head": (8, 6, 4)}
+    aim = armed(stance, AIM_AT, AIM_AIM)
+    kick = armed(P(stance, **{"chest": (-2, 3, 0), "spine": (1, -3, 0), "head": (4, 6, 4), "root": (0, -0.03, -0.07)}),
+                 (AIM_AT[0], AIM_AT[1] - 0.04, AIM_AT[2] + 0.015), (0, 8, 3))
+    shoot = Anim({1: aim, 2: kick, 4: P(aim, **{"chest": (2, 1, 0)}), 6: aim}, hand_on=HANDS_ON, arm_pole=POLES)
+    # a grenade: the rifle drops to the right hand alone, the left arm lobs overhand
+    one = P(STAND, **{"ik_hand.R": PORT_AT, "ikh.R": 1.0, "hand_dir.R": (10, -30, 0), "hdw.R": 1.0})
+    throw = Anim({1: P(one, **{"arm.L": (30, 0, 20), "forearm.L": (60, 0, 0)}),
+                  4: P(one, **{"arm.L": (140, 0, 40), "forearm.L": (110, 0, 0), "chest": (-6, -26, 0), "spine": (-4, -10, 0),
+                               "root": (0, -0.08, -0.08), "head": (-10, 20, 0)}),
+                  6: P(one, **{"arm.L": (150, 0, 20), "forearm.L": (40, 0, 0), "chest": (6, 10, 0), "spine": (4, 6, 0),
+                               "root": (0, 0.06, -0.08), "head": (-6, -6, 0)}),
+                  8: P(one, **{"arm.L": (90, 0, 10), "forearm.L": (10, 0, 0), "chest": (12, 24, 0), "spine": (6, 10, 0),
+                               "root": (0, 0.1, -0.1), "head": (0, -16, 0)}),
+                  12: P(one, **{"arm.L": (10, 0, 12), "forearm.L": (20, 0, 0)})},
+                 hand_on={"R": "chest"}, arm_pole=POLES)
+    fallen = {"ikw.L": 0.0, "ikw.R": 0.0, "ikh.L": 0.0, "ikh.R": 0.0, "hand_dir.R": (70, -4, 90), "hdw.R": 1.0, "turn": (-90, 0, 12),
+              "root": (0, 0.55, 0.12), "spine": (-4, 0, 6), "chest": (-4, 0, 0), "neck": (4, 0, 0), "head": (6, 45, 8),
+              "arm.L": (20, 0, 70), "forearm.L": (40, 0, 0), "arm.R": (-5, 0, 60), "forearm.R": (20, 0, 0),
+              "thigh.L": (25, 0, 10), "shin.L": (40, 0, 0), "thigh.R": (8, 0, 14), "shin.R": (15, 0, 0),
+              "foot.L": (-30, 0, 0), "foot.R": (-35, 0, 0)}
+    die = Anim({1: aim,
+                3: P(aim, **{"chest": (-18, 10, 6), "spine": (-8, 0, 0), "head": (-26, 10, 8), "root": (0, -0.06, -0.06)}),
+                7: P(fallen, **{"ikw.L": 0.9, "ikw.R": 0.9, "turn": (-8, 0, 4), "root": (0, 0.0, -0.28), "hips": (30, 0, 0),
+                                "spine": (10, 0, 0), "chest": (-10, 0, 0), "head": (-30, 0, 0), "arm.L": (40, 0, 40),
+                                "arm.R": (50, 0, 30), "hand_dir.R": (20, -45, 30), "ik_foot.L": (0.13, 0.18, 0.09, 0, 12), "ik_foot.R": (-0.14, -0.2, 0.09, 0, 35)}),
+                11: P(fallen, **{"turn": (-55, 0, 10), "root": (0, 0.3, 0.05), "thigh.L": (70, 0, 10), "shin.L": (100, 0, 0),
+                                 "thigh.R": (50, 0, 14), "shin.R": (80, 0, 0), "arm.L": (70, 0, 60), "arm.R": (30, 0, 60), "hand_dir.R": (50, 10, 70)}),
+                14: P(fallen, **{"root": (0, 0.55, 0.16), "turn": (-86, 0, 12)}),
+                18: fallen}, hand_on=HANDS_ON, arm_pole=POLES)
+    swim = {}
+    for i in range(0, 21, 4):
+        t = i / 20.0
+        a = 2 * math.pi * t
+        swim[i + 1] = {"ikw.L": 0.0, "ikw.R": 0.0, "turn": (48, 0, 4 * math.sin(a)), "root": (0, -0.62, -0.32 + 0.02 * math.sin(a * 2)),
+                       "neck": (-30, 0, 0), "head": (-30, 6 * math.sin(a), 0),
+                       "ik_hand.R": (-0.16, 0.36, 1.62), "ikh.R": 1.0, "hand_dir.R": (0, 20, 0), "hdw.R": 1.0,
+                       "arm.L": (70 + 70 * math.cos(a), 0, 25 + 15 * math.sin(a)), "forearm.L": (30 + 25 * max(0, math.sin(a)), 0, 0),
+                       "chest": (0, 8 * math.sin(a), 0),
+                       "thigh.L": (12 * math.sin(a * 2), 0, 6), "thigh.R": (-12 * math.sin(a * 2), 0, 6),
+                       "shin.L": (20 + 15 * max(0, math.cos(a * 2)), 0, 0), "shin.R": (20 + 15 * max(0, -math.cos(a * 2)), 0, 0),
+                       "foot.L": (-40, 0, 0), "foot.R": (-40, 0, 0)}
+    return {"idle": Anim(idle, loop=True, hand_on=HANDS_ON, arm_pole=POLES), "run": run, "shoot": shoot, "throw": throw,
+            "die": die, "swim": Anim(swim, loop=True, hand_on={"R": "chest"}, arm_pole=POLES)}
 
 
 def soldier():
@@ -26,35 +137,50 @@ def soldier():
     belt = mat("belt", (0.2, 0.18, 0.12), 0.7)
     white = mat("eye_white", (0.95, 0.95, 0.92), 0.3)
     iris = mat("iris", (0.2, 0.15, 0.1), 0.2)
-    athletic_body(uni, skin, white, iris, glove=skin, boot=boot)
-    sphere(0.125, (0, 0.005, 1.7), "head", helmet, (1.02, 1.08, 0.72))  # the helmet, with its brim
-    body_loft([(1.62, 0.13, 0.135, 0.005), (1.64, 0.125, 0.13, 0.005)], "head", helmet, 20, 0)
-    box((0.012, 0.012, 0.09), (0.09, -0.05, 1.6), "head", belt)  # chin strap
-    box((0.012, 0.012, 0.09), (-0.09, -0.05, 1.6), "head", belt)
-    body_loft([(1.05, 0.165, 0.11), (1.09, 0.165, 0.11)], "hips", belt, 20, 0)  # the belt, with pouches
-    for x in (-0.1, 0.0, 0.1):
-        box((0.05, 0.03, 0.05), (x, -0.115, 1.06), "hips", pack)
-    box((0.26, 0.14, 0.3), (0, 0.16, 1.3), "spine", pack)
-    body_loft([(1.43, 0.12, 0.05, 0.2), (1.46, 0.12, 0.05, 0.2)], "spine", mat("bedroll", (0.3, 0.25, 0.18), 0.9), 12, 1)
-    # the rifle in the right hand, pointing forward
-    box((0.045, 0.7, 0.055), (-0.27, -0.3, 0.86), "forearm.R", gun)
-    box((0.055, 0.22, 0.09), (-0.27, 0.08, 0.84), "forearm.R", stock)
-    box((0.03, 0.08, 0.12), (-0.27, -0.22, 0.79), "forearm.R", gun)
-    box((0.025, 0.25, 0.03), (-0.27, -0.55, 0.88), "forearm.R", gun)
-    run = {}
-    for f, ph in ((1, 1), (6, 0), (11, -1), (16, 0), (21, 1)):
-        run[f] = {"thigh.L": (40 * ph, 0, 0), "thigh.R": (-40 * ph, 0, 0), "shin.L": (-50 * max(0, -ph), 0, 0),
-                  "shin.R": (-50 * max(0, ph), 0, 0), "arm.L": (-35 * ph, 0, 5), "arm.R": (-60, 0, -5),
-                  "forearm.R": (-30, 0, 0), "spine": (12, 0, 0), "@root": (0, 0, 0.05 if ph == 0 else 0.0)}
-    aim = {"arm.R": (-80, 0, 10), "forearm.R": (-15, 0, 0), "arm.L": (-75, 0, -25), "forearm.L": (-30, 0, 0), "spine": (5, 0, 0)}
-    shoot = {1: aim, 3: dict(aim, **{"spine": (-3, 0, 0), "arm.R": (-88, 0, 10)}), 6: aim}
-    throw = {1: {"arm.L": (60, 0, 20), "spine": (-10, 0, 0)}, 6: {"arm.L": (-150, 0, 0), "spine": (15, 0, 0)}, 12: {}}
-    die = {1: {}, 8: {"hips": (-30, 0, 20), "@root": (0, 0, 0.15), "arm.L": (0, 0, 80), "arm.R": (0, 0, -60)},
-           18: {"hips": (-88, 0, 30), "@root": (0, 0, 0.1), "arm.L": (0, 0, 120), "arm.R": (0, 0, -90), "thigh.L": (20, 0, 10)}}
-    swim = {1: {"arm.L": (-150, 0, 20), "arm.R": (-40, 0, -20)}, 10: {"arm.L": (-40, 0, 20), "arm.R": (-150, 0, -20)},
-            20: {"arm.L": (-150, 0, 20), "arm.R": (-40, 0, -20)}}
-    idle = {1: {"arm.R": (-30, 0, 0)}, 30: {"arm.R": (-32, 0, 0), "head": (0, 0, 10), "spine": (2, 0, 0)}, 60: {"arm.R": (-30, 0, 0)}}
-    rig_export("soldier", out_dir, {"idle": idle, "run": run, "shoot": shoot, "throw": throw, "die": die, "swim": swim}, 0.5)
+    shape = {"chest": 1.05, "waist": 1.06, "arms": 1.05, "legs": 1.04, "neck": 1.1, "hand": 1.1}
+    human_body(SK, skin, uni, uni, white, iris, shoes=boot, sole=boot, glove=skin, sleeves="long", hands="grip",
+               shape=shape, shoe_height=0.21)
+    cx, cy, cz = 0, -0.012, 1.665
+    sphere(0.128, (0, cy + 0.008, cz + 0.035), "head", helmet, (1.0, 1.06, 0.74))   # the helmet, with its brim
+    body_loft([(cz - 0.035, 0.132, 0.138, cy + 0.008), (cz - 0.015, 0.128, 0.134, cy + 0.008)], "head", helmet, 24, 0)
+    for k in (-1, 1):   # chin strap
+        tube([(0.092 * k, cy + 0.0, cz - 0.02, 0.005), (0.07 * k, cy - 0.05, cz - 0.09, 0.005), (0, cy - 0.065, cz - 0.115, 0.005)], "head", belt, 6, 0.015)
+    # the webbing belt with pouches, braces, the pack and a bedroll
+    body_loft([(z, rx + 0.01, ry + 0.01, cy_, sq) for z, rx, ry, cy_, sq in torso_rings(1.0, 1.06, 0.0, shape)], "~body", belt, 26, 0)
+    for x in (-0.1, -0.04, 0.04, 0.1):
+        box((0.05, 0.035, 0.055), (x, -0.112, 1.02), "~body", pack, bevel=0.01)
+    for k in (-1, 1):
+        rings = torso_rings(1.06, 1.43, 0.0, shape)
+        tube([(0.085 * k, -(ry + 0.008) + cy_, z, 0.011) for z, rx, ry, cy_, sq in rings], "~body", belt, 6, 0.03, ell=(1.3, 0.4))
+    box((0.27, 0.13, 0.3), (0, 0.17, 1.28), "~body", pack, bevel=0.035)
+    box((0.2, 0.05, 0.12), (0, 0.25, 1.2), "~body", pack, bevel=0.02)
+    body_loft([(1.43, 0.13, 0.05, 0.19), (1.47, 0.13, 0.05, 0.19)], "~body", mat("bedroll", (0.3, 0.25, 0.18), 0.9), 14, 1)
+    rifle(gun, stock)
+    rig_export("soldier", out_dir, soldier_actions(), 0.5, skeleton=SK, fps=FPS)
+
+
+def hostage_actions():
+    idle = {}
+    for i in range(0, 61, 6):
+        t = i / 60.0
+        br = math.sin(2 * math.pi * t * 3)   # quick, nervous breaths
+        look = math.sin(2 * math.pi * t)
+        idle[i + 1] = P(STAND, **{"root": (0.015 * look, 0, -0.02), "hips": (0, 3 * look, -3 * look), "spine": (6, 0, 0),
+                                  "chest": (8 + 1.5 * br, 0, 0), "clavicle.L": (8, 0, 6 + 2 * br), "clavicle.R": (8, 0, 6 + 2 * br),
+                                  "arm.L": (30, 30, 10), "forearm.L": (80, 0, 0), "arm.R": (30, 30, 10), "forearm.R": (85, 0, 0),
+                                  "hand.L": (0, 0, -10), "hand.R": (0, 0, -10), "neck": (6, 25 * look, 0),
+                                  "head": (4, 20 * math.sin(2 * math.pi * (t - 0.05)), 0)})
+    run = gait(SK, 16, 3.14, 0.34, lift=0.26, lift_at=0.35, strike=10, push=40, bob=-0.04, drop=-0.08, lean=12,
+               arm_swing=45, arm_out=14, elbow=55, elbow_swing=15, pelvis_yaw=10, pelvis_roll=5, shoulder_yaw=12, reach=0.4)
+    wave = {}
+    for i in range(0, 17, 2):
+        t = i / 16.0
+        s_ = math.sin(2 * math.pi * t)
+        wave[i + 1] = P(STAND, **{"root": (0, 0, -0.02 - 0.03 * max(0, s_)), "arm.L": (40, -20, 120 + 18 * s_),
+                                  "arm.R": (40, -20, 120 - 18 * s_), "forearm.L": (25 - 15 * s_, 0, 0), "forearm.R": (25 + 15 * s_, 0, 0),
+                                  "clavicle.L": (0, 0, 14), "clavicle.R": (0, 0, 14), "chest": (-4, 6 * s_, 0), "head": (-12, -6 * s_, 0),
+                                  "hand.L": (0, 0, 10), "hand.R": (0, 0, 10)})
+    return {"idle": Anim(idle, loop=True), "walk": run, "wave": Anim(wave, loop=True)}
 
 
 def hostage():
@@ -65,14 +191,9 @@ def hostage():
     hair = mat("hair", (0.15, 0.1, 0.08), 0.8)
     white = mat("eye_white", (0.95, 0.95, 0.92), 0.3)
     iris = mat("iris", (0.2, 0.12, 0.08), 0.2)
-    athletic_body(shirt, skin, white, iris, hair=hair, boot=mat("sandals", (0.4, 0.25, 0.1), 0.7), legs=trousers)
-    walk = {}
-    for f, ph in ((1, 1), (8, 0), (15, -1), (22, 0), (29, 1)):
-        walk[f] = {"thigh.L": (25 * ph, 0, 0), "thigh.R": (-25 * ph, 0, 0), "arm.L": (-20 * ph, 0, 5), "arm.R": (20 * ph, 0, -5)}
-    wave = {1: {"arm.L": (0, 0, 150), "arm.R": (0, 0, -150)}, 8: {"arm.L": (0, 0, 165), "arm.R": (0, 0, -165), "@root": (0, 0, 0.1)},
-            16: {"arm.L": (0, 0, 150), "arm.R": (0, 0, -150)}}
-    rig_export("hostage", out_dir, {"idle": {1: {"head": (0, 0, 10)}, 30: {"head": (0, 0, -10)}, 60: {"head": (0, 0, 10)}},
-                                    "walk": walk, "wave": wave}, 0.5)
+    human_body(SK, skin, shirt, trousers, white, iris, hair=hair, shoes=mat("sandals", (0.4, 0.25, 0.1), 0.7),
+               sleeves="short", hands="relaxed", shape={"chest": 0.95, "arms": 0.92, "waist": 1.02}, shoe_height=0.13)
+    rig_export("hostage", out_dir, hostage_actions(), 0.5, skeleton=SK, fps=FPS)
 
 
 # ------------------------------------------------------------------ props

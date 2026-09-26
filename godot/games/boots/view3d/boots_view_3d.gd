@@ -446,7 +446,7 @@ func _update_people(e: BootsEngine, delta: float) -> void:
 		n.position = target
 		var a := "walk" if moving else ("wave" if not h["following"] else "idle")
 		if p["anim"].current_animation != a:
-			p["anim"].play(a, 0.2)
+			p["anim"].play(a, 0.2, 1.4 if a == "walk" else 1.0)  # the hostage runs with the squad, at the soldiers' pace
 
 
 func _pose(p: Dictionary, u: Dictionary, e: BootsEngine, delta: float, enemy: bool) -> void:
