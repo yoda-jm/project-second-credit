@@ -106,5 +106,7 @@ decisions below are settled unless the owner reopens them.
    **Crate Keeper** (Sokoban-like, `godot/games/crates/`): reads standard `.xsb` collections; our puzzles carry par and a
    solution (made by a solver script in the scratchpad history), undo/redo, stars. Characters on the new
    `humanoid.py` rig (26 bones, smooth skin) and `creature_kit.py` (animals).
-14. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+14. Game 12, **Nightbite** (Pac-Man-like, `godot/games/nightbite/`): neon maze chase, `mazes/*.maze` (our format,
+   mirrored halves checked for dead ends by a scratchpad script), four spirit temperaments, autopilot.
+15. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

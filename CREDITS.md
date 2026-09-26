@@ -92,6 +92,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - The keeper is built on the shared humanoid rig by `tools/blender/crates_keeper.py`, the warehouse by
   `tools/blender/crates_models.py`; sound effects, the harbour ambience and the theme are synthesised by `tools/audio/`.
 
+## Game 12 (Nightbite, working title)
+
+- Inspired by *Pac-Man* (Namco, 1980) and the spirit of its *Championship Edition*. None of its code, graphics,
+  sounds, music, mazes or characters are in this repo: our hero, our lantern spirits and their temperaments, our
+  mazes and our sounds are original.
+- Characters and maze pieces are built by `tools/blender/nightbite_characters.py` and `nightbite_models.py`; sound
+  effects and both music loops are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

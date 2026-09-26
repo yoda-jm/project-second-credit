@@ -187,29 +187,31 @@ func _wall_piece(m: NightMaze, c: Vector2i, neon: Color) -> void:
 	var n_count := int(up) + int(down) + int(left) + int(right)
 	var kind := "wall_single"
 	var yaw := 0.0
-	# pieces are modelled connecting +X (straight: +X and -X; corner: +X and +Z(down); T: -X, +X, +Z; end: +X)
+	# pieces as modelled: straight along X; corner joins right and up; T joins left, right and up; end joins right.
+	# A turn of +90 degrees takes right to up, up to left, left to down, down to right.
 	match n_count:
 		4: kind = "wall_cross"
 		3:
 			kind = "wall_t"
-			if not down: yaw = PI
-			elif not left: yaw = PI * 0.5
-			elif not right: yaw = -PI * 0.5
+			if not down: yaw = 0.0
+			elif not right: yaw = PI * 0.5
+			elif not up: yaw = PI
+			else: yaw = -PI * 0.5
 		2:
 			if left and right: kind = "wall_straight"
 			elif up and down: kind = "wall_straight"; yaw = PI * 0.5
 			else:
 				kind = "wall_corner"
-				if right and down: yaw = 0.0
-				elif down and left: yaw = -PI * 0.5
-				elif left and up: yaw = PI
-				else: yaw = PI * 0.5
+				if right and up: yaw = 0.0
+				elif up and left: yaw = PI * 0.5
+				elif left and down: yaw = PI
+				else: yaw = -PI * 0.5
 		1:
 			kind = "wall_end"
 			if right: yaw = 0.0
-			elif down: yaw = -PI * 0.5
+			elif up: yaw = PI * 0.5
 			elif left: yaw = PI
-			else: yaw = PI * 0.5
+			else: yaw = -PI * 0.5
 	var n := _scene(kind)
 	n.position = Vector3(c.x + 0.5, 0, c.y + 0.5)
 	n.rotation.y = yaw
@@ -272,7 +274,14 @@ func _process(delta: float) -> void:
 		var n: Node3D = v["node"]
 		n.position = Vector3(s["pos"].x, 0.1 + 0.05 * sin(_time * 4.0 + i), s["pos"].y)
 		var sd: Vector2i = s["dir"]
-		n.rotation.y = lerp_angle(n.rotation.y, atan2(float(sd.x), float(sd.y)), minf(1.0, delta * 12.0))
+		# spirits face the camera; their pupils look the way they go (as eyes only, they look where home is)
+		var look := Vector3(sd.x, 0, sd.y) * 0.035
+		for eye_name in ["pupil_l", "pupil_r"]:
+			var pu := n.find_child(eye_name, true, false) as Node3D
+			if pu:
+				if not pu.has_meta("rest"):
+					pu.set_meta("rest", pu.position)
+				pu.position = (pu.get_meta("rest") as Vector3) + Vector3(look.x, -look.z * 0.6, look.z * 0.4)
 		var col: Color = v["col"]
 		if s["scared"]:
 			col = Color(0.95, 0.95, 1.0) if ending else SCARED
