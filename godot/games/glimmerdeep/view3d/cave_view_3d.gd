@@ -30,6 +30,12 @@ var _static_dirty := true  ## dirt, walls and steel only change on engine frames
 const STATIC_KINDS := [Kind.DIRT, Kind.BRICK, Kind.STEEL, Kind.MAGIC]
 var _landed := {}  ## cell index -> time an object landed there (for the squash)
 var _env: Environment
+## Two-player race: the other player's game, drawn here as a see-through ghost of their hero in their colour.
+var ghost: CaveGame
+var ghost_color := Color(0.4, 0.8, 1.0)
+var _ghost_node: MeshInstance3D
+var _ghost_cell := Vector2i(-1, -1)
+var _ghost_from := Vector2i(-1, -1)
 var _fill: DirectionalLight3D
 var _dirt_mat: StandardMaterial3D
 var _brick_mat: StandardMaterial3D
@@ -437,9 +443,40 @@ func _process(delta: float) -> void:
 			_add(kind, Transform3D(basis, pos), color)
 	for kind in _mm.size():
 		_mm[kind].multimesh.visible_instance_count = _counts[kind]
+	_update_ghost(delta)
 	_update_camera(engine, hero_pos, delta)
 	_lamp.position = hero_pos + Vector3(0.0, 0.6, 1.4)
 	_lamp.visible = engine.player_state == CaveRendered.PlayerState.LIVING
+
+
+func _update_ghost(_delta: float) -> void:
+	if ghost == null or ghost.engine == null:
+		return
+	if _ghost_node == null:
+		_ghost_node = MeshInstance3D.new()
+		_ghost_node.mesh = _mesh(Kind.HERO)
+		var m := StandardMaterial3D.new()
+		m.albedo_color = Color(ghost_color, 0.42)
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.emission_enabled = true
+		m.emission = ghost_color
+		m.emission_energy_multiplier = 1.2
+		m.rim_enabled = true
+		m.rim = 1.0
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_ghost_node.material_override = m
+		_ghost_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_ghost_node)
+	var e := ghost.engine
+	var alive := e.player_state == CaveRendered.PlayerState.LIVING
+	_ghost_node.visible = alive and e.hatched
+	var cell := Vector2i(e.player_x, e.player_y)
+	if cell != _ghost_cell:  # glide from the last cell like the heroes do, a third of a step
+		_ghost_from = _ghost_cell if _ghost_cell.distance_to(cell) < 1.5 else cell
+		_ghost_cell = cell
+	var k := clampf(ghost.frame_progress * 3.0, 0.0, 1.0)
+	var p := Vector2(_ghost_from).lerp(Vector2(cell), k)
+	_ghost_node.transform = Transform3D(Basis.from_scale(Vector3.ONE * 1.35), Vector3(p.x, -p.y, 0.15))
 
 
 ## A short slow-motion when the hero dies (the whole game slows down, then eases back).

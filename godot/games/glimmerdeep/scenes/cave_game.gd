@@ -48,7 +48,14 @@ var cave_no := 0
 var lives := LIVES
 var campaign_done := false
 var story_open := false
-var autopilot := false  ## captures: the demo bot plays the campaign (and story cards are skipped)
+var autopilot := false
+## Two-player race: 0 = the only player (arrows, WASD... through the ui actions), 1 = arrow keys and the first
+## gamepad, 2 = W A S D (by key position, so ZQSD on AZERTY) and the second gamepad.
+var player := 0
+var race_seed := -1  ## the engine's random seed (a race gives both players the same cave, rocks and creatures)
+var auto_restart := true  ## a finished cave starts again by itself (not in a race: the race decides)
+const P_KEYS := {1: [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT], 2: [KEY_W, KEY_S, KEY_A, KEY_D]}
+const P_FIRE := {1: [KEY_CTRL, KEY_ENTER, KEY_KP_0], 2: [KEY_SHIFT, KEY_SPACE, KEY_TAB]}  ## captures: the demo bot plays the campaign (and story cards are skipped)
 var _score_at_start := 0
 var _cards_seen := {}
 
@@ -104,7 +111,7 @@ func restart() -> void:
 	playing_demo = demo != null
 	if demo:
 		demo.rewind()
-	engine = CaveEngine.new(cave, level, demo.seed if demo else randi() & 0x7fffffff)
+	engine = CaveEngine.new(cave, level, demo.seed if demo else (race_seed if race_seed >= 0 else randi() & 0x7fffffff))
 	score = _score_at_start if pack else 0
 	finished = false
 	bonus_pending = false
@@ -120,11 +127,7 @@ func restart() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_pressed() or event.is_echo():
 		return
-	var dir := D.STILL
-	if event.is_action("ui_up"): dir = D.UP
-	elif event.is_action("ui_down"): dir = D.DOWN
-	elif event.is_action("ui_left"): dir = D.LEFT
-	elif event.is_action("ui_right"): dir = D.RIGHT
+	var dir := _event_dir(event)
 	if dir != D.STILL:
 		if playing_demo and not demo_locked:
 			demo = null
@@ -140,8 +143,48 @@ func _unhandled_input(event: InputEvent) -> void:
 		_tapped_fire = _fire_held()
 
 
+func _event_dir(event: InputEvent) -> int:
+	if player == 0:
+		if event.is_action("ui_up"): return D.UP
+		if event.is_action("ui_down"): return D.DOWN
+		if event.is_action("ui_left"): return D.LEFT
+		if event.is_action("ui_right"): return D.RIGHT
+		return D.STILL
+	if event is InputEventKey:
+		var k: Array = P_KEYS[player]
+		var i := k.find(event.physical_keycode)
+		return [D.UP, D.DOWN, D.LEFT, D.RIGHT][i] if i >= 0 else D.STILL
+	if event is InputEventJoypadButton and event.device == player - 1:
+		match event.button_index:
+			JOY_BUTTON_DPAD_UP: return D.UP
+			JOY_BUTTON_DPAD_DOWN: return D.DOWN
+			JOY_BUTTON_DPAD_LEFT: return D.LEFT
+			JOY_BUTTON_DPAD_RIGHT: return D.RIGHT
+	return D.STILL
+
+
+## The directions held now: up, down, left, right.
+func _held() -> Array:
+	if player == 0:
+		return [Input.is_action_pressed("ui_up"), Input.is_action_pressed("ui_down"),
+			Input.is_action_pressed("ui_left"), Input.is_action_pressed("ui_right")]
+	var k: Array = P_KEYS[player]
+	var dev := player - 1
+	var ax := Input.get_joy_axis(dev, JOY_AXIS_LEFT_X)
+	var ay := Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y)
+	return [Input.is_physical_key_pressed(k[0]) or Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_UP) or ay < -0.5,
+		Input.is_physical_key_pressed(k[1]) or Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_DOWN) or ay > 0.5,
+		Input.is_physical_key_pressed(k[2]) or Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_LEFT) or ax < -0.5,
+		Input.is_physical_key_pressed(k[3]) or Input.is_joy_button_pressed(dev, JOY_BUTTON_DPAD_RIGHT) or ax > 0.5]
+
+
 func _fire_held() -> bool:
-	return Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_SPACE)
+	if player == 0:
+		return Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_SPACE)
+	for key in P_FIRE[player]:
+		if Input.is_physical_key_pressed(key):
+			return true
+	return Input.is_joy_button_pressed(player - 1, JOY_BUTTON_A)
 
 
 func _process(delta: float) -> void:
@@ -156,7 +199,7 @@ func _process(delta: float) -> void:
 		return
 	if finished:
 		_finished_ms += delta * 1000.0
-		if _finished_ms > 3500.0:
+		if _finished_ms > 3500.0 and auto_restart:
 			_after_cave()
 		return
 	_elapsed_ms += delta * 1000.0
@@ -207,8 +250,8 @@ func _step() -> void:
 		move = DemoBot.next_move(engine)
 	else:
 		# held keys win; otherwise a tap made since the last frame still counts (no lost key presses)
-		move = D.from_keypress(Input.is_action_pressed("ui_up"), Input.is_action_pressed("ui_down"),
-			Input.is_action_pressed("ui_left"), Input.is_action_pressed("ui_right"))
+		var held := _held()
+		move = D.from_keypress(held[0], held[1], held[2], held[3])
 		fire = _fire_held()
 		if move == D.STILL and _tapped_dir != D.STILL:
 			move = _tapped_dir

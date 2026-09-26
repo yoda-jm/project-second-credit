@@ -121,3 +121,5 @@ func _draw() -> void:
 			HudKit.GOOD if won else HudKit.BAD, a, pop)
 		if game.campaign_done:
 			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.45 + 130), [["ENTER", "play again"], ["ESC", "menu"]], a)
+	if game.player == 0 and game.playing_demo:
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 30), [["ARROWS", "play"], ["F2", "two-player race"]], 0.9)

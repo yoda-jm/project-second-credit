@@ -8,6 +8,7 @@ const SFX := "res://games/glimmerdeep/audio/sfx/"
 
 @export var game: CaveGame
 @export var music_volume_db := -8.0
+@export var with_music := true  ## a two-player race plays the theme once, from the first player's audio
 
 var _music: AudioStreamPlayer
 var _streams := {}
@@ -41,6 +42,8 @@ func _ready() -> void:
 
 
 func _start_music() -> void:
+	if not with_music:
+		return
 	_music.volume_db = -40.0
 	_music.play()
 	create_tween().tween_property(_music, "volume_db", music_volume_db, 2.5).set_trans(Tween.TRANS_SINE) \
