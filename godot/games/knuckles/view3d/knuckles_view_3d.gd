@@ -38,7 +38,7 @@ func _build_env() -> void:
 	_env.background_color = Color(0.02, 0.02, 0.05)
 	_env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	_env.ambient_light_color = Color(0.25, 0.28, 0.45)
-	_env.ambient_light_energy = 0.7
+	_env.ambient_light_energy = 0.9
 	_env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	_env.tonemap_exposure = 1.1
 	_env.glow_enabled = true
@@ -82,6 +82,16 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, mat: Material) -> MeshIns
 	return mi
 
 
+## A long strip along the stage, cut into short boxes: each piece gets its own nearby lights (the compatibility
+## renderer lights a mesh with its eight nearest lights only).
+func _strip(L: float, y: float, z: float, size: Vector3, mat: Material) -> void:
+	var seg := 12.0
+	var x := -10.0
+	while x < L - 10.0:
+		_box(_set, Vector3(x + seg * 0.5, y, z), Vector3(seg + 0.001, size.y, size.z), mat)
+		x += seg
+
+
 func _glow(c: Color, energy: float) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = c
@@ -114,6 +124,7 @@ func _on_stage(e: BrawlEngine) -> void:
 	e.event.connect(_on_event)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(e.level.name)
+	_env.background_color = {"docks": Color(0.03, 0.04, 0.1), "rooftops": Color(0.07, 0.04, 0.14)}.get(e.level.theme, Color(0.02, 0.02, 0.05))
 	match e.level.theme:
 		"docks": _build_docks(e, rng)
 		"rooftops": _build_rooftops(e, rng)
@@ -124,11 +135,16 @@ func _on_stage(e: BrawlEngine) -> void:
 
 func _build_street(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 	var L := e.level.length + 30.0
-	var asphalt := Pbr.material("dark_rock", Color(0.28, 0.28, 0.32), 0.5, 0.0, 0.55)
+	var asphalt := Pbr.material("dark_rock", Color(0.42, 0.42, 0.48), 0.5, 0.0, 0.5)
 	var walk := Pbr.material("stone_bricks", Color(0.5, 0.5, 0.55), 1.2)
-	_box(_set, Vector3(L * 0.5 - 10, -0.1, 0), Vector3(L, 0.2, 7.0), asphalt)
-	_box(_set, Vector3(L * 0.5 - 10, 0.05, -3.4), Vector3(L, 0.2, 1.6), walk)          # sidewalk
-	_box(_set, Vector3(L * 0.5 - 10, 0.05, -2.62), Vector3(L, 0.22, 0.12), _glow(Color(0.7, 0.7, 0.7), 0.0))  # kerb
+	_strip(L, -0.1, 0, Vector3(0, 0.2, 7.0), asphalt)
+	_strip(L, 0.05, -3.4, Vector3(0, 0.2, 1.6), walk)          # sidewalk
+	_strip(L, 0.05, -2.62, Vector3(0, 0.22, 0.12), _glow(Color(0.7, 0.7, 0.7), 0.0))  # kerb
+	_strip(L, 0.05, 3.9, Vector3(0, 0.2, 1.6), walk)            # the near sidewalk
+	_strip(L, 0.05, 3.12, Vector3(0, 0.22, 0.12), _glow(Color(0.7, 0.7, 0.7), 0.0))
+	var paint := _glow(Color(0.85, 0.8, 0.55), 0.15)  # dashed centre line
+	for i in int(L / 4.0):
+		_box(_set, Vector3(-9 + i * 4.0, 0.004, 0.4), Vector3(2.0, 0.01, 0.14), paint)
 	# puddles: a glossy film that mirrors the neon
 	var puddle := StandardMaterial3D.new()
 	puddle.albedo_color = Color(0.02, 0.02, 0.04)
@@ -147,18 +163,20 @@ func _build_street(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 		_box(_set, Vector3(x + w * 0.5, h * 0.5, -5.0), Vector3(w - 0.2, h, 1.6), Pbr.material("stone_bricks", tint, 0.5))
 		# shop window at street level
 		var shop := NEON[rng.randi_range(0, NEON.size() - 1)]
-		_box(_set, Vector3(x + w * 0.5, 1.4, -4.18), Vector3(w * 0.6, 2.0, 0.05), _glow(shop.lerp(Color(1, 0.9, 0.8), 0.6), 0.9))
+		_box(_set, Vector3(x + w * 0.5, 1.4, -4.18), Vector3(w * 0.6, 2.0, 0.05), _glow(shop.lerp(Color(1, 0.85, 0.7), 0.3) * 0.6, 0.35))
+		_box(_set, Vector3(x + w * 0.5, 2.5, -4.1), Vector3(w * 0.62, 0.14, 0.12), _glow(Color(0.1, 0.1, 0.12), 0.0))  # frame
+		_box(_set, Vector3(x + w * 0.5, 2.9, -4.05), Vector3(w * 0.66, 0.5, 0.9), _glow(shop.darkened(0.55), 0.2))  # awning
 		# upper windows
 		for fy in range(1, int(h / 3.0)):
 			for fx in range(int(w / 2.2)):
 				if rng.randf() < 0.55:
 					var lit := rng.randf() < 0.6
 					_box(_set, Vector3(x + 1.2 + fx * 2.2, fy * 3.0 + 1.0, -4.18), Vector3(1.0, 1.4, 0.05),
-						_glow(Color(1.0, 0.8, 0.5) if lit else Color(0.05, 0.06, 0.1), 1.3 if lit else 0.0))
+						_glow(Color(0.9, 0.62, 0.35) if lit else Color(0.05, 0.06, 0.1), 0.45 if lit else 0.0))
 		# a neon sign sticking out, and its light on the street
 		if rng.randf() < 0.8:
 			var nc := NEON[rng.randi_range(0, NEON.size() - 1)]
-			var sign := _box(_set, Vector3(x + w * rng.randf_range(0.2, 0.8), rng.randf_range(3.8, 6.0), -3.9), Vector3(0.18, rng.randf_range(1.2, 2.4), 0.9), _glow(nc, 4.0))
+			var sign := _box(_set, Vector3(x + w * rng.randf_range(0.2, 0.8), rng.randf_range(3.8, 6.0), -3.9), Vector3(0.18, rng.randf_range(1.2, 2.4), 0.9), _glow(nc, 2.2))
 			sign.rotation.y = PI * 0.5
 			_light(_set, sign.position + Vector3(0, 0, 1.2), nc, 2.4, 9.0)
 		x += w
@@ -169,15 +187,16 @@ func _build_street(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 		lamp.position = Vector3(lx, 0, -3.0)
 		lamp.rotation.y = PI
 		_set.add_child(lamp)
-		_light(_set, Vector3(lx, 4.6, -1.9), Color(1.0, 0.8, 0.55), 2.0, 10.0)
+		_light(_set, Vector3(lx, 4.6, -1.6), Color(1.0, 0.8, 0.55), 2.6, 12.0)
 		lx += 14.0
-	var cx := 10.0
+	# parked cars behind the fighters, between the lamps (never in front of the fight)
+	var cx := 11.0
 	while cx < L:
 		var car := _scene("car")
-		car.position = Vector3(cx, 0, 4.1)
+		car.position = Vector3(cx, 0, -3.2)
 		car.rotation.y = PI if rng.randf() < 0.5 else 0.0
 		_set.add_child(car)
-		cx += rng.randf_range(16.0, 28.0)
+		cx += 14.0 * rng.randi_range(2, 3)
 	for i in int(L / 12.0):
 		var n := _scene("barrel" if i % 3 == 0 else "trash_bags")
 		n.position = Vector3(rng.randf_range(0, L - 10), 0, -3.6)
@@ -188,7 +207,7 @@ func _build_street(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 
 func _build_docks(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 	var L := e.level.length + 30.0
-	_box(_set, Vector3(L * 0.5 - 10, -0.1, 0), Vector3(L, 0.2, 7.0), Pbr.material("planks", Color(0.5, 0.42, 0.35), 0.7))
+	_strip(L, -0.1, 0, Vector3(0, 0.2, 7.0), Pbr.material("planks", Color(0.5, 0.42, 0.35), 0.7))
 	var water := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(L + 60, 60)
@@ -228,10 +247,10 @@ func _build_docks(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 
 func _build_rooftops(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 	var L := e.level.length + 30.0
-	_box(_set, Vector3(L * 0.5 - 10, -0.1, 0), Vector3(L, 0.2, 7.5), Pbr.material("rock", Color(0.45, 0.45, 0.5), 0.6))
+	_strip(L, -0.1, 0, Vector3(0, 0.2, 7.5), Pbr.material("rock", Color(0.45, 0.45, 0.5), 0.6))
 	var wall := Pbr.material("stone_bricks", Color(0.45, 0.4, 0.4), 0.8)
-	_box(_set, Vector3(L * 0.5 - 10, 0.5, -3.8), Vector3(L, 1.0, 0.4), wall)  # parapet
-	_box(_set, Vector3(L * 0.5 - 10, -10.0, 0), Vector3(L, 20.0, 8.0), wall)
+	_strip(L, 0.5, -3.8, Vector3(0, 1.0, 0.4), wall)  # parapet
+	_strip(L, -10.0, 0, Vector3(0, 20.0, 8.0), wall)
 	var x := 0.0
 	while x < L:
 		var n := _scene("water_tank" if rng.randf() < 0.4 else "ac_unit")
@@ -243,13 +262,24 @@ func _build_rooftops(e: BrawlEngine, rng: RandomNumberGenerator) -> void:
 		var th := rng.randf_range(10, 45)
 		var tz := rng.randf_range(-40, -18)
 		var tw := rng.randf_range(4, 9)
-		_box(_set, Vector3(tx, th * 0.5 - 12, tz), Vector3(tw, th, tw), _glow(Color(0.04, 0.04, 0.08), 0.0))
+		_box(_set, Vector3(tx, th * 0.5 - 12, tz), Vector3(tw, th, tw), _glow(Color(0.07, 0.07, 0.13), 0.0))
 		for k in rng.randi_range(3, 10):
 			_box(_set, Vector3(tx + rng.randf_range(-tw * 0.4, tw * 0.4), rng.randf_range(-10, th - 13), tz + tw * 0.5 + 0.05),
 				Vector3(0.6, 0.8, 0.05), _glow(NEON[rng.randi_range(0, NEON.size() - 1)].lerp(Color(1, 0.85, 0.6), 0.6), 1.2))
 		_box(_set, Vector3(tx, th - 12 + 0.3, tz), Vector3(0.3, 0.3, 0.3), _glow(Color(1, 0.1, 0.1), 6.0))
-	_light(_set, Vector3(L * 0.3, 8, 4), Color(0.6, 0.4, 1.0), 2.0, 30.0)
-	_light(_set, Vector3(L * 0.7, 8, 4), Color(1.0, 0.3, 0.6), 2.0, 30.0)
+	# the city's glow on the horizon, and a neon rig every few metres along the roof
+	var haze := _box(_set, Vector3(L * 0.5, -2.0, -48), Vector3(L + 120, 16, 0.2), _glow(Color(0.5, 0.2, 0.45), 0.5))
+	haze.material_override.albedo_color = Color(0, 0, 0)
+	_box(_set, Vector3(L * 0.5, 22, -60), Vector3(3.0, 3.0, 0.2), _glow(Color(0.9, 0.92, 1.0), 2.5)).rotation.z = PI * 0.25  # moon glint
+	var lx := 0.0
+	var k := 0
+	while lx < L:
+		var c := NEON[k % NEON.size()]
+		_box(_set, Vector3(lx, 1.6, -3.7), Vector3(2.2, 0.12, 0.12), _glow(c, 4.0))  # a neon tube on the parapet
+		_light(_set, Vector3(lx, 2.6, -1.8), c, 2.2, 11.0)
+		_light(_set, Vector3(lx + 5.0, 5.0, 3.0), Color(0.55, 0.6, 1.0), 1.2, 12.0)  # moonlit fill
+		lx += 10.0
+		k += 1
 
 
 # ------------------------------------------------------------------ fighters and items

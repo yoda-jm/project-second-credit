@@ -87,6 +87,7 @@ func _draw() -> void:
 	if _foe_t > 0.0:
 		var f := e.by_id(_foe)
 		if not f.is_empty():
+			HudKit.panel(self, Rect2(vp.x * 0.5 - 220, 118, 440, 64), PINK, 14, 0.8)
 			HudKit.text(self, Vector2(vp.x * 0.5 - 200, 150), NAMES.get(f["kind"], "ENEMY"), 20, PINK, HudKit.font(true))
 			_bar(Rect2(vp.x * 0.5 - 200, 160, 400, 12), float(maxi(0, f["hp"])) / float(f["max_hp"]), PINK)
 	# GO!
