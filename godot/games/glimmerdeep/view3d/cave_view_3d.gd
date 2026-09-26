@@ -29,6 +29,21 @@ var _cells_kind := PackedInt32Array()
 var _static_dirty := true  ## dirt, walls and steel only change on engine frames
 const STATIC_KINDS := [Kind.DIRT, Kind.BRICK, Kind.STEEL, Kind.MAGIC]
 var _landed := {}  ## cell index -> time an object landed there (for the squash)
+var _env: Environment
+var _fill: DirectionalLight3D
+var _dirt_mat: StandardMaterial3D
+var _brick_mat: StandardMaterial3D
+## The Descent: each cave deeper down has its own earth, air and light (dirt tint, fog, lamp, fill light).
+const THEMES := [
+	{"dirt": Color(0.62, 0.5, 0.4), "brick": Color(1.0, 0.45, 0.32), "fog": Color(0.08, 0.06, 0.1), "lamp": Color(1.0, 0.8, 0.5), "fill": Color(0.45, 0.6, 1.0)},
+	{"dirt": Color(0.72, 0.56, 0.38), "brick": Color(1.0, 0.5, 0.32), "fog": Color(0.13, 0.09, 0.05), "lamp": Color(1.0, 0.78, 0.45), "fill": Color(0.6, 0.6, 0.8)},
+	{"dirt": Color(0.46, 0.38, 0.33), "brick": Color(0.9, 0.42, 0.3), "fog": Color(0.1, 0.05, 0.02), "lamp": Color(1.0, 0.6, 0.3), "fill": Color(0.3, 0.35, 0.6)},
+	{"dirt": Color(0.46, 0.55, 0.38), "brick": Color(0.85, 0.5, 0.45), "fog": Color(0.06, 0.08, 0.06), "lamp": Color(1.0, 0.85, 0.6), "fill": Color(0.75, 0.5, 1.0)},
+	{"dirt": Color(0.46, 0.5, 0.62), "brick": Color(0.75, 0.5, 0.6), "fog": Color(0.05, 0.06, 0.13), "lamp": Color(0.85, 0.85, 1.0), "fill": Color(0.6, 0.4, 1.0)},
+	{"dirt": Color(0.4, 0.52, 0.37), "brick": Color(0.8, 0.5, 0.35), "fog": Color(0.04, 0.09, 0.05), "lamp": Color(0.9, 1.0, 0.7), "fill": Color(0.4, 1.0, 0.6)},
+	{"dirt": Color(0.76, 0.67, 0.56), "brick": Color(1.1, 0.4, 0.3), "fog": Color(0.1, 0.08, 0.08), "lamp": Color(1.0, 0.9, 0.75), "fill": Color(0.55, 0.65, 1.0)},
+	{"dirt": Color(0.6, 0.43, 0.37), "brick": Color(1.0, 0.38, 0.28), "fog": Color(0.15, 0.04, 0.03), "lamp": Color(1.0, 0.55, 0.35), "fill": Color(1.0, 0.45, 0.3)},
+]
 
 
 func _ready() -> void:
@@ -67,6 +82,7 @@ func _build_environment() -> void:
 	env.adjustment_enabled = true
 	env.adjustment_saturation = 1.0
 	env.adjustment_contrast = 1.08
+	_env = env
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
@@ -79,6 +95,7 @@ func _build_environment() -> void:
 	key.directional_shadow_max_distance = 60.0
 	add_child(key)
 	var fill := DirectionalLight3D.new()
+	_fill = fill
 	fill.rotation_degrees = Vector3(-15, 140, 0)
 	fill.light_color = Color(0.45, 0.6, 1.0)
 	fill.light_energy = 0.35
@@ -229,6 +246,12 @@ func _build_multimeshes() -> void:
 		inst.multimesh = mm
 		if kind != Kind.HERO:  # the hero keeps the materials made in Blender
 			inst.material_override = _material(kind)
+			if kind == Kind.DIRT or kind == Kind.BRICK:  # our own copies: the theme tints them per cave
+				inst.material_override = inst.material_override.duplicate()
+				if kind == Kind.DIRT:
+					_dirt_mat = inst.material_override
+				else:
+					_brick_mat = inst.material_override
 		if kind == Kind.PORTAL or kind == Kind.BLAST:
 			inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(inst)
@@ -278,6 +301,12 @@ static func kind_of(e: int) -> int:
 
 func _on_cave_started(engine: CaveEngine) -> void:
 	_static_dirty = true
+	var th: Dictionary = THEMES[game.cave_no % THEMES.size()] if game.pack else THEMES[0]
+	_dirt_mat.albedo_color = th["dirt"]
+	_brick_mat.albedo_color = th["brick"]
+	_env.fog_light_color = th["fog"]
+	_lamp.light_color = th["lamp"]
+	_fill.light_color = th["fill"]
 	for i in _mm.size():
 		_mm[i].multimesh.instance_count = engine.w * engine.h
 	_came_from.clear()

@@ -2,7 +2,8 @@ extends Node
 ## Game 1 main scene: one cave in the 3D diorama view with its HUD. Pass "--demo" (user argument) to run the
 ## cave's demo replay instead of waiting for the player (the capture script does this), or "--demo=N" for the
 ## N-th replay (1: the hero gets crushed, for the death effect). Without --demo the campaign starts (the pack's
-## caves in order, with its story), or the single cave with "--cave".
+## caves in order, with its story), or the single cave with "--cave". "--descent=N" shows the campaign's cave N
+## played by the demo bot (for captures).
 
 @export_file("*.bd") var cave_file := "res://games/glimmerdeep/packs/second-credit/first-light.bd"
 @export var cave_index := 0
@@ -20,7 +21,14 @@ func _ready() -> void:
 			demo = true
 			demo_index = int(arg.substr(7))
 	var pack := Pack.find("glimmerdeep", "second-credit")
-	if demo or pack == null or OS.get_cmdline_user_args().has("--cave"):
+	var descent := -1
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--descent="):
+			descent = int(arg.get_slice("=", 1))
+	if descent >= 0 and pack:  # captures: the campaign's cave N, played by the demo bot
+		game.autopilot = true
+		game.start_campaign(pack, descent)
+	elif demo or pack == null or OS.get_cmdline_user_args().has("--cave"):
 		game.load_cave(cave_file, cave_index, demo, demo_index)
 	else:  # the player: the campaign, from the first cave
 		game.start_campaign(pack)

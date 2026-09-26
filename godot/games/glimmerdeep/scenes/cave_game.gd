@@ -48,6 +48,7 @@ var cave_no := 0
 var lives := LIVES
 var campaign_done := false
 var story_open := false
+var autopilot := false  ## captures: the demo bot plays the campaign (and story cards are skipped)
 var _score_at_start := 0
 var _cards_seen := {}
 
@@ -64,18 +65,19 @@ func load_cave(path: String, index: int = 0, with_demo: bool = false, demo_index
 
 
 ## Plays a pack's caves one after the other (every cave of every level file, in order).
-func start_campaign(p: Pack) -> void:
+func start_campaign(p: Pack, first := 0) -> void:
 	_clear_cards()
 	pack = p
 	caves.clear()
 	for f in p.levels:
 		caves.append_array(BdcffLoader.load_file(f).caves)
-	cave_no = 0
+	cave_no = clampi(first, 0, 999)
 	lives = LIVES
 	score = 0
 	campaign_done = false
 	_cards_seen.clear()
 	demo = null
+	cave_no = mini(cave_no, caves.size() - 1)
 	_begin_cave()
 
 
@@ -91,7 +93,7 @@ func _begin_cave() -> void:
 	_score_at_start = score
 	restart()
 	var card := pack.card_before(cave_no)
-	if not card.is_empty() and not _cards_seen.has(cave_no):
+	if not card.is_empty() and not _cards_seen.has(cave_no) and not autopilot:
 		_cards_seen[cave_no] = true
 		story_open = true
 		var c := StoryCard.show_card(self, card, Color(1.0, 0.8, 0.35))
@@ -201,6 +203,8 @@ func _step() -> void:
 		if not m.is_empty():
 			move = m[0]
 			fire = m[1]
+	elif autopilot:
+		move = DemoBot.next_move(engine)
 	else:
 		# held keys win; otherwise a tap made since the last frame still counts (no lost key presses)
 		move = D.from_keypress(Input.is_action_pressed("ui_up"), Input.is_action_pressed("ui_down"),
