@@ -21,7 +21,13 @@ void vertex() {
 	float h = 0.10 * sin(dot(p, vec2(0.8, 0.6)) * 0.7 + t * 1.1)
 		+ 0.06 * sin(dot(p, vec2(-0.4, 0.9)) * 1.3 + t * 1.6)
 		+ 0.035 * sin(dot(p, vec2(0.95, -0.3)) * 2.1 + t * 2.3);
-	VERTEX.y += h;
+	// under the land the sheet calms down and sinks, so no swell ever breaks through the ground
+	vec2 vuv = (p + 0.5) / map_size;
+	float vland = textureLod(shore_mask, clamp(vuv, vec2(0.0), vec2(1.0)), 0.0).r;
+	if (vuv.x < 0.0 || vuv.y < 0.0 || vuv.x > 1.0 || vuv.y > 1.0) { vland = 0.0; }
+	float inland = smoothstep(0.45, 0.8, vland);
+	h *= 1.0 - inland;
+	VERTEX.y += h - inland * 0.6;
 	// analytic normal of the swell
 	float dx = 0.10 * 0.7 * 0.8 * cos(dot(p, vec2(0.8, 0.6)) * 0.7 + t * 1.1) + 0.06 * 1.3 * -0.4 * cos(dot(p, vec2(-0.4, 0.9)) * 1.3 + t * 1.6)
 		+ 0.035 * 2.1 * 0.95 * cos(dot(p, vec2(0.95, -0.3)) * 2.1 + t * 2.3);
