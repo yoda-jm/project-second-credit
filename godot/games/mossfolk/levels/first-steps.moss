@@ -1,0 +1,78 @@
+; Mossfolk: First Steps, our own levels (CC BY-SA 4.0). Pixels; a mossling is about 10 tall.
+
+[level]
+name=Just Dig Down
+size=480x160
+folk=10 save=8 rate=50 minutes=4
+skills=dig:2
+entrance=80,50
+exit=400,134
+theme=0
+rect 0 80 480 40
+steel 0 30 6 50
+steel 474 30 6 50
+rect 0 135 480 25
+steel 0 120 6 15
+steel 474 120 6 15
+solution=@160:0:dig
+
+[level]
+name=Through the Wall
+size=640x160
+folk=12 save=10 rate=55 minutes=4
+skills=bash:2 build:2
+entrance=80,60
+exit=560,109
+theme=1
+rect 0 110 640 50
+ellipse 312 110 30 60
+steel 0 40 6 70
+steel 634 40 6 70
+solution=@275:0:bash
+
+[level]
+name=Mind the Gap
+size=560x170
+folk=10 save=8 rate=20 minutes=5
+skills=block:1 build:2 pop:1
+entrance=70,50
+exit=470,99
+water=250,150,22,20
+theme=2
+rect 0 100 250 70
+rect 272 100 288 70
+steel 220 100 20 12
+steel 0 30 6 70
+steel 554 30 6 70
+solution=@230:1:block @246:0:build 520:1:pop
+
+[level]
+name=Up and Over
+size=640x170
+folk=10 save=9 rate=45 minutes=5
+skills=climb:10 glide:10
+entrance=70,40
+exit=560,159
+theme=3
+rect 0 80 300 90
+rect 300 10 30 160
+rect 330 160 310 10
+steel 0 20 6 60
+steel 634 100 6 60
+solution=@120:*:climb @120:*:glide
+
+[level]
+name=Down the Seam
+size=640x170
+folk=12 save=10 rate=50 minutes=5
+skills=mine:3 dig:2
+entrance=70,40
+exit=560,159
+theme=4
+poly 0,70 330,70 360,110 640,110 640,130 0,130
+rect 330 160 310 10
+rect 0 160 330 10
+steel 0 20 6 50
+steel 634 90 6 80
+steel 0 130 6 30
+solution=@450:0:dig

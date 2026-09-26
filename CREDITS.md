@@ -116,6 +116,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   shader (`godot/games/inkstorm/shaders/ink_board.gdshader`); sound effects and both music loops are synthesised by
   `tools/audio/inkstorm_sfx.py` and `inkstorm_music.py`.
 
+## Game 15 (Mossfolk, working title)
+
+- Inspired by *Lemmings* (DMA Design, 1991). None of its code, graphics, sounds, music or levels are in this repo:
+  the mosslings, their caverns, our levels, sounds and music are original.
+- The mosslings, hatch, burrow, traps and cave props are built by `tools/blender/mossfolk_models.py`; the terrain is
+  a shader over the level's pixel mask; sound effects and the three themes are synthesised by
+  `tools/audio/mossfolk_sfx.py` and `mossfolk_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

@@ -191,6 +191,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/inkstorm/art/models/windmill.glb", "model", 0.3],
 			["res://games/inkstorm/art/models/inkwell.glb", "model", 0.3]],
 	},
+	{
+		"id": "mossfolk",
+		"style": "Puzzle",
+		"title": "Mossfolk",
+		"tagline": "Little folk, one way home, eight ways to help.",
+		"inspired_by": "Lemmings (1991)",
+		"scene": "res://games/mossfolk/scenes/mossfolk_game.tscn",
+		"card": "",
+		"accent": Color(0.55, 0.85, 0.4),
+		"props": [["res://games/mossfolk/art/models/mossling.glb", "model", 0.4],
+			["res://games/mossfolk/art/models/mushroom_big.glb", "model", 0.3],
+			["res://games/mossfolk/art/models/crystal_cluster.glb", "model", 0.3]],
+	},
 ]
 
 

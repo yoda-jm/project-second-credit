@@ -112,5 +112,8 @@ decisions below are settled unless the owner reopens them.
    LBreakout2 set (`--walls=<file>`), capsules (wide, laser, catch, slow, multi, life, break), drones, autopilot.
 16. Game 14, **Inkstorm** (Qix-like, `godot/games/inkstorm/`): claim 75% of the map; land rises as a painted relief
    (`shaders/ink_board.gdshader`), one storm then two, sparks and the fuse, slow lines score double; `--stage=N`.
-17. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+17. Game 15, **Mossfolk** (Lemmings-like, `godot/games/mossfolk/`): pixel terrain, eight skills, five levels in
+   `levels/*.moss` (our text format, each with a recorded solution the demo plays and a test checks); `--level=N`.
+   Open item: an importer for the player's original level files (it needs their graphics sets, read locally).
+18. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
