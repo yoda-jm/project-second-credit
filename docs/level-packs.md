@@ -72,7 +72,7 @@ Each entry in the list records its source URL and, when known, its licence. Plan
 | Rampart | our coast maps (`.map`, text grid: water, land, rock, castles) | none |
 | Fruity Frank | our garden packs (`.gdn`, text grid in BDCFF style: several `[garden]` sections per file; spec in `godot/games/fruitburrow/engine/garden_map.gd`) | CPC disk image (later, optional) |
 | Cannon Fodder | original CF1/CF2 `.map` + `.spt` + the tileset `.hit` tables (read by `godot/games/boots/engine/cf_import.gd`; format notes in its header, after Open Fodder), OpenFodder Editor output (same format); our campaigns: `.boots` text files | user's Amiga/DOS data folder (local only) |
-| Z | Zod Engine map format | original Z data (to investigate) |
+| Z | Zod Engine `.map` + planet `.tileinfo`, read locally (`godot/games/flags/engine/zod_import.gd`) | original Z data (to investigate) |
 | Alley Cat, Winter Games, Double Dragon | none (fixed content) | n/a |
 
 ## Open questions

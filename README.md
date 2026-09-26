@@ -14,7 +14,7 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: **Glimmerdeep** (game 1), **Bastion Coast** (game 2), **Fruitburrow** (game 3), **Whisker Alley** (game 4), **Frostpeak Games** (game 5) and **Muddy Boots** (game 6), all working titles, are playable, in 3D with sound
+> Status: **Glimmerdeep** (game 1), **Bastion Coast** (game 2), **Fruitburrow** (game 3), **Whisker Alley** (game 4), **Frostpeak Games** (game 5), **Muddy Boots** (game 6), **Neon Knuckles** (game 7) and **Iron Flags** (game 8), all working titles, are playable, in 3D with sound
 > and music. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
@@ -29,8 +29,8 @@ and Tetris Effect.
 | 4 | Alley Cat (1984): **Whisker Alley** | Platformer physics, character animation, multiple scenes |
 | 5 | Winter Games (1985): **Frostpeak Games** | Outdoor environments, event framework, advanced input, hot-seat play |
 | 6 | Cannon Fodder (1993): **Muddy Boots** | Top-down terrain, squads, pathfinding, map importer |
-| 7 | Double Dragon (1987) | Melee combat, co-op |
-| 8 | Z (1996) | RTS layer, Zod Engine map compatibility |
+| 7 | Double Dragon (1987): **Neon Knuckles** | Melee combat, hit-stop, grabs and throws, weapons, co-op |
+| 8 | Z (1996): **Iron Flags** | RTS layer: territories, factories, squads, AI; Zod Engine map importer |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

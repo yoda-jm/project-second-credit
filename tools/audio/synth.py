@@ -45,10 +45,11 @@ class Synth:
         tt = self.t(sec)
         return sum(a * np.sin(2 * np.pi * freq * r * tt) * np.exp(-tt * (3 + r) / decay) for r, a in partials)
 
-    def save(self, name, x, gain=0.9):
+    def save(self, name, x, gain=0.9, fade=True):
         x = np.asarray(x, dtype=float)
-        fade = min(len(x), int(SR * 0.004))
-        x[-fade:] *= np.linspace(1, 0, fade)
+        if fade:  # off for seamless loops, whose end must meet their start
+            fade = min(len(x), int(SR * 0.004))
+            x[-fade:] *= np.linspace(1, 0, fade)
         x = x / (np.max(np.abs(x)) + 1e-9) * gain
         with wave.open(os.path.join(self.out, name + ".wav"), "wb") as w:
             w.setnchannels(1)
