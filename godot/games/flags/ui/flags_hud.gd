@@ -166,6 +166,19 @@ func _bars(e: FlagsEngine) -> void:
 		var f: float = clampf(u["hp"] / u["max_hp"], 0.0, 1.0)
 		draw_rect(Rect2(sp + Vector2(-wd * 0.5, 0), Vector2(wd, 6)), Color(0, 0, 0, 0.6))
 		draw_rect(Rect2(sp + Vector2(-wd * 0.5 + 1, 1), Vector2((wd - 2) * f, 4)), HudKit.GOOD.lerp(HudKit.BAD, 1.0 - f))
+	# what each of your factories is building, and how far along (both sides in the demo)
+	for b in e.buildings:
+		if not b["kind"] in E.FACTORIES or b["team"] == Team.NEUTRAL or (b["team"] == Team.BLUE and not game.demo):
+			continue
+		var top := Vector3(b["cell"].x + b["size"].x * 0.5 - 0.5, 3.6 if b["kind"] != "fort" else 5.8, b["cell"].y + b["size"].y * 0.5 - 0.5)
+		if cam.is_position_behind(top):
+			continue
+		var sp := cam.unproject_position(top)
+		var col := RED if b["team"] == Team.RED else BLUE
+		var picked: bool = game.factory == b["id"]
+		draw_circle(sp, 22, Color(0.04, 0.05, 0.1, 0.7), true, -1.0, true)
+		HudKit.ring(self, sp, 18, b["progress"], HudKit.GOLD if picked else col, 4.0)
+		HudKit.text(self, sp + Vector2(0, 5), NAMES.get(b["build"], "?").left(2), 13, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
 	for b in e.buildings:
 		if b["kind"] != "fort" or b["hp"] >= b["max_hp"]:
 			continue

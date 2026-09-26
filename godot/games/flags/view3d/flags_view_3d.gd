@@ -17,7 +17,7 @@ const PLANETS := {
 	"desert": {"base": ["sand", Color(1.05, 0.92, 0.72)], "alt": ["soil", Color(1.0, 0.8, 0.6)], "road": ["rock", Color(0.95, 0.82, 0.66)],
 		"rock": Color(0.85, 0.66, 0.48), "sky": [Color(0.35, 0.55, 0.85), Color(0.95, 0.85, 0.7)], "sun": [Vector3(-52, -35, 0), Color(1.0, 0.92, 0.78), 1.35],
 		"fog": [Color(0.95, 0.85, 0.7), 0.004], "water": Color(0.1, 0.45, 0.5), "ambient": Color(0.75, 0.7, 0.62)},
-	"arctic": {"base": ["beach_sand", Color(1.05, 1.1, 1.2)], "alt": ["rock", Color(0.8, 0.86, 0.95)], "road": ["rock", Color(0.72, 0.76, 0.84)],
+	"arctic": {"base": ["beach_sand", Color(1.05, 1.1, 1.2)], "alt": ["sand", Color(0.98, 1.06, 1.22)], "road": ["rock", Color(0.72, 0.76, 0.84)],
 		"rock": Color(0.75, 0.8, 0.9), "sky": [Color(0.4, 0.6, 0.9), Color(0.85, 0.9, 0.98)], "sun": [Vector3(-38, -20, 0), Color(1.0, 0.97, 0.94), 1.2],
 		"fog": [Color(0.85, 0.9, 1.0), 0.006], "water": Color(0.15, 0.4, 0.55), "ambient": Color(0.7, 0.78, 0.9)},
 	"volcanic": {"base": ["dark_rock", Color(0.62, 0.6, 0.6)], "alt": ["soil", Color(0.42, 0.34, 0.3)], "road": ["rock", Color(0.55, 0.52, 0.5)],
@@ -424,15 +424,15 @@ func _build_ground(e: FlagsEngine, p: Dictionary) -> void:
 			var c := Vector2i(x, y)
 			if m.at(c) != T.BRIDGE:
 				continue
-			_box(Vector3(x, -0.06, y), Vector3(1.0, 0.1, 1.0), planks)
+			_box(Vector3(x, 0.1, y), Vector3(1.0, 0.1, 1.0), planks)  # high enough that no swell laps over it
 			var vert := m.at(c + Vector2i(0, -1)) == T.BRIDGE or m.at(c + Vector2i(0, 1)) == T.BRIDGE
 			for s in [-1, 1]:
 				var side := c + (Vector2i(s, 0) if vert else Vector2i(0, s))
 				if m.at(side) != T.BRIDGE:
-					var off := Vector3(s * 0.46, 0.12, 0) if vert else Vector3(0, 0.12, s * 0.46)
+					var off := Vector3(s * 0.46, 0.25, 0) if vert else Vector3(0, 0.25, s * 0.46)
 					_box(Vector3(x, 0, y) + off, Vector3(0.06, 0.1, 1.0) if vert else Vector3(1.0, 0.1, 0.06), iron)
 			if (x + y) % 2 == 0:
-				_box(Vector3(x, -0.35, y), Vector3(0.14, 0.6, 0.14), iron)
+				_box(Vector3(x, -0.2, y), Vector3(0.14, 0.6, 0.14), iron)
 
 
 func _near(m: FlagsMap, c: Vector2i, t: int) -> bool:
@@ -820,7 +820,7 @@ func _pose(v: Dictionary, u: Dictionary, delta: float) -> void:
 	var y := 0.0
 	var t := game.engine.map.at(Vector2i(u["pos"].floor()))
 	if t == T.BRIDGE:
-		y = -0.01
+		y = 0.15
 	elif t == T.ROUGH:
 		y = 0.03
 	n.position = w(u["pos"], y)
