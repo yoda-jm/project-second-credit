@@ -250,6 +250,7 @@ func _build_multimeshes() -> void:
 				inst.material_override = inst.material_override.duplicate()
 				if kind == Kind.DIRT:
 					_dirt_mat = inst.material_override
+					_dirt_mat.vertex_color_use_as_albedo = true  # the per-clod tint
 				else:
 					_brick_mat = inst.material_override
 		if kind == Kind.PORTAL or kind == Kind.BLAST:
@@ -386,8 +387,8 @@ func _process(delta: float) -> void:
 					var roll := 0.0
 					if from != null:
 						roll = (from.x - x) * t * PI * 0.5
-					basis = Basis.from_scale(Vector3(1.0 + squash, 1.0 - squash, 1.0 + squash)) \
-						* Basis(Vector3.BACK, roll) * Basis(Vector3.UP, float(i % 7))
+					basis = Basis.from_scale(Vector3(1.0 + squash, 1.0 - squash, 1.0 + squash) * 1.22) \
+						* Basis(Vector3.BACK, roll) * Basis(Vector3.UP, float(i % 7))  # a boulder fills its cell
 					pos.y -= squash * 0.3
 					var tint := 0.85 + 0.15 * sin(i * 1.7)
 					color = Color(tint, tint * 0.97, tint * 0.93)
@@ -395,7 +396,15 @@ func _process(delta: float) -> void:
 					basis = Basis.from_scale(Vector3(1.0 + squash, 1.0 - squash, 1.0 + squash)) \
 						* Basis(Vector3.UP, _time * 1.6 + i) * Basis(Vector3.RIGHT, 0.25)
 				Kind.DIRT:
-					basis = Basis(Vector3.UP, float((i * 37) % 4) * PI * 0.5) * Basis.from_scale(Vector3(0.96, 0.96, 0.9))
+					# each clod a little different: tint, depth and a slight tilt, so the earth never reads as a grid
+					var hs := sin(x * 12.9898 + y * 78.233) * 43758.5453
+					hs -= floorf(hs)
+					var hs2 := sin(x * 39.346 + y * 11.135) * 24634.6345
+					hs2 -= floorf(hs2)
+					basis = Basis(Vector3.UP, float((i * 37) % 4) * PI * 0.5) * Basis(Vector3.RIGHT, (hs - 0.5) * 0.08) \
+						* Basis(Vector3.BACK, (hs2 - 0.5) * 0.08) * Basis.from_scale(Vector3(0.96, 0.96, 0.84 + 0.12 * hs2))
+					var tn := 0.86 + 0.24 * hs
+					color = Color(tn, tn * (0.96 + 0.06 * hs2), tn * (0.92 + 0.08 * hs2))
 				Kind.FIREFLY:
 					basis = Basis(Vector3.BACK, _time * 5.0 + i)
 					pos.z += 0.1 * sin(_time * 6.0 + i)
