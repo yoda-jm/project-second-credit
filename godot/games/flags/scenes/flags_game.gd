@@ -13,7 +13,7 @@ signal campaign_over(won: bool)
 const E = preload("res://games/flags/engine/flags_engine.gd")
 const Team = FlagsMap.Team
 
-@export_file("*.flags") var campaign_file := "res://games/flags/maps/campaign.flags"
+@export_file("*.flags") var campaign_file := "res://games/flags/packs/first-war/first-war.flags"
 
 var engine: FlagsEngine
 var maps: Array[FlagsMap] = []
@@ -30,11 +30,16 @@ var _ais: Array[FlagsAI] = []
 var _seed := 1
 var _drag_from := Vector2(-1, -1)
 var drag_rect := Rect2()  ## the selection box on screen, for the HUD
+var pack: Pack  ## the campaign pack, for its story cards between maps
+var story_open := false
+var _cards_seen := {}
 
 
 func start(seed := -1, first_level := 0) -> void:
 	_seed = seed if seed >= 0 else randi()
 	maps = FlagsMap.parse_campaign(FileAccess.get_file_as_string(campaign_file))
+	pack = Pack.find("flags", "first-war")
+	_cards_seen.clear()
 	level = clampi(first_level, 0, maps.size() - 1)
 	over = false
 	_start_map()
@@ -63,10 +68,20 @@ func _start_map() -> void:
 	end_time = 0.0
 	map_started.emit(engine)
 	selection_changed.emit()
+	for c in get_children():
+		if c is StoryCard:
+			c.queue_free()
+	story_open = false
+	var card := pack.card_before(level) if pack and m.source == "text" else {}
+	if not card.is_empty() and not _cards_seen.has(level):
+		_cards_seen[level] = true
+		story_open = true
+		var sc := StoryCard.show_card(self, card, Color(1.0, 0.64, 0.23), 7.0 if demo else 0.0)
+		sc.closed.connect(func(): story_open = false)
 
 
 func _process(delta: float) -> void:
-	if engine == null or over:
+	if engine == null or over or story_open:
 		return
 	if engine.phase != E.Phase.PLAY:
 		end_time += delta
@@ -76,8 +91,10 @@ func _process(delta: float) -> void:
 				if level >= maps.size():
 					over = true
 					campaign_over.emit(true)
+					if pack and not pack.outro.is_empty():
+						StoryCard.show_card(self, pack.outro, Color(1.0, 0.64, 0.23), 9.0 if demo else 0.0)
 					if demo:
-						get_tree().create_timer(8.0).timeout.connect(func(): start(_seed + 1))
+						get_tree().create_timer(12.0).timeout.connect(func(): start(_seed + 1))
 					return
 			elif demo:
 				level = (level + 1) % maps.size()

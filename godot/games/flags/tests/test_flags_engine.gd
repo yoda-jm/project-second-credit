@@ -37,7 +37,7 @@ func _run(e: FlagsEngine, seconds: float, ais: Array = []) -> void:
 
 
 func test_campaign_parses_and_every_flag_is_reachable() -> void:
-	var maps := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/maps/campaign.flags"))
+	var maps := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/packs/first-war/first-war.flags"))
 	assert_int(maps.size()).is_equal(3)
 	for m in maps:
 		assert_int(m.zones.size()).is_greater_equal(6)
@@ -198,8 +198,8 @@ func test_zod_maps_from_a_local_install_load_when_present() -> void:
 
 
 func test_computer_battle_is_deterministic_and_moves_on() -> void:
-	var m1 := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/maps/campaign.flags"))[0]
-	var m2 := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/maps/campaign.flags"))[0]
+	var m1 := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/packs/first-war/first-war.flags"))[0]
+	var m2 := FlagsMap.parse_campaign(FileAccess.get_file_as_string("res://games/flags/packs/first-war/first-war.flags"))[0]
 	var e1 := FlagsEngine.new(m1, 9)
 	var e2 := FlagsEngine.new(m2, 9)
 	_run(e1, 150.0, [FlagsAI.new(Team.RED, 9), FlagsAI.new(Team.BLUE, 9)])
@@ -209,3 +209,12 @@ func test_computer_battle_is_deterministic_and_moves_on() -> void:
 	assert_int(e1.stats[Team.RED]["kills"] + e1.stats[Team.BLUE]["kills"]).is_greater(0)
 	assert_int(e1.units.size()).is_equal(e2.units.size())
 	assert_int(e1.stats[Team.RED]["captures"]).is_equal(e2.stats[Team.RED]["captures"])
+
+
+func test_the_first_war_pack_tells_its_story() -> void:
+	var p := Pack.find("flags", "first-war")
+	assert_object(p).is_not_null()
+	assert_int(FlagsMap.parse_campaign(p.levels_text()).size()).is_equal(3)
+	for i in 3:
+		assert_bool(p.card_before(i).is_empty()).is_false()
+	assert_bool(p.outro.is_empty()).is_false()

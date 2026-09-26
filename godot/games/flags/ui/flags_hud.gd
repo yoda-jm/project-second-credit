@@ -75,7 +75,8 @@ func _show(text: String, sub: String, col: Color, secs: float) -> void:
 
 
 func _process(delta: float) -> void:
-	_t += delta
+	if not game.story_open:  # the map banner waits behind a story card
+		_t += delta
 	_time += delta
 	queue_redraw()
 

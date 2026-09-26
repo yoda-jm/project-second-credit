@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "game": "flags",
+  "id": "first-war",
+  "name": "The First War",
+  "version": "1.0.0",
+  "author": "Second Credit",
+  "licence": "CC-BY-SA-4.0",
+  "description": "Three planets, three forts to flatten: a desert, a frozen river and a volcanic works.",
+  "levels": ["first-war.flags"],
+  "intro": {
+    "title": "The First War",
+    "text": "Somewhere between two moons, two robot armies have run out of things to argue about, so they argue about planets.\nThe rules are simple: plant a robot on a flag and everything in that territory is yours. More ground, faster factories. Flatten their fort, keep yours."
+  },
+  "story": [
+    {"level": 1, "title": "Frost Line",
+     "text": "Dust Bowl is ours, and the brass is delighted, which means a colder posting. The next world is ice, cut in two by a frozen river with three bridges.\nThe guns on the banks belong to whoever holds the flags. Take the bridges first."},
+    {"level": 2, "title": "Magma Works",
+     "text": "Their last fort sits on a volcano, of course. Lava channels, rock walls, and factories on every ridge.\nHeavy shells will crack the rock if the bridges are too crowded. End the war here."}
+  ],
+  "outro": {
+    "title": "Ceasefire",
+    "text": "The last blue fort crumbles into the lava and the radio goes quiet.\nThe robots stand around for a while, unsure what to do next. Then someone finds another planet on the map."
+  }
+}

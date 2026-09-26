@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Iron Flags campaign maps, generated from a short description of each battlefield (territory grid, rivers, ridges,
-what stands in each territory), deterministic. Output: godot/games/flags/maps/campaign.flags (our text format, see
+what stands in each territory), deterministic. Output: godot/games/flags/packs/first-war/first-war.flags (our text format, see
 godot/games/flags/engine/flags_map.gd). Licence CC BY-SA 4.0. Usage: python3 tools/flags_maps.py"""
 import os, random
 
-OUT = os.path.join(os.path.dirname(__file__), "..", "godot", "games", "flags", "maps", "campaign.flags")
+OUT = os.path.join(os.path.dirname(__file__), "..", "godot", "games", "flags", "packs", "first-war", "first-war.flags")
 
 
 class Map:
