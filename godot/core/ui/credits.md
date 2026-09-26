@@ -76,6 +76,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Bombers, creatures, bombs, blocks, power-ups and arena dressing are built by `tools/blender/blastyard_bombers.py`
   and `blastyard_models.py`; sound effects and the party theme are synthesised by `tools/audio/`.
 
+## Game 10 (Ingot Run, working title)
+
+- Inspired by *Lode Runner* (Brøderbund, 1983). None of its code, graphics, sounds or levels are in this repo; our
+  levels are our own. The game reads the plain-text tile format used by the free remakes, so players can load level
+  sets they have, locally.
+- The runner and the guards are built on the shared humanoid rig by `tools/blender/ingot_characters.py`, the temple
+  mine by `tools/blender/ingot_models.py`; sound effects and the theme are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
