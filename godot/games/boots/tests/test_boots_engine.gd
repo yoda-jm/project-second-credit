@@ -15,7 +15,7 @@ func _run(e: BootsEngine, seconds: float) -> void:
 
 
 func test_campaign_parses_with_even_rows() -> void:
-	var text := FileAccess.get_file_as_string("res://games/boots/maps/first-tour.boots")
+	var text := FileAccess.get_file_as_string("res://games/boots/packs/first-tour/first-tour.boots")
 	var ms := BootsMap.parse_campaign(text)
 	assert_int(ms.size()).is_equal(3)
 	for chunk in text.split("[mission]").slice(1):
@@ -135,10 +135,10 @@ func test_crate_gives_grenades() -> void:
 
 
 func test_same_seed_and_orders_replay_identically() -> void:
-	var m := BootsMap.parse_campaign(FileAccess.get_file_as_string("res://games/boots/maps/first-tour.boots"))[1]
+	var m := BootsMap.parse_campaign(FileAccess.get_file_as_string("res://games/boots/packs/first-tour/first-tour.boots"))[1]
 	var out := []
 	for run in 2:
-		var mm := BootsMap.parse_campaign(FileAccess.get_file_as_string("res://games/boots/maps/first-tour.boots"))[1]
+		var mm := BootsMap.parse_campaign(FileAccess.get_file_as_string("res://games/boots/packs/first-tour/first-tour.boots"))[1]
 		var e := BootsEngine.new(mm, 17)
 		for i in 1800:
 			if i % 240 == 0:
@@ -151,7 +151,7 @@ func test_same_seed_and_orders_replay_identically() -> void:
 
 
 func test_demo_bot_completes_the_campaign() -> void:
-	var text := FileAccess.get_file_as_string("res://games/boots/maps/first-tour.boots")
+	var text := FileAccess.get_file_as_string("res://games/boots/packs/first-tour/first-tour.boots")
 	for mi in BootsMap.parse_campaign(text).size():
 		var e := BootsEngine.new(BootsMap.parse_campaign(text)[mi], 1)
 		var bot := BootsBot.new()
@@ -161,3 +161,34 @@ func test_demo_bot_completes_the_campaign() -> void:
 			e.tick()
 			n += 1
 		assert_int(e.phase).is_equal(E.Phase.WON)
+
+
+func test_campaign_pack_loads_with_its_story() -> void:
+	var p := Pack.find("boots", "first-tour")
+	assert_object(p).is_not_null()
+	assert_int(BootsMap.parse_campaign(p.levels_text()).size()).is_equal(3)
+	assert_str(p.card_before(0).get("title", "")).is_equal("First Tour")
+	assert_bool(p.card_before(2).is_empty()).is_false()
+	assert_bool(p.outro.is_empty()).is_false()
+
+
+func test_every_pack_mission_can_be_won() -> void:
+	# the autopilot wins each mission of every shipped pack with one of a few seeds (the maps are playable)
+	var packs := Pack.scan("boots")
+	assert_int(packs.size()).is_greater_equal(2)
+	for p in packs:
+		var text := p.levels_text()
+		for mi in BootsMap.parse_campaign(text).size():
+			var won := false
+			for seed in [1, 2, 3]:
+				var e := BootsEngine.new(BootsMap.parse_campaign(text)[mi], seed)
+				var bot := BootsBot.new()
+				var n := 0
+				while e.phase == E.Phase.PLAY and n < 60 * 300:
+					bot.drive(e)
+					e.tick()
+					n += 1
+				if e.phase == E.Phase.WON:
+					won = true
+					break
+			assert_bool(won).override_failure_message("%s mission %d is not won by the bot" % [p.id, mi + 1]).is_true()

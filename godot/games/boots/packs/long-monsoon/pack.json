@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "game": "boots",
+  "id": "long-monsoon",
+  "name": "The Long Monsoon",
+  "version": "1.0.0",
+  "author": "Second Credit",
+  "licence": "CC-BY-SA-4.0",
+  "description": "Five missions through the rainy season: a beach landing, a river of mud, a sinking delta, a cold front in the mountains, and the last stand at Boot Hill.",
+  "levels": ["long-monsoon.boots"],
+  "intro": {
+    "title": "The Long Monsoon",
+    "text": "The rains came early this year. The landing craft drop the squad in the shallows before dawn, rifles held above the waterline.\nIntelligence says the coast is lightly held. Intelligence has said that before."
+  },
+  "story": [
+    {"level": 1, "title": "River Of Mud",
+     "text": "The river has burst its banks and the enemy holds the far side. There is no bridge, only brown water to the chest.\nYou cannot shoot while you swim. Cross where they are not looking, and take the rockets from the supply drop on the way."},
+    {"level": 2, "title": "The Sinking Delta",
+     "text": "Two aid workers are trapped in the delta, where the ground swallows boots whole. The quicksand is slow; the mines are not.\nWalk them back to the tent in the west. Every step counts."},
+    {"level": 3, "title": "Cold Front",
+     "text": "The monsoon turns to snow above the tree line. The enemy has moved its barracks up the pass, where the wind cuts through the thin jackets we were issued.\nBring the huts down before they freeze us out."},
+    {"level": 4, "title": "Boot Hill",
+     "text": "The last of them are dug in around the old hill, the one with the crosses. They have prisoners, they have mines, and they have nowhere left to go.\nEnd it here. Bring everyone home who can still walk."}
+  ],
+  "outro": {
+    "title": "The Rains Stop",
+    "text": "One morning the rain simply stops. The valley steams in the sun, and the mud dries into the shape of a thousand boot prints.\nOn Boot Hill somebody has planted a small flag between the crosses. Nobody remembers who."
+  }
+}

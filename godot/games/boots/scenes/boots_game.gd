@@ -10,7 +10,12 @@ signal campaign_over(won: bool)
 const E = preload("res://games/boots/engine/boots_engine.gd")
 const RECRUITS := 30
 
-@export_file("*.boots") var campaign_file := "res://games/boots/maps/first-tour.boots"
+@export var pack_id := "first-tour"  ## the campaign pack (core/packs/pack.gd): its missions and story cards
+
+var pack: Pack
+var story_open := false  ## a story card is up: the mission waits
+var show_story := true  ## false while the demo plays behind the campaign chooser
+var _cards_seen := {}
 
 var engine: BootsEngine
 var missions: Array[BootsMap] = []
@@ -30,7 +35,13 @@ var _cursor := Vector2.ZERO
 
 func start(seed := -1) -> void:
 	_seed = seed if seed >= 0 else randi()
-	missions = BootsMap.parse_campaign(FileAccess.get_file_as_string(campaign_file))
+	for c in get_children():  # a story card left from the demo
+		if c is StoryCard:
+			c.queue_free()
+	story_open = false
+	pack = Pack.find("boots", pack_id)
+	missions = BootsMap.parse_campaign(pack.levels_text())
+	_cards_seen.clear()
 	mission = 0
 	recruits = RECRUITS
 	squad_size = 4
@@ -39,8 +50,7 @@ func start(seed := -1) -> void:
 
 
 func _start_mission() -> void:
-	var text := FileAccess.get_file_as_string(campaign_file)
-	var m: BootsMap = BootsMap.parse_campaign(text)[mission]  # a fresh copy: the engine changes nothing in it, but huts etc. are rebuilt
+	var m: BootsMap = BootsMap.parse_campaign(pack.levels_text())[mission]  # a fresh copy: the engine changes nothing in it, but huts etc. are rebuilt
 	var n := mini(4, squad_size + recruits)
 	recruits -= maxi(0, n - squad_size)
 	squad_size = n
@@ -49,6 +59,17 @@ func _start_mission() -> void:
 	_bot = BootsBot.new()
 	end_time = 0.0
 	mission_started.emit(engine)
+	_story(pack.card_before(mission), mission)
+
+
+## Shows a story card once (not again when a lost mission is retried); the mission waits until it closes.
+func _story(card: Dictionary, key) -> void:
+	if card.is_empty() or _cards_seen.has(key) or not show_story:
+		return
+	_cards_seen[key] = true
+	story_open = true
+	var c := StoryCard.show_card(self, card, Color(0.6, 0.8, 0.4), 7.0 if demo else 0.0)
+	c.closed.connect(func(): story_open = false)
 
 
 func _on_event(kind: String, _d: Dictionary) -> void:
@@ -57,7 +78,7 @@ func _on_event(kind: String, _d: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
-	if engine == null or over:
+	if engine == null or over or story_open:
 		return
 	if engine.phase != E.Phase.PLAY:
 		end_time += delta
@@ -67,8 +88,9 @@ func _process(delta: float) -> void:
 				if mission >= missions.size():
 					over = true
 					campaign_over.emit(true)
+					_story(pack.outro, "outro")
 					if demo:
-						get_tree().create_timer(6.0).timeout.connect(func(): start(_seed + 1))
+						get_tree().create_timer(10.0).timeout.connect(func(): start(_seed + 1))
 					return
 			elif recruits <= 0:
 				over = true

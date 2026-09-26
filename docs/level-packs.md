@@ -12,7 +12,11 @@
 5. **Level editors** for grid-based games, so anyone can make packs, including recreations of classic
    layouts shared outside this repo at their own responsibility.
 
-## Pack layout (draft)
+## Pack layout
+
+Built: `godot/core/packs/pack.gd` loads packs, `godot/core/ui/story_card.gd` shows the story between levels and
+`godot/core/ui/pack_chooser.gd` lets the player pick a campaign. Muddy Boots uses them first
+(`godot/games/boots/packs/`: *First Tour* and *The Long Monsoon*).
 
 ```
 my-pack/                     (folder or .zip)
@@ -26,19 +30,25 @@ my-pack/                     (folder or .zip)
 ```json
 {
   "format": 1,
-  "game": "boulderdash",
-  "id": "example-caves",
-  "name": "Example Caves",
+  "game": "boots",
+  "id": "long-monsoon",
+  "name": "The Long Monsoon",
   "version": "1.0.0",
-  "author": "someone",
+  "author": "Second Credit",
   "licence": "CC-BY-SA-4.0",
-  "levels": ["levels/set.bd"],
-  "level_format": "bdcff"
+  "description": "Five missions through the rainy season...",
+  "levels": ["long-monsoon.boots"],
+  "intro": {"title": "The Long Monsoon", "text": "The rains came early this year..."},
+  "story": [{"level": 1, "title": "River Of Mud", "text": "..."}],
+  "outro": {"title": "The Rains Stop", "text": "..."}
 }
 ```
 
+Level paths are relative to the pack folder and may not leave it. `story` cards show before level N (0-based);
+`intro` before the first level, `outro` after the last is won.
+
 Where packs load from:
-- the built-in `packs/` folder (free packs shipped with the game)
+- the game's own `godot/games/<game>/packs/<id>/` folders (free packs shipped with the game)
 - the user folder `user://packs/` (Godot's per-user data dir)
 - a pack path given on the command line
 
@@ -71,7 +81,7 @@ Each entry in the list records its source URL and, when known, its licence. Plan
 | Boulder Dash | BDCFF (read and write) | C64/Atari images → BDCFF (GDash has converters to study) |
 | Rampart | our coast maps (`.map`, text grid: water, land, rock, castles) | none |
 | Fruity Frank | our garden packs (`.gdn`, text grid in BDCFF style: several `[garden]` sections per file; spec in `godot/games/fruitburrow/engine/garden_map.gd`) | CPC disk image (later, optional) |
-| Cannon Fodder | original CF1/CF2 `.map` + `.spt` + the tileset `.hit` tables (read by `godot/games/boots/engine/cf_import.gd`; format notes in its header, after Open Fodder), OpenFodder Editor output (same format); our campaigns: `.boots` text files | user's Amiga/DOS data folder (local only) |
+| Cannon Fodder | original CF1/CF2 `.map` + `.spt` + the tileset `.hit` tables (read by `godot/games/boots/engine/cf_import.gd`; format notes in its header, after Open Fodder), OpenFodder Editor output (same format); our campaigns: packs of `.boots` text files | user's Amiga/DOS data folder (local only) |
 | Z | Zod Engine `.map` + planet `.tileinfo`, read locally (`godot/games/flags/engine/zod_import.gd`) | original Z data (to investigate) |
 | Alley Cat, Winter Games, Double Dragon | none (fixed content) | n/a |
 

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "game": "boots",
+  "id": "first-tour",
+  "name": "First Tour",
+  "version": "1.0.0",
+  "author": "Second Credit",
+  "licence": "CC-BY-SA-4.0",
+  "description": "Three missions to learn the ropes: move, shoot, throw, and bring the hostages home.",
+  "levels": ["first-tour.boots"],
+  "intro": {
+    "title": "First Tour",
+    "text": "Thirty volunteers queue on the hill above the camp, their boots still shiny. Four of them get a rifle today.\nThe jungle below has been quiet for a week, which nobody likes. The sergeant has one piece of advice: walk in single file, keep your heads down, and bring those boots back muddy. Not empty."
+  },
+  "story": [
+    {"level": 1, "title": "Huts In The Hills",
+     "text": "Word came down the line: the enemy has dug in on the hills past the river, and their huts turn out fresh troops faster than we can count them.\nThere is a crate of grenades by the ford. Flatten every hut, then clear whoever is left standing."},
+    {"level": 2, "title": "Bring Them Home",
+     "text": "Two of our scouts walked into the valley last night and never walked out. They are alive, held in the camp by the swamp.\nGet in, get them to the rescue tent, and mind where you step: the ground there has been planted."}
+  ],
+  "outro": {
+    "title": "Tour Complete",
+    "text": "The squad marches back up the hill, fewer than came down, every boot caked in mud.\nOn the hill the new crosses stand in a neat row. The queue of volunteers is longer than ever."
+  }
+}
