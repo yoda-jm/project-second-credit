@@ -127,7 +127,12 @@ func _on_garden(e: FruitburrowEngine) -> void:
 func _build_board(e: FruitburrowEngine) -> void:
 	var w := e.map.w
 	var h := e.map.h
-	var soil_mat := Pbr.material("soil", Color(1.0, 0.82, 0.62), 0.45)
+	var soil_mat := ShaderMaterial.new()  # soil in layers: humus, loam, clay, deep earth
+	soil_mat.shader = load("res://games/fruitburrow/shaders/strata.gdshader")
+	soil_mat.set_shader_parameter("albedo_tex", load(Pbr.ROOT + "soil/albedo.jpg"))
+	soil_mat.set_shader_parameter("normal_tex", load(Pbr.ROOT + "soil/normal.jpg"))
+	soil_mat.set_shader_parameter("top", _cell_pos(Vector2(0, 0)).y + 0.5)
+	soil_mat.set_shader_parameter("depth", float(h))
 	var back_mat := Pbr.material("soil", Color(0.4, 0.3, 0.23), 0.45)
 	var frame_mat := Pbr.material("soil", Color(0.55, 0.42, 0.32), 0.45)
 	var grass_mat := Pbr.material("grass_lush", Color(0.85, 1.0, 0.8), 1.5)
