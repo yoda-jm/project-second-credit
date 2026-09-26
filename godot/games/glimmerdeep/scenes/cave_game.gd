@@ -2,6 +2,8 @@ class_name CaveGame
 extends Node
 ## Runs one cave in real time: engine timing, player input (with a tap buffer), demo replays, score, time
 ## bonus and restarts. Views (flat debug view, 3D diorama) listen to its signals and read `engine`.
+## Campaign mode plays a pack's caves in order (core/packs/pack.gd): three lives, the score carries on, and the
+## pack's story cards show between caves.
 
 signal cave_started(engine: CaveEngine)
 ## Emitted after each engine frame; `frame_ms` is how long this frame lasts on screen.
@@ -9,6 +11,10 @@ signal frame_done(engine: CaveEngine, frame_ms: float)
 signal cave_finished(engine: CaveEngine, success: bool)
 ## Emitted when the pre-start countdown shows a new number (3, 2, 1, then 0 for GO).
 signal countdown_tick(number: int)
+## Campaign: the run is over (won: every cave cleared; else out of lives).
+signal campaign_over(won: bool)
+
+const LIVES := 3
 
 ## Seconds of 3-2-1 countdown before the cave starts (the engine does not run meanwhile).
 @export var countdown_seconds := 3.0
@@ -35,13 +41,61 @@ var _finished_ms := 0.0
 var _tapped_dir := D.STILL
 var _tapped_fire := false
 var _suicide := false
+# campaign
+var pack: Pack
+var caves: Array[CaveStored] = []
+var cave_no := 0
+var lives := LIVES
+var campaign_done := false
+var story_open := false
+var _score_at_start := 0
+var _cards_seen := {}
 
 
 func load_cave(path: String, index: int = 0, with_demo: bool = false, demo_index: int = 0) -> void:
+	_clear_cards()
+	pack = null
+	campaign_done = false
+	_score_at_start = 0
 	cave_set = BdcffLoader.load_file(path)
 	cave = cave_set.caves[index]
 	demo = cave.replays[mini(demo_index, cave.replays.size() - 1)] if with_demo and not cave.replays.is_empty() else null
 	restart()
+
+
+## Plays a pack's caves one after the other (every cave of every level file, in order).
+func start_campaign(p: Pack) -> void:
+	_clear_cards()
+	pack = p
+	caves.clear()
+	for f in p.levels:
+		caves.append_array(BdcffLoader.load_file(f).caves)
+	cave_no = 0
+	lives = LIVES
+	score = 0
+	campaign_done = false
+	_cards_seen.clear()
+	demo = null
+	_begin_cave()
+
+
+func _clear_cards() -> void:
+	for c in get_children():
+		if c is StoryCard:
+			c.queue_free()
+	story_open = false
+
+
+func _begin_cave() -> void:
+	cave = caves[cave_no]
+	_score_at_start = score
+	restart()
+	var card := pack.card_before(cave_no)
+	if not card.is_empty() and not _cards_seen.has(cave_no):
+		_cards_seen[cave_no] = true
+		story_open = true
+		var c := StoryCard.show_card(self, card, Color(1.0, 0.8, 0.35))
+		c.closed.connect(func(): story_open = false)
 
 
 func restart() -> void:
@@ -49,7 +103,7 @@ func restart() -> void:
 	if demo:
 		demo.rewind()
 	engine = CaveEngine.new(cave, level, demo.seed if demo else randi() & 0x7fffffff)
-	score = 0
+	score = _score_at_start if pack else 0
 	finished = false
 	bonus_pending = false
 	_elapsed_ms = 0.0
@@ -72,7 +126,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if dir != D.STILL:
 		if playing_demo and not demo_locked:
 			demo = null
-			restart()
+			var p := Pack.find("glimmerdeep", "second-credit")
+			if p:  # the player takes over: the campaign starts
+				start_campaign(p)
+			else:
+				restart()
+			return
 		elif playing_demo:
 			return
 		_tapped_dir = dir
@@ -84,7 +143,7 @@ func _fire_held() -> bool:
 
 
 func _process(delta: float) -> void:
-	if engine == null:
+	if engine == null or story_open or campaign_done:
 		return
 	if countdown_left > 0.0:
 		var before := ceili(countdown_left)
@@ -96,13 +155,42 @@ func _process(delta: float) -> void:
 	if finished:
 		_finished_ms += delta * 1000.0
 		if _finished_ms > 3500.0:
-			restart()
+			_after_cave()
 		return
 	_elapsed_ms += delta * 1000.0
 	while _elapsed_ms >= engine.speed and not finished:
 		_elapsed_ms -= engine.speed
 		_step()
 	frame_progress = clampf(_elapsed_ms / maxf(engine.speed, 1.0), 0.0, 1.0)
+
+
+func _after_cave() -> void:
+	if pack == null:  # single cave (the demo): play it again
+		restart()
+		return
+	if engine.player_state == PS.EXITED:
+		cave_no += 1
+		if cave_no >= caves.size():
+			campaign_done = true
+			campaign_over.emit(true)
+			if not pack.outro.is_empty():
+				StoryCard.show_card(self, pack.outro, Color(1.0, 0.8, 0.35))
+			return
+		_begin_cave()
+		return
+	lives -= 1
+	if lives <= 0:
+		campaign_done = true
+		campaign_over.emit(false)
+		return
+	restart()
+
+
+## After a finished campaign: Enter plays it again from the first cave.
+func _input(event: InputEvent) -> void:
+	if campaign_done and pack and event.is_action_pressed("ui_accept"):
+		start_campaign(pack)
+		get_viewport().set_input_as_handled()
 
 
 func _step() -> void:

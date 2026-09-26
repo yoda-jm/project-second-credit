@@ -28,8 +28,9 @@ func test_game_scene_plays_the_demo() -> void:
 
 func test_3d_game_scene_runs() -> void:
 	var runner := scene_runner("res://games/glimmerdeep/scenes/glimmerdeep_game.tscn")
-	await runner.simulate_frames(60, 100)  # 3 s countdown, then the cave hatches
 	var game: CaveGame = runner.find_child("Game")
+	game.load_cave(FILE)  # the single cave (the scene itself opens the campaign on its story card)
+	await runner.simulate_frames(60, 100)  # 3 s countdown, then the cave hatches
 	assert_object(game.engine).is_not_null()
 	assert_bool(game.engine.hatched).is_true()
 

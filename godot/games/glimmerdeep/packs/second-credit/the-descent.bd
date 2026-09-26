@@ -1,0 +1,273 @@
+; Second Credit, game 1: The Descent, caves 2 to 8. Licence CC BY-SA 4.0 (see LICENSES/). Designed for this project.
+[BDCFF]
+Version=0.5
+[game]
+Name=The Descent
+Author=Second Credit
+Description=A descent through the caverns below First Light.
+Levels=5
+[cave]
+Name=The Rockfall
+Description=Boulders stacked to the roof: dig from the side, never from below.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=14 15 16 17 18
+CaveTime=150 140 130 120 110
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP..rrr.....rrrr.d.....rrr.......rrrr..W
+W...rdr.....rddr.......rdr.......rdr...W
+W...rrr.....rrrr.......rrr.d.....rrr...W
+W......d..................r............W
+W..d......rrr......d.....rdr....d......W
+W.........rdr.............r...........dW
+W.rrrr....rrr....rrrr.........rrrr.....W
+W.rddr...........rddr.....d...rddr.....W
+W.rrrr...d.......rrrr.........rrrr..d..W
+W.......................r..............W
+W....d......rrr........rdr.......d.....W
+W...........rdr.........r..............W
+W..rrr......rrr...d........rrr....rrr..W
+W..rdr.....................rdr....rdr..W
+W..rrr....d.......rrrr.....rrr....rrr..W
+W.................rddr.........d.......W
+W.......rrr.......rrrr.................W
+W..d....rdr.............d.......rrr....W
+W.......rrr......d..............rdr...XW
+W...............................rrr....W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[cave]
+Name=Firefly Hollow
+Description=Fireflies patrol the tunnels. Let them pass, then take what they guard.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=12 13 14 15 16
+CaveTime=150 145 140 135 130
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP......d.........r.........d.........XW
+W.wwwwwwwwwww.........wwwwwwwwwwwwwww..W
+W.w    q    w...d.....w      Q      w..W
+W.w         w.........w             w..W
+W.wwwwww.wwww....r....wwwwwwww.wwwwww..W
+W......d.......d...........d...........W
+W..r.......r.........d.........r.......W
+W......wwwwwwwwwwwwwwwwwwwwwwww....d...W
+W..d...w                      w........W
+W......w  d   d   q   d   d   w..r.....W
+W......w                      w........W
+W..r...wwwwwwwwwwwwwwwwwwwwwwww...d....W
+W..........d...................r.......W
+W.d.....r.......d.....r..........d.....W
+W....wwwwwwwwww......wwwwwwwwwwww......W
+W....w   o    w..d...w    O     w..d...W
+W....w        w......w          w......W
+W....wwww.wwwww......wwwwww.wwwww......W
+W..d.........d.....r.......d......r....W
+W.......d........................d.....W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[cave]
+Name=Butterfly Garden
+Description=Drop a boulder on a butterfly and it bursts into diamonds.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=15 16 17 18 19
+CaveTime=160 150 140 130 120
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP.....r.....r......r......r.....r.....W
+W......r.....r......r......r.....r..d..W
+W......................................W
+W..wwwwwww..wwwwwwww..wwwwwwww..wwww...W
+W..w  c  w..w   C  w..w  c   w..wC w...W
+W..w     w..w      w..w      w..w  w...W
+W..wwwwwww..wwwwwwww..wwwwwwww..wwww...W
+W.d.....d.......d.......d.......d......W
+W......r.....r......r......r...........W
+W...d.....d.......d.......d.......d....W
+W......................................W
+W..r....rrr......r.......rrr......r....W
+W.......rdr..............rdr...........W
+W..d....rrr...d......d...rrr..d....d...W
+W......................................W
+W...wwwwwwww......wwwwwwwww............W
+W...w  b   w..d...w   B   w....d.......W
+W...wwwwwwww......wwwwwwwww...........XW
+W.....d...........d..........d.........W
+W..d..........d...........d.......d....W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[cave]
+Name=The Magic Mill
+Description=The shimmering wall turns falling boulders into diamonds, while it lasts.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=18 19 20 21 22
+CaveTime=170 160 150 140 130
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+MagicWallTime=40 35 30 25 20
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP..rrrrrrrr......d.......rrrrrrrr.....W
+W...rrrrrrrr..............rrrrrrrr..d..W
+W...........r..d....d...r..............W
+W..d..........................d........W
+W...MMMMMMMMMMMM.......MMMMMMMMMMMM....W
+W...                                ...W
+W...  d   d   d          d   d   d  ...W
+W...                                ...W
+W..wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww..W
+W..d......d........r.......d.......d...W
+W......r..........rdr.............r....W
+W..d.......d.......r.....d.........d...W
+W......rrrr.........................d..W
+W......rddr......d.......rrrr..........W
+W......rrrr..............rddr....d.....W
+W..d...........r.........rrrr..........W
+W.........d.........d..........r.......W
+W....r..........d..........d...........W
+W..d.......r..........r.........d.....XW
+W..........d......d......d.............W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[cave]
+Name=The Green Tide
+Description=The amoeba grows. Wall it in and it turns to diamonds; let it spread and it turns to stone.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=16 17 18 19 20
+CaveTime=160 150 140 130 120
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+AmoebaTime=120 110 100 90 80
+AmoebaThreshold=0.18
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP....d.......r.......d.........r......W
+W.........d.......d..........d......d..W
+W..r..........................r........W
+W......wwwwwwwwww......................W
+W......w        w....d.......d.....r...W
+W..d...w   a    w.......r..............W
+W......w        w...........d..........W
+W......wwwww.wwww.....d.........d......W
+W....d........................r........W
+W..........r.......d...........d.......W
+W..d.............................d.....W
+W.......d......r........wwwwwwwwwww....W
+W...r...................w         w..d.W
+W............d..........w    a    w....W
+W.....d.................w         w....W
+W..........d.....r......wwwww.wwwww....W
+W..d...........................d.......W
+W.......r.......d.........d............W
+W....d.........................r......XW
+W..........d.......d........d..........W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[cave]
+Name=Glass Labyrinth
+Description=Brick corridors fold back on themselves. The clock is the real enemy.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=17 18 19 20 21
+CaveTime=210 200 190 180 170
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP.d...w.....d.....w.......d.w.....d...W
+W.wwww.w.wwwwwwwww.w.wwwwww..w.wwwwwww.W
+W.w..d.w.w.......w.w.w....w..w.......w.W
+W.w.www.dw.wwwww.w...w.dd.w..wwwww.w.w.W
+W.w...w..w.w..dw.wwwww....w......w.w.w.W
+W.www.w..w.w.www.....wwwwww.dd.w.w.w...W
+W...w.wd.w.w.....www.......wwwww.w.www.W
+Www.w.wwww.wwwww...w.wwwww.......w...w.W
+W.d.w......d...w.d.w.w...wwwwwwwww.w.w.W
+W.www.wwwwwwww.www.w.w.d.........w.w.w.W
+W.....w......w...w...w.wwwwwwwww.w.w.d.W
+W.wwwww.dddd.www.wwwww.w.......w.w.www.W
+W.w.....dddd...w.......w.wwwww.w.w.....W
+W.w.wwwwwwwwww.wwwwwwwww.w.d.w.w.wwwww.W
+W.w..........d.........w.w...w.w.....w.W
+W.wwwwwwwwwwwwwwwwwww..w.wwwww.wwwww.w.W
+W..d................w..w.....d.....w.w.W
+W.wwwwwwwwwwwwwwww..w..wwwwwwwwwww.w.w.W
+W....d.......d......w.......d......w..XW
+W.d.....d.......d...w...d......d...w...W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[cave]
+Name=The Deep Heart
+Description=Everything the deep has shown you, all at once. Then the way out.
+Author=Second Credit
+Size=40 22 0 0 39 21
+DiamondsRequired=24 25 26 27 28
+CaveTime=200 190 180 170 160
+DiamondValue=10 15
+CaveScheduling=ms
+FrameTime=150 140 130 120 110
+HatchingDelay=6
+Colors=Black Black Orange Brown White
+MagicWallTime=30 28 26 24 22
+[map]
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WP..rrrr....d......rrrrr......d....rr..W
+W...rddr...........rdddr...........rd..W
+W...rrrr.....d.....rrrrr.....d.....rr..W
+W.d.........................r..........W
+W......wwwwwww.....MMMMMMM.....wwwwww..W
+W..d...w  q  w.....       .....w  c w..W
+W......w     w.....  d d  .....w    w..W
+W......wwwwwww.............d...wwwwww..W
+W..r.......d........r..................W
+W..........r.......rdr........d........W
+W..d..........d.....r.....r............W
+W.....rrr.....................rrr..d...W
+W.....rdr.....wwwwwwwwwwww....rdr......W
+W.....rrr.....w    B     w....rrr......W
+W..d..........wwwwwwwwwwww.........d...W
+W.........d.........d......d...........W
+W...r...........r.........r.....r......W
+W..d......d..........d........d........W
+W.....d...........d.........d.........XW
+W..d.......d..d........d........d......W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+[/map]
+[/cave]
+[/game]
+[/BDCFF]

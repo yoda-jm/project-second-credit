@@ -23,6 +23,7 @@ func _ready() -> void:
 		if not success and e.player_state == CaveRendered.PlayerState.DIED:
 			_death_t = 0.0)
 	game.countdown_tick.connect(func(n): _count = n; _count_t = 0.0)
+	game.campaign_over.connect(func(won): _show("THE DESCENT IS DONE" if won else "GAME OVER"))
 
 
 func _show(text: String) -> void:
@@ -74,6 +75,11 @@ func _draw() -> void:
 	draw_rect(Rect2(vp.x * 0.5 - 86, 90, 172 * tf, 3), tcol)
 	HudKit.panel(self, Rect2(vp.x - 314, 16, 290, 84), HudKit.GOLD)
 	HudKit.stat(self, vp.x - 44, 20, "SCORE", "%06d" % game.score, HudKit.GOLD, HudKit.RIGHT)
+	if game.pack:  # campaign: which cave, and the lives left
+		HudKit.panel(self, Rect2(vp.x - 314, 108, 290, 44), Color(1, 1, 1, 0.2), 14, 0.9)
+		HudKit.text(self, Vector2(vp.x - 294, 138), "CAVE %d / %d" % [game.cave_no + 1, game.caves.size()], 18, HudKit.INK, HudKit.label_font())
+		for i in CaveGame.LIVES:
+			HudKit.gem(self, Vector2(vp.x - 52 - i * 30, 130), 10.0, HudKit.BAD if i < game.lives else Color(1, 1, 1, 0.15))
 	# 3-2-1-GO before the start, then the hatching ring until the player appears
 	var c := Vector2(vp.x * 0.5, vp.y * 0.5)
 	if game.countdown_left > 0.0 or (_count == 0 and _count_t < 0.8):
@@ -111,5 +117,7 @@ func _draw() -> void:
 		var a := clampf(_message_t * 3.0, 0.0, 1.0)
 		var won := game.engine.player_state == CaveRendered.PlayerState.EXITED
 		var pop := 1.0 + 0.2 * exp(-_message_t * 8.0)
-		HudKit.banner(self, vp, vp.y * 0.45, _message, ("SCORE %d" % game.score) if won else "",
+		HudKit.banner(self, vp, vp.y * 0.45, _message, ("SCORE %d" % game.score) if won or game.campaign_done else "",
 			HudKit.GOOD if won else HudKit.BAD, a, pop)
+		if game.campaign_done:
+			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.45 + 130), [["ENTER", "play again"], ["ESC", "menu"]], a)

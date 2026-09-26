@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "game": "glimmerdeep",
+  "id": "second-credit",
+  "name": "The Descent",
+  "version": "1.0.0",
+  "author": "Second Credit",
+  "licence": "CC-BY-SA-4.0",
+  "description": "Eight caves, each deeper than the last: rockfalls, fireflies, butterflies, a magic mill, the green tide, a labyrinth, and the heart of the mountain.",
+  "levels": ["first-light.bd", "the-descent.bd"],
+  "intro": {
+    "title": "The Descent",
+    "text": "The old miners said the mountain glows at its heart, and that it keeps what it is given.\nYou have a lamp, a shovel and three tries. Start where the light still reaches."
+  },
+  "story": [
+    {"level": 1, "title": "The Rockfall",
+     "text": "Below First Light the ceiling was never shored up. Boulders sit stacked to the roof, waiting for someone to take the one at the bottom.\nDig from the side. Never from below."},
+    {"level": 2, "title": "Firefly Hollow",
+     "text": "Something glows in the tunnels here, and it is not the gems. The fireflies follow the walls and burn whatever they touch.\nLet them pass. They always come round again."},
+    {"level": 3, "title": "Butterfly Garden",
+     "text": "Deeper down the air turns warm and soft, and butterflies drift in their brick cages.\nThe miners had a cruel trick: drop a boulder on one and it bursts into diamonds."},
+    {"level": 4, "title": "The Magic Mill",
+     "text": "A wall that shimmers like oil on water. Whatever falls through it comes out changed: stone into diamond, diamond into stone.\nIt only turns for a little while once it starts. Be ready."},
+    {"level": 5, "title": "The Green Tide",
+     "text": "The amoeba lives in the damp caves, and it grows. Leave it room and it chokes the cave in stone.\nFence it in, and it gives up its diamonds instead."},
+    {"level": 6, "title": "Glass Labyrinth",
+     "text": "Corridors of red brick fold back on themselves until the lamp light cannot tell left from right.\nThe gems are easy here. The clock is not."},
+    {"level": 7, "title": "The Deep Heart",
+     "text": "At the bottom the whole mountain hums. Every trick it has shown you is here at once, around the heart of it.\nTake what you need, and find the way out."}
+  ],
+  "outro": {
+    "title": "Daylight",
+    "text": "You climb out into a grey morning with your pockets full and your lamp nearly dry.\nBehind you, far down, the mountain glows a little dimmer. Or perhaps it is only your eyes."
+  }
+}
