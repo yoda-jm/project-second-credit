@@ -100,6 +100,11 @@ decisions below are settled unless the owner reopens them.
    files). Open items: fog of war, APC transport, a menu to pick Zod maps.
 12. Game 9, **Blastyard** (working title, Bomberman-like, `godot/games/blastyard/`): battle for 1-4 players with bots,
    solo stages, sudden death; arenas in `maps/*.blast`. Glimmerdeep has a two-player race (F2); Bastion Coast versus is
-   in progress.
-13. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+   done (F2).
+13. Game 10, **Ingot Run** (Lode Runner-like, `godot/games/ingot/`): five levels in the free remakes' text format
+   (`levels/*.lvl`, `--level=N`); guards hunt by shortest path; the bot proves every level clearable. Game 11,
+   **Crate Keeper** (Sokoban-like, `godot/games/crates/`): reads standard `.xsb` collections; our puzzles carry par and a
+   solution (made by a solver script in the scratchpad history), undo/redo, stars. Characters on the new
+   `humanoid.py` rig (26 bones, smooth skin) and `creature_kit.py` (animals).
+14. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
