@@ -16,7 +16,8 @@
 
 Built: `godot/core/packs/pack.gd` loads packs, `godot/core/ui/story_card.gd` shows the story between levels and
 `godot/core/ui/pack_chooser.gd` lets the player pick a campaign. In use: Muddy Boots (*First Tour*, *The Long
-Monsoon*), Glimmerdeep (*The Descent*, eight caves) and Bastion Coast (*The Coastline*, five islands).
+Monsoon*), Glimmerdeep (*The Descent*, eight caves) and Bastion Coast (*The Coastline*, five islands; *Versus
+Coasts*, maps for 2-3 players, whose castles are marked with the player's number: `players=` in the header).
 
 ```
 my-pack/                     (folder or .zip)

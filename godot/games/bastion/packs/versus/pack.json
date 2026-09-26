@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "game": "bastion",
+  "id": "versus",
+  "name": "Versus Coasts",
+  "version": "1.0.0",
+  "author": "Second Credit",
+  "licence": "CC-BY-SA-4.0",
+  "description": "Coasts for two or three players, each with their own shore and castles, facing each other across the water.",
+  "levels": ["split-isle.map", "facing-harbours.map", "three-crowns.map"]
+}

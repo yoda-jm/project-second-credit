@@ -2,6 +2,7 @@ class_name BastionView3D
 extends Node3D
 ## 3D coastal diorama of a Bastion Coast game. Cell (x, y) sits at (x, 0, y). Reads the engine each frame and
 ## reacts to its events (shots, impacts, sinking ships). Also turns mouse positions into map cells.
+## Versus: each player's walls, territory, cursor, cannons and home castle take the player's colour.
 
 const MODELS := "res://games/bastion/art/models/"
 const LAND_H := 0.35
@@ -44,6 +45,15 @@ var _wakes := {}  ## ship id -> CPUParticles3D
 var _holes: MultiMeshInstance3D
 var _blocked_cache := ""
 var _blocked_t := 0.0
+# versus
+var _wall_mat: Material  ## the solo walls
+var _wall_vs_mat: Material  ## the same stone, tinted per instance with the owner's colour
+var _zone_owner := PackedInt32Array()
+var _edge_owner := PackedInt32Array()
+var _crosses: Array[MeshInstance3D] = []  ## one aiming ring per player
+var _marks: Array[MeshInstance3D] = []  ## a coloured ring around each player's home castle
+var _blocked_p: Array[String] = ["", "", ""]
+var _last_cells := {}  ## player -> enclosed cells (the territory pulse)
 
 
 func _ready() -> void:
@@ -129,7 +139,9 @@ func _build_world() -> void:
 	_ground = MeshInstance3D.new()
 	_ground.material_override = lm
 	add_child(_ground)
-	_walls = _mm(load(MODELS + "wall.obj"), Pbr.material("stone_bricks", Color(1.75, 1.62, 1.42), 1.4), false)  # pale limestone
+	_wall_mat = Pbr.material("stone_bricks", Color(1.75, 1.62, 1.42), 1.4)  # pale limestone
+	_wall_vs_mat = Pbr.material("stone_bricks", Color(1.75, 1.62, 1.42), 1.4, 0.0, 1.0, true)
+	_walls = _mm(load(MODELS + "wall.obj"), _wall_mat, false)
 	var rub: StandardMaterial3D = Pbr.material("rock", Color(0.35, 0.3, 0.28), 2.0).duplicate()
 	rub.emission_enabled = true
 	rub.emission = Color(1.0, 0.35, 0.05)
@@ -193,6 +205,34 @@ func _build_world() -> void:
 	cm.emission_energy_multiplier = 2.0
 	_cross.material_override = cm
 	add_child(_cross)
+	for i in 3:
+		var col: Color = BastionGame.PLAYER_COLORS[i]
+		var ring := MeshInstance3D.new()
+		ring.mesh = torus
+		ring.material_override = _glow_mat(col, 2.5)
+		ring.visible = false
+		add_child(ring)
+		_crosses.append(ring)
+		var mark := MeshInstance3D.new()
+		var mt := TorusMesh.new()
+		mt.inner_radius = 1.45
+		mt.outer_radius = 1.7
+		mark.mesh = mt
+		mark.material_override = _glow_mat(col, 1.6)
+		mark.visible = false
+		mark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mark)
+		_marks.append(mark)
+
+
+static func _glow_mat(col: Color, energy: float) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = col
+	m.emission_enabled = true
+	m.emission = col
+	m.emission_energy_multiplier = energy
+	return m
 
 
 func _mm(mesh: Mesh, mat: Material, colors: bool) -> MultiMeshInstance3D:
@@ -262,7 +302,15 @@ func _on_started(e: BastionEngine) -> void:
 	for inst in [_land, _walls, _rubble, _ghost, _zone]:
 		inst.multimesh.instance_count = n
 	_edge.multimesh.instance_count = n * 4
+	_zone_owner.resize(n)
+	_edge_owner.resize(n * 4)
+	_walls.material_override = _wall_vs_mat if e.versus else _wall_mat
 	_last_enclosed = 0
+	_last_cells.clear()
+	for m in _marks:
+		m.visible = false
+	for c in _crosses:
+		c.visible = false
 	_sea_mat.set_shader_parameter("shore_mask", _shore_mask(e))
 	_sea_mat.set_shader_parameter("map_size", Vector2(e.map.w, e.map.h))
 	_balls.multimesh.instance_count = 64
@@ -357,12 +405,37 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			create_tween().tween_property(node, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			_cannons[d["pos"]] = node
 			_fx.dust(node.position, 14)
+			if e.versus:  # a coloured plinth: whose cannon it is
+				var base := MeshInstance3D.new()
+				var cyl := CylinderMesh.new()
+				cyl.top_radius = 0.95
+				cyl.bottom_radius = 1.0
+				cyl.height = 0.06
+				base.mesh = cyl
+				base.material_override = _glow_mat(BastionGame.PLAYER_COLORS[d.get("player", 0)], 0.9)
+				base.position.y = 0.02
+				base.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				node.add_child(base)
+		"cannon_hit":
+			_fx.explosion(Vector3(d["pos"].x + 0.5, LAND_H + 0.5, d["pos"].y + 0.5), 0.5)
+			_shake = maxf(_shake, 0.25)
+		"cannon_destroyed":
+			_land_dirty = true
+			_shake = maxf(_shake, 0.5)
+			_fx.explosion(Vector3(d["pos"].x + 0.5, LAND_H + 0.5, d["pos"].y + 0.5), 1.6)
+			var node: Node3D = _cannons.get(d["pos"])
+			if node:
+				_cannons.erase(d["pos"])
+				node.queue_free()
+		"player_out":
+			_land_dirty = true
 		"wall_placed", "castle_claimed", "enclosed":
 			_land_dirty = true
 			if kind == "enclosed":
-				if d["cells"] > _last_enclosed + 2:
+				var who: int = d.get("player", 0)
+				if d["cells"] > _last_cells.get(who, 0) + 2:
 					_zone_pulse = 1.0  # a new area closed: flash it
-				_last_enclosed = d["cells"]
+				_last_cells[who] = d["cells"]
 			if kind == "wall_placed":
 				for c in d["cells"]:
 					_fx.dust(Vector3(c.x, LAND_H + 0.3, c.y), 5)
@@ -405,13 +478,22 @@ func _process(delta: float) -> void:
 		_land_dirty = false
 	_zone_pulse = maxf(0.0, _zone_pulse - delta * 0.8)
 	var za := 0.12 + 0.04 * sin(_time * 3.0) + 0.5 * _zone_pulse  # a light wash: the ground itself is tinted
-	for i in _zone.multimesh.visible_instance_count:
-		_zone.multimesh.set_instance_color(i, Color(1.0, 0.82, 0.4, za))  # your land: a warm golden wash
-	for i in _edge.multimesh.visible_instance_count:
-		_edge.multimesh.set_instance_color(i, Color(1, 1, 1, 1) * (0.8 + 0.4 * sin(_time * 4.0 + i * 0.3) + _zone_pulse))
+	if e.versus:  # each player's land in their own colour
+		for i in _zone.multimesh.visible_instance_count:
+			_zone.multimesh.set_instance_color(i, Color(BastionGame.PLAYER_COLORS[_zone_owner[i]], za * 1.4))
+		for i in _edge.multimesh.visible_instance_count:
+			var k := 0.8 + 0.4 * sin(_time * 4.0 + i * 0.3) + _zone_pulse
+			_edge.multimesh.set_instance_color(i, BastionGame.PLAYER_COLORS[_edge_owner[i]] * Color(0.45, 0.4, 0.3) * k)
+	else:
+		for i in _zone.multimesh.visible_instance_count:
+			_zone.multimesh.set_instance_color(i, Color(1.0, 0.82, 0.4, za))  # your land: a warm golden wash
+		for i in _edge.multimesh.visible_instance_count:
+			_edge.multimesh.set_instance_color(i, Color(1, 1, 1, 1) * (0.8 + 0.4 * sin(_time * 4.0 + i * 0.3) + _zone_pulse))
 	_blocked_t -= delta
 	if _blocked_t <= 0.0:
 		_blocked_cache = e.blocked()
+		for pl in e.players:
+			_blocked_p[pl.index] = e.blocked(pl.index)
 		_blocked_t = 0.25
 	_update_holes(e)
 	_update_ships(e, delta)
@@ -421,10 +503,24 @@ func _process(delta: float) -> void:
 	for c in e.map.castles.size():
 		var home := c == e.home_castle
 		var enclosed := e.enclosed_castles.has(c)
+		if e.versus:
+			home = false
+			enclosed = false
+			for pl in e.players:
+				home = home or (pl.home_castle == c and pl.alive)
+				enclosed = enclosed or pl.enclosed_castles.has(c)
 		_castles[c].scale = Vector3.ONE * (1.08 if home else 1.0)
 		for mi in _castles[c].find_children("*", "MeshInstance3D", true, false):
 			(mi as MeshInstance3D).transparency = 0.0 if enclosed or e.phase == BastionEngine.Phase.CHOOSE else 0.2
 	# camera: steeper while placing, a slow drift around the board (calmer while placing), shake on impacts
+	if e.versus:
+		for pl in e.players:
+			var m := _marks[pl.index]
+			m.visible = pl.home_castle >= 0 and pl.alive
+			if m.visible:
+				var cp := e.map.castles[pl.home_castle]
+				m.position = Vector3(cp.x + 0.5, LAND_H + 0.04, cp.y + 0.5)
+				m.scale = Vector3(1, 0.4, 1) * (1.0 + 0.04 * sin(_time * 3.0 + pl.index))
 	_update_camera_arc(e, delta)
 	_shake = maxf(0.0, _shake - delta * 1.5)
 	var drift := Vector3(sin(_time * 0.05) * 1.5, 0, cos(_time * 0.04) * 0.8) * (1.0 - 0.7 * _top)
@@ -455,6 +551,9 @@ func _rebuild_board(e: BastionEngine) -> void:
 			var cellv := e.cell(x, y)
 			if cellv == BastionEngine.Cell.WALL:
 				_walls.multimesh.set_instance_transform(wi, Transform3D(Basis(), Vector3(x, LAND_H, y)))
+				if e.versus:  # the owner's colour, blended into the stone
+					var pc: Color = BastionGame.PLAYER_COLORS[e.owner_at(x, y)]
+					_walls.multimesh.set_instance_color(wi, Color.WHITE.lerp(pc, 0.55))
 				wi += 1
 			elif cellv == BastionEngine.Cell.RUBBLE:
 				_rubble.multimesh.set_instance_transform(ri, Transform3D(Basis(Vector3.UP, float(x * 7 + y)), Vector3(x, LAND_H, y)))
@@ -469,14 +568,17 @@ func _rebuild_board(e: BastionEngine) -> void:
 	var ei := 0
 	for y in e.map.h:
 		for x in e.map.w:
-			if not e.is_ours(x, y):
+			var who: int = e.territory[y * e.map.w + x] - 1
+			if who < 0:
 				continue
 			_zone.multimesh.set_instance_transform(zi, Transform3D(Basis(), Vector3(x, LAND_H + 0.02, y)))
+			_zone_owner[zi] = who
 			zi += 1
 			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				if not e.is_ours(x + d.x, y + d.y) and e.cell(x + d.x, y + d.y) != BastionEngine.Cell.WALL:
+				if not e.is_ours(x + d.x, y + d.y, who) and e.cell(x + d.x, y + d.y) != BastionEngine.Cell.WALL:
 					var basis := Basis() if d.y != 0 else Basis(Vector3.UP, PI * 0.5)
 					_edge.multimesh.set_instance_transform(ei, Transform3D(basis, Vector3(x + d.x * 0.46, LAND_H + 0.05, y + d.y * 0.46)))
+					_edge_owner[ei] = who
 					ei += 1
 	_zone.multimesh.visible_instance_count = zi
 	_edge.multimesh.visible_instance_count = ei
@@ -615,7 +717,21 @@ func _update_ships(e: BastionEngine, delta: float) -> void:
 func _update_holes(e: BastionEngine) -> void:
 	var n := 0
 	var show := e.phase == BastionEngine.Phase.BUILD or e.phase == BastionEngine.Phase.CANNONS
-	if show:
+	if show and e.versus:  # versus: the gaps in each player's home ring
+		var pulse := 0.55 + 0.45 * sin(_time * 7.0)
+		for pl in e.players:
+			var holes: Array = pl.castle_holes.get(pl.home_castle, [])
+			if not pl.alive or holes.size() > BastionEngine.HOLE_LIMIT:
+				continue
+			for h in holes:
+				if n >= 64:
+					break
+				var grow := 0.85 + 0.25 * pulse
+				_holes.multimesh.set_instance_transform(n, Transform3D(Basis.from_scale(Vector3(grow, 0.6 + 0.4 * pulse, grow)),
+					Vector3(h.x, LAND_H + 0.5, h.y)))
+				_holes.multimesh.set_instance_color(n, Color(3.0, 0.2, 0.1, 0.35 + 0.45 * pulse))
+				n += 1
+	elif show:
 		var pulse := 0.55 + 0.45 * sin(_time * 7.0)
 		for c in e.castle_holes:
 			var holes: Array = e.castle_holes[c]
@@ -673,6 +789,10 @@ func _update_balls(e: BastionEngine) -> void:
 
 
 func _update_cursor(e: BastionEngine) -> void:
+	if e.versus:
+		_cross.visible = false
+		_update_cursors_versus(e)
+		return
 	var n := 0
 	_cross.visible = e.phase == BastionEngine.Phase.BATTLE and not game.demo
 	var pulse := 0.6 + 0.4 * sin(_time * 8.0)
@@ -712,6 +832,58 @@ func _update_cursor(e: BastionEngine) -> void:
 	_ghost.multimesh.visible_instance_count = n
 
 
+## Versus: every player's ghost piece, cannon spot, castle choice or aiming ring, in their colour (a red tint
+## where it cannot go, grey when the piece fits nowhere).
+func _update_cursors_versus(e: BastionEngine) -> void:
+	var n := 0
+	var pulse := 0.6 + 0.4 * sin(_time * 8.0)
+	for pl in e.players:
+		var p := pl.index
+		var col: Color = BastionGame.PLAYER_COLORS[p]
+		var bad := col.lerp(Color(1.0, 0.1, 0.1), 0.7) * Color(0.8, 0.8, 0.8)
+		var ring := _crosses[p]
+		ring.visible = pl.alive and e.phase == BastionEngine.Phase.BATTLE
+		if not pl.alive:
+			continue
+		match e.phase:
+			BastionEngine.Phase.BUILD:
+				var at := Vector2i(pl.cursor.round())
+				var ok := e.can_place_piece(at, p)
+				var grey := _blocked_p[p] == "piece"
+				for c in e.piece_cells_at(at, p):
+					_ghost.multimesh.set_instance_transform(n, Transform3D(Basis(), Vector3(c.x, LAND_H + 0.35, c.y)))
+					var gc := Color(0.5, 0.5, 0.5) if grey else (col.lightened(0.25) if ok else bad)
+					_ghost.multimesh.set_instance_color(n, gc * Color(1, 1, 1, 0.6 * pulse))
+					n += 1
+			BastionEngine.Phase.CANNONS:
+				if pl.cannons_to_place > 0:
+					var at := Vector2i(pl.cursor.round())
+					var ok := e.can_place_cannon(at, p)
+					for dy in 2:
+						for dx in 2:
+							_ghost.multimesh.set_instance_transform(n, Transform3D(Basis(), Vector3(at.x + dx, LAND_H + 0.3, at.y + dy)))
+							_ghost.multimesh.set_instance_color(n, (col.lightened(0.25) if ok else bad) * Color(1, 1, 1, 0.55 * pulse))
+							n += 1
+			BastionEngine.Phase.CHOOSE:
+				var c := pl.home_castle
+				if c < 0:
+					c = e.map.castle_at(roundi(pl.cursor.x), roundi(pl.cursor.y))
+					if c < 0 or e.map.region_of(e.map.castles[c].x, e.map.castles[c].y) != p:
+						c = e._nearest_castle(pl.cursor, p)
+				var cp := e.map.castles[c]
+				var a := 0.9 if pl.home_castle >= 0 else 0.6 * pulse
+				for y in range(cp.y - 1, cp.y + 3):
+					for x in range(cp.x - 1, cp.x + 3):
+						if x == cp.x - 1 or x == cp.x + 2 or y == cp.y - 1 or y == cp.y + 2:
+							_ghost.multimesh.set_instance_transform(n, Transform3D(Basis.from_scale(Vector3(1, 0.3, 1)), Vector3(x, LAND_H + 0.1, y)))
+							_ghost.multimesh.set_instance_color(n, Color(col.lightened(0.2), a))
+							n += 1
+			BastionEngine.Phase.BATTLE:
+				ring.position = Vector3(pl.cursor.x, LAND_H + 0.5, pl.cursor.y)
+				ring.rotation.y = _time * 2.0 + p
+	_ghost.multimesh.visible_instance_count = n
+
+
 func _update_cannons(e: BastionEngine) -> void:
 	for c in e.cannons:
 		var node: Node3D = _cannons.get(c["pos"])
@@ -719,7 +891,9 @@ func _update_cannons(e: BastionEngine) -> void:
 			continue
 		if e.phase == BastionEngine.Phase.BATTLE:
 			var aim: Vector2 = e.cursor - (Vector2(c["pos"]) + Vector2(0.5, 0.5))
-			if game.demo and not e.ships.is_empty():
+			if e.versus:
+				aim = e.players[c["player"]].cursor - (Vector2(c["pos"]) + Vector2(0.5, 0.5))
+			elif game.demo and not e.ships.is_empty():
 				aim = e.ships[0]["pos"] - (Vector2(c["pos"]) + Vector2(0.5, 0.5))
 			# the models face +Z (Blender's -Y), hence the half turn
 			node.rotation.y = lerp_angle(node.rotation.y, atan2(aim.x, aim.y), 0.15)

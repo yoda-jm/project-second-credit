@@ -68,6 +68,15 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			play("ship_sunk", -2.0)
 		"phase":
 			play("horn", -6.0, 1.0 if d["phase"] != BastionEngine.Phase.BATTLE else 1.12)
+		"cannon_hit":
+			play("wall_destroyed", -7.0, 0.8)
+		"cannon_destroyed":
+			play("ship_sunk", -2.0, 1.2)
+		"player_out":
+			play("game_over", -4.0)
 		"game_over":
+			if game.engine.versus:  # a winner: the horn, and the music stays up
+				play("horn", -2.0, 0.9)
+				return
 			play("game_over", -2.0)
 			create_tween().tween_property(_music, "volume_db", -30.0, 2.0)
