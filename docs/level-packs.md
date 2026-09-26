@@ -86,6 +86,7 @@ Each entry in the list records its source URL and, when known, its licence. Plan
 | Z | Zod Engine `.map` + planet `.tileinfo`, read locally (`godot/games/flags/engine/zod_import.gd`) | original Z data (to investigate) |
 | Lode Runner | the plain-text tile format of the free remakes (`#` `@` `H` `-` `X` `S` `$` `0` `&`), read by `godot/games/ingot/engine/ingot_level.gd`; our sets use it with `[level]` headers | original disks (later, optional) |
 | Sokoban | the standard text format (`.xsb`/`.sok`: `#` `$` `.` `*` `@` `+`), read by `godot/games/crates/engine/crates_level.gd`; our set adds `par=` and `solution=` comments | n/a |
+| Arkanoid | our `.wall` text (13 wide: `a`-`f` crystal, `H` hard, `S` steel, `G` gold); LBreakout2 level sets (their `Bricks:` grid), read by `godot/games/prism/engine/prism_level.gd` | n/a (original rounds stay on the player's machine) |
 | Alley Cat, Winter Games, Double Dragon | none (fixed content) | n/a |
 
 ## Open questions

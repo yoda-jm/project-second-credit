@@ -1,0 +1,96 @@
+; Prism Breaker: the Spectrum set, our own walls (CC BY-SA 4.0). 13 bricks wide.
+; .  empty   a-f  crystal (one hit)   H  hard   S  steel   G  gold (never breaks)
+
+[level]
+name=First Light
+.............
+.............
+aaaaaaaaaaaaa
+bbbbbbbbbbbbb
+ccccccccccccc
+ddddddddddddd
+eeeeeeeeeeeee
+fffffffffffff
+
+[level]
+name=The Pyramid
+.............
+......H......
+.....HaH.....
+....bbbbb....
+...ccccccc...
+..ddddddddd..
+.eeeeeeeeeee.
+fffffffffffff
+
+[level]
+name=Stained Glass
+.............
+a.b.c.d.e.f.a
+.............
+HHHHHHHHHHHHH
+.............
+f.e.d.c.b.a.f
+aaaaaaaaaaaaa
+bbb.bbbbb.bbb
+
+[level]
+name=Twin Towers
+.............
+.HH.......HH.
+.aa.......aa.
+.bb..SSS..bb.
+.cc..ccc..cc.
+.dd..ddd..dd.
+.ee..eee..ee.
+.ff..fff..ff.
+.HH..HHH..HH.
+
+[level]
+name=Diamond
+......a......
+.....bab.....
+....cbabc....
+...dcbGbcd...
+..edcbabcde..
+...dcbabcd...
+....cbabc....
+.....bab.....
+......a......
+
+[level]
+name=Steel Gate
+.............
+aaaaaaaaaaaaa
+bbbbbbbbbbbbb
+HHHHHHHHHHHHH
+ccccccccccccc
+ddddddddddddd
+SSSS.....SSSS
+eeee.....eeee
+.............
+..SS.....SS..
+
+[level]
+name=Checkerboard
+a.b.c.d.e.f.a
+.b.c.d.e.f.a.
+c.d.e.f.a.b.c
+.d.e.f.a.b.c.
+e.f.a.b.c.d.e
+.f.a.b.c.d.e.
+HHHHHHHHHHHHH
+.............
+G.G.G.G.G.G.G
+
+[level]
+name=Prism Core
+.............
+...HHHHHHH...
+..HfffffffH..
+.HeeeeeeeeeH.
+.HddSSSSSddH.
+.HccS...SccH.
+.HbbS.G.SbbH.
+.HaaS...SaaH.
+.HHHSS.SSHHH.

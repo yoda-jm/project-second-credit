@@ -100,6 +100,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Characters and maze pieces are built by `tools/blender/nightbite_characters.py` and `nightbite_models.py`; sound
   effects and both music loops are synthesised by `tools/audio/`.
 
+## Game 13 (Prism Breaker, working title)
+
+- Inspired by *Arkanoid* (Taito, 1986). None of its code, graphics, sounds, music or rounds are in this repo: our
+  walls, capsules, drones and sounds are original. The game can also read level sets written for the free game
+  LBreakout2 (layout only), from the player's own files, locally.
+- The bricks, paddle, frame, drones and backdrop are built by `tools/blender/prism_models.py`; sound effects and the
+  theme are synthesised by `tools/audio/prism_sfx.py` and `prism_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

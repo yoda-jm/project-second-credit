@@ -165,6 +165,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/nightbite/art/models/fruit_0.glb", "model", 0.3],
 			["res://games/nightbite/art/models/fruit_1.glb", "model", 0.3]],
 	},
+	{
+		"id": "prism",
+		"style": "Arcade",
+		"title": "Prism Breaker",
+		"tagline": "One ball, one paddle, a wall of light.",
+		"inspired_by": "Arkanoid (1986)",
+		"scene": "res://games/prism/scenes/prism_game.tscn",
+		"card": "",
+		"accent": Color(0.35, 0.8, 1.0),
+		"props": [["res://games/prism/art/models/capsule.glb", "model", 0.4],
+			["res://games/prism/art/models/ball.glb", "model", 0.25],
+			["res://games/prism/art/models/drone_1.glb", "model", 0.3]],
+	},
 ]
 
 

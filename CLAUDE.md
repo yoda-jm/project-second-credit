@@ -108,5 +108,7 @@ decisions below are settled unless the owner reopens them.
    `humanoid.py` rig (26 bones, smooth skin) and `creature_kit.py` (animals).
 14. Game 12, **Nightbite** (Pac-Man-like, `godot/games/nightbite/`): neon maze chase, `mazes/*.maze` (our format,
    mirrored halves checked for dead ends by a scratchpad script), four spirit temperaments, autopilot.
-15. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+15. Game 13, **Prism Breaker** (Arkanoid-like, `godot/games/prism/`): eight walls in `levels/*.wall` (our format) or an
+   LBreakout2 set (`--walls=<file>`), capsules (wide, laser, catch, slow, multi, life, break), drones, autopilot.
+16. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
