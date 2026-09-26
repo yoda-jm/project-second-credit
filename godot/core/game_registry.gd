@@ -113,6 +113,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/flags/art/models/flag_pole.glb", "model", 0.3],
 			["res://games/flags/art/models/cannon_gun.glb", "model", 0.3]],
 	},
+	{
+		"id": "blastyard",
+		"style": "Party",
+		"title": "Blastyard",
+		"tagline": "Four bombers, one yard, no hard feelings.",
+		"inspired_by": "Bomberman (1983)",
+		"scene": "res://games/blastyard/scenes/blastyard_game.tscn",
+		"card": "",
+		"accent": Color(1.0, 0.55, 0.2),
+		"props": [["res://games/blastyard/art/models/bomb.glb", "model", 0.4],
+			["res://games/blastyard/art/models/crate.glb", "model", 0.3],
+			["res://games/blastyard/art/models/pu_fire.glb", "model", 0.3]],
+	},
 ]
 
 

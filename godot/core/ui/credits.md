@@ -69,6 +69,13 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Robots, vehicles, guns, buildings and props are built by `tools/blender/flags_robots.py` and `flags_models.py`;
   sound effects and the battle theme are synthesised by `tools/audio/`.
 
+## Game 9 (Blastyard, working title)
+
+- Inspired by *Bomberman* (Hudson Soft, 1983). None of its code, graphics, sounds, music or stages are in this repo;
+  the rules are rewritten from how the genre plays, and the arenas and solo stages are our own.
+- Bombers, creatures, bombs, blocks, power-ups and arena dressing are built by `tools/blender/blastyard_bombers.py`
+  and `blastyard_models.py`; sound effects and the party theme are synthesised by `tools/audio/`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
