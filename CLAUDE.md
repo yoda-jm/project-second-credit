@@ -117,5 +117,7 @@ decisions below are settled unless the owner reopens them.
    Open item: an importer for the player's original level files (it needs their graphics sets, read locally).
 18. Game 16, **Hopline** (Frogger-like, `godot/games/hopline/`): lanes move as pure functions of time, so the
    autopilot plans through time (a beam search); diving turtles, a crocodile in the bays, fly and lady-frog bonuses.
-19. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+19. Game 17, **Slipfloe** (Pengo-like, `godot/games/slipfloe/`): a maze of ice generated per stage, sliding and
+   shattering blocks, eggs, wall shakes, three gem blocks; the autopilot looks for blocks with mites in their lane.
+20. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

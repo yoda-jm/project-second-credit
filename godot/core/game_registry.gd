@@ -217,6 +217,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/hopline/art/models/truck.glb", "model", 0.3],
 			["res://games/hopline/art/models/lilypad.glb", "model", 0.3]],
 	},
+	{
+		"id": "slipfloe",
+		"style": "Arcade",
+		"title": "Slipfloe",
+		"tagline": "Shove the ice, flatten the mites, line up the gems.",
+		"inspired_by": "Pengo (1982)",
+		"scene": "res://games/slipfloe/scenes/slipfloe_game.tscn",
+		"card": "",
+		"accent": Color(0.45, 0.85, 1.0),
+		"props": [["res://games/slipfloe/art/models/otter.glb", "model", 0.4],
+			["res://games/slipfloe/art/models/gem_block.glb", "model", 0.3],
+			["res://games/slipfloe/art/models/mite.glb", "model", 0.3]],
+	},
 ]
 
 

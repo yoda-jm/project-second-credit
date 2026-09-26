@@ -131,6 +131,13 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Models are built by `tools/blender/hopline_models.py`; sound effects, ambience and both music loops are
   synthesised by `tools/audio/hopline_sfx.py` and `hopline_music.py`.
 
+## Game 17 (Slipfloe, working title)
+
+- Inspired by *Pengo* (Coreland / Sega, 1982). None of its code, graphics, sounds or music (nor the classical piece
+  it used) are in this repo: the otter, the frost mites, the arena and the score are original.
+- Models are built by `tools/blender/slipfloe_models.py`; sound effects and both music loops are synthesised by
+  `tools/audio/slipfloe_sfx.py` and `slipfloe_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
