@@ -34,11 +34,15 @@ void vertex() {
 void fragment() {
 	float n = noise(wpos * 1.3) * 0.6 + noise(wpos * 4.1) * 0.3 + noise(wpos * 11.0) * 0.1;
 	vec3 col = mix(shade, tint, 0.75 + 0.25 * n);
-	if (mark_rect.z > 0.0) {
+	float painted = 0.0;
+	if (mark_rect.z != 0.0) {
 		vec2 uv = (wpos.xz - mark_rect.xy) / mark_rect.zw;
 		if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0) {
 			vec4 m = texture(mark_tex, uv);
-			col = mix(col, m.rgb, m.a);
+			// paint soaked into the snow: grainy edges, lighter where the snow sparkles through
+			float grain = noise(wpos * 9.0) * 0.5 + noise(wpos * 27.0) * 0.5;
+			painted = m.a * smoothstep(0.15, 0.45, grain + m.a * 0.6 - 0.35);
+			col = mix(col, m.rgb * (0.85 + 0.25 * n), painted);
 		}
 	}
 	ALBEDO = col;
@@ -55,5 +59,5 @@ void fragment() {
 	float h = hash(cell);
 	vec3 view_w = (INV_VIEW_MATRIX * vec4(VIEW, 0.0)).xyz;
 	float g = step(0.992, h) * step(0.7, fract(h * 97.0 + dot(view_w, vec3(3.1, 5.7, 2.3))));
-	EMISSION = vec3(1.0, 0.98, 0.92) * g * sparkle * 1.6;
+	EMISSION = vec3(1.0, 0.98, 0.92) * g * sparkle * 1.6 * (1.0 - painted);
 }
