@@ -211,7 +211,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Five lanes of traffic, five of canal, five homes.",
 		"inspired_by": "Frogger (1981)",
 		"scene": "res://games/hopline/scenes/hopline_game.tscn",
-		"card": "",
+		"card": "res://core/ui/cards/hopline.png",
 		"accent": Color(0.45, 0.9, 0.45),
 		"props": [["res://games/hopline/art/models/frog.glb", "model", 0.4],
 			["res://games/hopline/art/models/truck.glb", "model", 0.3],
