@@ -76,8 +76,9 @@ func _draw() -> void:
 		HudKit.banner(self, vp, vp.y * 0.5, "GAME OVER", "SCORE %d" % e.score, HudKit.BAD, 1.0)
 		if not game.demo:
 			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.5 + 130), [["ENTER", "play again"], ["ESC", "menu"]])
-	elif not game.demo and e.phase == InkEngine.Phase.READY and e.stage == 0 and e.lives == 3:
-		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["SPACE", "draw fast"], ["SHIFT", "draw slow x2"]])
+	elif not game.demo and e.stage == 0 and e.claimed < 0.06:
+		# until the first claims, how to play
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["ARROWS", "move, step off the edge to draw"], ["SHIFT", "draw slowly: x2"]])
 	if game.demo:
 		var msg := "DEMO  -  PRESS ANY KEY TO PLAY"
 		var wd := HudKit.width(msg, 22, HudKit.label_font()) + 60.0

@@ -66,8 +66,9 @@ func _steer() -> void:
 	elif Input.is_action_pressed("ui_left") or Input.is_physical_key_pressed(KEY_A) or ax < -0.5: d = Vector2i(-1, 0)
 	elif Input.is_action_pressed("ui_right") or Input.is_physical_key_pressed(KEY_D) or ax > 0.5: d = Vector2i(1, 0)
 	engine.want = d
-	engine.draw_fast = Input.is_physical_key_pressed(KEY_SPACE) or Input.is_joy_button_pressed(0, JOY_BUTTON_A)
+	# stepping off the edge draws; holding shift (or X) draws slowly, for double points
 	engine.draw_slow = Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)
+	engine.draw_fast = not engine.draw_slow
 
 
 func _unhandled_input(event: InputEvent) -> void:
