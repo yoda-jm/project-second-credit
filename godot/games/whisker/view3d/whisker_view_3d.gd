@@ -1355,7 +1355,8 @@ func _update_room(e: WhiskerEngine, delta: float) -> void:
 				var zt := fmod(_time * 0.6 + i * 0.3, 1.0)
 				zz.position = Vector3(dr.dogs[i]["x"] + 0.3 + zt * 0.5, 1.4 + zt * 1.2, 0.5)
 				zz.modulate.a = 1.0 - zt
-				zz.font_size = int(60 + zt * 60)
+				# grow by scale, never by font size: every new font size rasterises and caches a whole glyph atlas
+				zz.scale = Vector3.ONE * (0.625 + zt * 0.625)
 		E.RoomKind.HEARTS:
 			var hr := r as HeartsRoom
 			for i in hr.hearts.size():

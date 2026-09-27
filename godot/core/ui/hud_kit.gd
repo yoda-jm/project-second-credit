@@ -116,9 +116,11 @@ static func banner(ci: CanvasItem, vp: Vector2, y: float, title: String, sub: St
 	for yy in [top, top + h]:
 		var line := PackedVector2Array([Vector2(vp.x * 0.1, yy), Vector2(vp.x * 0.5, yy), Vector2(vp.x * 0.9, yy)])
 		ci.draw_polyline_colors(line, PackedColorArray([Color(accent, 0), Color(accent, a), Color(accent, 0)]), 2.0, true)
-	var size := int(84 * pop)
-	var ty := y + size * 0.36 - (22.0 if sub != "" else 0.0)
-	text(ci, Vector2(vp.x * 0.5, ty), title, size, Color(accent, a), font(true), CENTER)
+	# the pop is a drawing scale, not a font size: every new font size would rasterise and cache its own glyphs
+	var ty := y + 84 * 0.36 - (22.0 if sub != "" else 0.0)
+	ci.draw_set_transform(Vector2(vp.x * 0.5, ty), 0.0, Vector2.ONE * pop)
+	text(ci, Vector2.ZERO, title, 84, Color(accent, a), font(true), CENTER)
+	ci.draw_set_transform(Vector2.ZERO)
 	if sub != "":
 		text(ci, Vector2(vp.x * 0.5, ty + 50), sub, 28, Color(INK, a * 0.9), label_font(), CENTER)
 
