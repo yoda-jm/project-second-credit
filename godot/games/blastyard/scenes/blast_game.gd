@@ -34,6 +34,7 @@ var countdown := 0.0
 var over_t := -1.0
 var match_winner := -1
 var _acc := 0.0
+var fast_forward := false   ## the players are out: the rest of the round runs fast
 var _bots: Array[BlastBot] = []
 var _seed := 1
 var _setup_row := 0
@@ -116,7 +117,11 @@ func _process(delta: float) -> void:
 		if over_t > (4.5 if match_winner >= 0 else 3.0):
 			_after_round()
 		# the arena keeps ticking a moment so the last flames and the victory dance play out
-	_acc = minf(_acc + delta, 0.25)
+	# every player out in a battle: the bots' finish plays at speed (nothing to wait for)
+	fast_forward = not demo and mode == "battle" and over_t < 0.0 and humans > 0 \
+		and range(mini(humans, engine.players.size())).all(func(s): return not engine.players[s]["alive"])
+	var speed := 8.0 if fast_forward else 1.0
+	_acc = minf(_acc + delta * speed, 0.25 * speed)
 	while _acc >= E.TICK:
 		_acc -= E.TICK
 		for b in _bots:

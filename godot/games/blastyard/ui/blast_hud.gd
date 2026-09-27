@@ -105,6 +105,11 @@ func _draw() -> void:
 	if _result != "":
 		var a := clampf(_result_t * 4.0, 0.0, 1.0)
 		HudKit.banner(self, vp, vp.y * 0.42, _result, "", HudKit.GOLD, a, 1.0 + 0.25 * exp(-_result_t * 8.0))
+	if game.fast_forward:
+		var ff := "YOU'RE OUT  -  FAST FORWARD  >>"
+		var fw := HudKit.width(ff, 22, HudKit.label_font()) + 60.0
+		HudKit.panel(self, Rect2(vp.x * 0.5 - fw * 0.5, vp.y - 62, fw, 44), Color(0, 0, 0, 0), 22, 0.9)
+		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 32), ff, 22, HudKit.GOLD, HudKit.label_font(), HudKit.CENTER)
 	if game.demo:
 		var msg := "DEMO  -  PRESS ANY KEY"
 		var wd := HudKit.width(msg, 22, HudKit.label_font()) + 60.0
