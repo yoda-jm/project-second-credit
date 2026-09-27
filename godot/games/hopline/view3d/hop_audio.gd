@@ -1,7 +1,8 @@
 class_name HopAudio
 extends Node
 ## Hopline music and sound: the theme (the hurry loop when time is short), town traffic and the canal lapping as
-## ambience, a spring for every hop, horns now and then, and a sound for each way home or not.
+## ambience, a spring for every hop, horns when a driver honks (the view decides: now and then, and at a frog landing
+## just in front of a car), and a sound for each way home or not.
 
 const SFX := "res://games/hopline/audio/sfx/"
 const NAMES := ["hop", "splat", "plop", "home", "all_home", "fly", "lady", "time_warn", "time_up", "extra_life", "ready",
@@ -15,7 +16,6 @@ var _next := 0
 var _music: AudioStreamPlayer
 var _theme: AudioStream
 var _hurry: AudioStream
-var _horn_t := 6.0
 
 
 func _ready() -> void:
@@ -45,6 +45,11 @@ func _ready() -> void:
 		p.volume_db = amb[1]
 		add_child(p)
 		p.play()
+	game.fx.connect(func(kind: String, d: Dictionary):
+		if kind == "honk":
+			var big: bool = d.get("big", false)
+			play("horn_b" if big else "horn_a", -8.0 if d.get("near", false) else -14.0,
+				randf_range(0.8, 0.9) if big else randf_range(0.98, 1.12)))
 	game.stage_started.connect(func(e):
 		e.event.connect(_on_event)
 		play("ready", -3.0)
@@ -61,7 +66,7 @@ func play(name: String, db := 0.0, pitch := 1.0) -> void:
 	p.play()
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	var e := game.engine
 	if e == null:
 		return
@@ -72,10 +77,6 @@ func _process(delta: float) -> void:
 	elif not hurry and _music.stream == _hurry:
 		_music.stream = _theme
 		_music.play()
-	_horn_t -= delta
-	if _horn_t <= 0.0:
-		_horn_t = randf_range(7.0, 16.0)
-		play("horn_a" if randf() < 0.5 else "horn_b", -14.0, randf_range(0.9, 1.1))
 
 
 func _on_event(kind: String, d: Dictionary) -> void:
@@ -87,7 +88,9 @@ func _on_event(kind: String, d: Dictionary) -> void:
 				"time": play("time_up", -3.0)
 				"croc": play("croc_snap", -3.0)
 				_: play("splat", -3.0)
-		"home": play("home", -3.0)
+		"home":
+			# a quick crossing streak climbs in pitch
+			play("home", -3.0, 1.0 + minf(game.streak, 6) * 0.04)
 		"all_home": play("all_home", -2.0)
 		"fly": play("fly", -4.0)
 		"lady_home", "lady": play("lady", -4.0)

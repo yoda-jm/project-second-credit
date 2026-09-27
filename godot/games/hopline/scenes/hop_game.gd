@@ -5,6 +5,8 @@ extends Node
 
 signal stage_started(engine: HopEngine)
 signal game_over()
+## Presentation-only happenings the view decides (a honk, a near miss), for the HUD and the sound.
+signal fx(kind: String, data: Dictionary)
 
 const E = preload("res://games/hopline/engine/hop_engine.gd")
 
@@ -17,19 +19,36 @@ var high := 0
 var _acc := 0.0
 var _bot: HopBot
 var _seed := 1
+var first_stage := 0         ## "--stage=N": start later (captures of the sunset and night stages)
+var streak := 0              ## quick crossings in a row (presentation only: no points)
+var best_streak := 0
+var last_crossing := 0.0     ## seconds the last frog home took
+const QUICK := 11.0          ## a crossing under this many seconds keeps the streak going
 
 
 func start(seed := -1) -> void:
 	_seed = seed if seed >= 0 else randi()
-	stage = 0
+	stage = first_stage
 	over = false
+	streak = 0
 	_new_stage(4, 0)
 
 
 func _new_stage(lives: int, score: int) -> void:
 	engine = HopEngine.new(stage, _seed + stage * 13, lives, score)
 	_bot = HopBot.new(_seed + stage)
+	engine.event.connect(_on_event)
 	stage_started.emit(engine)
+
+
+func _on_event(kind: String, d: Dictionary) -> void:
+	match kind:
+		"home":
+			last_crossing = HopEngine.LIFE_TIME - engine.life_t
+			streak = streak + 1 if last_crossing < QUICK else 0
+			best_streak = maxi(best_streak, streak)
+		"die":
+			streak = 0
 
 
 func _process(delta: float) -> void:
@@ -61,11 +80,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not demo_locked and event.is_pressed() and not event.is_echo() and (event is InputEventKey or event is InputEventJoypadButton) \
 				and not event.is_action("ui_cancel"):
 			demo = false
+			first_stage = 0
 			start()
 			get_viewport().set_input_as_handled()
 		return
 	if over:
 		if event.is_action_pressed("ui_accept"):
+			first_stage = 0
 			start()
 		return
 	if event.is_echo() or not event.is_pressed():
