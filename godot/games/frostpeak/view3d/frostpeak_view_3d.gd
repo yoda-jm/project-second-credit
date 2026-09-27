@@ -69,7 +69,15 @@ func _ready() -> void:
 	_build_world()
 	_build_mountains()
 	_build_oval()
+	var before := get_child_count()
 	_build_hill()
+	# the hill's structures (the in-run, towers, lights, boards) cast no sun shadows: seen from the chase camera they
+	# are off screen, and their shadows would lie on the landing slope under nothing. The athletes keep theirs.
+	for i in range(before, get_child_count()):
+		var c := get_child(i)
+		for g in [c] + c.find_children("*", "GeometryInstance3D", true, false):
+			if g is GeometryInstance3D:
+				(g as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_build_plaza()
 	_skater = _athlete("skater")
 	_rival = _athlete("skater")
@@ -455,7 +463,7 @@ func _build_world() -> void:
 	we.environment = env
 	add_child(we)
 	_sun = DirectionalLight3D.new()
-	_sun.rotation_degrees = Vector3(-40, -62, 0)  # winter sun from the side: relief on the snow, shadows not streaks
+	_sun.rotation_degrees = Vector3(-66, -30, 0)  # a high sun: shadows fall close under what casts them (a low one threw them far across the slope)
 	_sun.light_color = Color(1.0, 0.94, 0.84)
 	_sun.light_energy = 1.45
 	_sun.light_angular_distance = 0.5  # soft edges
