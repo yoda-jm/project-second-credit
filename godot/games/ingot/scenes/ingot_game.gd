@@ -81,6 +81,10 @@ func _process(delta: float) -> void:
 		engine.tick()
 
 
+var _v_want := 0
+var _v_hold := 0.0
+
+
 func _read_input() -> void:
 	var ax := Input.get_joy_axis(0, JOY_AXIS_LEFT_X)
 	var ay := Input.get_joy_axis(0, JOY_AXIS_LEFT_Y)
@@ -88,8 +92,21 @@ func _read_input() -> void:
 	var down := Input.is_action_pressed("ui_down") or Input.is_physical_key_pressed(KEY_S) or ay > 0.5
 	var left := Input.is_action_pressed("ui_left") or Input.is_physical_key_pressed(KEY_A) or ax < -0.5
 	var right := Input.is_action_pressed("ui_right") or Input.is_physical_key_pressed(KEY_D) or ax > 0.5
+	# a vertical press is remembered a moment, so pressing up just before the ladder still catches it
+	if up != down:
+		_v_want = -1 if up else 1
+		_v_hold = 0.35
+	else:
+		_v_hold -= E.TICK
+		if _v_hold <= 0.0:
+			_v_want = 0
 	var d := Vector2i.ZERO
-	if left != right:
+	# up or down wins wherever the runner can climb (from the cell it stands on, or the one it is moving to)
+	var r: Dictionary = engine.runner
+	var at: Vector2i = r["to"] if r["state"] in ["move", "fall"] else r["cell"]
+	if _v_want != 0 and engine._can_move(at, Vector2i(0, _v_want), r):
+		d.y = _v_want
+	elif left != right:
 		d.x = -1 if left else 1
 	elif up != down:
 		d.y = -1 if up else 1

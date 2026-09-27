@@ -14,12 +14,12 @@ enum Phase { PLAY, DEAD, CLEARED }
 const T = IngotLevel.T
 const TICK := 1.0 / 60.0
 const RUNNER_SPEED := 4.6   ## cells per second
-const GUARD_SPEED := 2.7
+const GUARD_SPEED := 2.35
 const FALL_SPEED := 7.5
 const DIG_TIME := 0.28
-const HOLE_OPEN := 6.5      ## seconds a hole stays open
+const HOLE_OPEN := 7.5      ## seconds a hole stays open
 const HOLE_REFILL := 0.9    ## then it closes over this long
-const TRAPPED := 2.6        ## seconds a guard stays stuck in a hole
+const TRAPPED := 3.2        ## seconds a guard stays stuck in a hole
 const RESPAWN := 1.2
 const DIRS := {"left": Vector2i(-1, 0), "right": Vector2i(1, 0), "up": Vector2i(0, -1), "down": Vector2i(0, 1)}
 
@@ -317,7 +317,7 @@ func _step_guard(g: Dictionary) -> void:
 		if g["gold_hold"] <= 0.0 and at(c) == T.EMPTY and not gold.has(c) and not passable(c + Vector2i(0, 1)):
 			g["gold"] = false
 			gold[c] = true
-	if rng.randf() < 0.12:  # a guard sometimes hesitates at a crossing
+	if rng.randf() < 0.2:  # a guard sometimes hesitates at a crossing
 		return
 	var d := _hunt(c, g)
 	if d != Vector2i.ZERO:
