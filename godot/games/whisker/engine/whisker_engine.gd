@@ -67,6 +67,7 @@ var windows: Array[Dictionary] = []  ## {col, row, rect: Rect2, open: bool, t: f
 var dog := {"x": 18.0, "dir": -1, "chasing": false, "alert": 0.0}
 var shoes: Array[Dictionary] = []  ## {pos, vel, spin}
 var room: WhiskerRoom = null
+var played := {}  ## room kind -> times entered
 var room_window := -1
 var _jump := false
 var _shoe_in := 4.0
@@ -210,6 +211,26 @@ func _control(dt: float, jump_now: bool) -> void:
 		event.emit("land", {"pos": cat.pos, "kind": cat.ground.get("kind", "")})
 
 
+## The room behind a window that opens: the kind played least so far (and not behind another open window), so
+## every room comes round.
+func _next_room() -> int:
+	var kinds := [RoomKind.FISHBOWL, RoomKind.MICE, RoomKind.BIRDCAGE, RoomKind.DOGBOWLS]
+	var showing := {}
+	for w in windows:
+		if w["open"]:
+			showing[w["room"]] = true
+	var best := 1 << 30
+	var picks: Array = []
+	for k in kinds:
+		var n: int = played.get(k, 0) + (100 if showing.has(k) else 0)
+		if n < best:
+			best = n
+			picks = [k]
+		elif n == best:
+			picks.append(k)
+	return picks[rng.randi_range(0, picks.size() - 1)]
+
+
 func _tick_windows(dt: float) -> void:
 	for i in windows.size():
 		var w := windows[i]
@@ -222,6 +243,7 @@ func _tick_windows(dt: float) -> void:
 			event.emit("window_close", {"i": i})
 		elif open_windows() < MAX_OPEN:
 			w["open"] = true
+			w["room"] = _next_room()
 			w["t"] = rng.randf_range(3.0, 6.5) / (1.0 + 0.1 * (level - 1))
 			event.emit("window_open", {"i": i})
 		else:
@@ -300,6 +322,7 @@ func _try_windows() -> void:
 func _enter_room(i: int, serenade := false) -> void:
 	room_window = i
 	var kind: RoomKind = RoomKind.HEARTS if serenade else windows[i]["room"]
+	played[kind] = played.get(kind, 0) + 1
 	match kind:
 		RoomKind.FISHBOWL: room = FishbowlRoom.new()
 		RoomKind.MICE: room = MiceRoom.new()
