@@ -127,5 +127,16 @@ decisions below are settled unless the owner reopens them.
 22. Game 20, **Henhouse Heist** (Chuckie Egg-like, `godot/games/henhouse/`): three farm levels in `levels/*.hen`
    (32 x 26), ladders, lifts, grain that stops the clock, wandering hens, the goose; the autopilot plans on a graph of
    walks, climbs, drops and jumps.
-23. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+23. Owner feedback pass (2026-09-27): Prism Breaker became a 3D neon arena (grid tunnel, refractive bricks, ball
+   lights); Mossfolk a solid 3D rock slab (`view3d/moss_slab.gd`) with a directed camera, drag to pan and wheel to
+   zoom; Hopline got a following camera, afternoon/sunset/night stages (`--stage=N`) and a canal shader with wakes;
+   Fizzlings gold-glowing full bubbles, caustics and camera punches; Inkstorm draws by stepping off the edge (shift for
+   slow); Ingot Run catches ladders easily; Blastyard fast-forwards once the players are out; Whisker Alley opens the
+   least-played room and its bird flies freely. Henhouse Heist still wants the same visual pass; the ski jump is being
+   rebuilt to a real hill profile with a fly-over.
+24. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+   static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
+   glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
+   1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
+25. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

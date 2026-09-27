@@ -29,6 +29,30 @@ Rampart moved up to game 2 on 2026-09-25, at the owner's request.
 - A strong visual showcase without hard assets: glowing gems, rock materials, crumbling dirt, explosions,
   dynamic light. Rockford can be a small, stylised character with minimal animation at first.
 
+## After the ladder: games 9 to 20
+
+With the ladder done (2026-09-26), the owner asked to keep going through the catalog, always the next relevant
+game, and to polish each one to the same standard (3D, lighting, camera, juice). Each brings a little new tech:
+
+| # | Inspired by | Our title | What it brought |
+|---|---|---|---|
+| 9 | Bomberman (1983) | *Blastyard* | Party battle for 1-4 players with bots, solo stages, sudden death |
+| 10 | Lode Runner (1983) | *Ingot Run* | Digging, guard hunting by shortest path, the free remakes' level format |
+| 11 | Sokoban (1982) | *Crate Keeper* | Puzzle solver for our levels, undo/redo, the standard .xsb format |
+| 12 | Pac-Man (1980) | *Nightbite* | Maze chase with four spirit temperaments, neon look |
+| 13 | Arkanoid (1986) | *Prism Breaker* | Ball physics, capsules, a 3D neon arena; LBreakout2 level sets |
+| 14 | Qix (1981) | *Inkstorm* | Territory claiming with flood fill, a relief shader rising as land is claimed |
+| 15 | Lemmings (1991) | *Mossfolk* | Destructible pixel terrain as 3D rock, eight skills, recorded solutions |
+| 16 | Frogger (1981) | *Hopline* | Lanes as functions of time (the autopilot plans through time), times of day |
+| 17 | Pengo (1982) | *Slipfloe* | Sliding and shattering blocks, generated mazes |
+| 18 | Bubble Bobble (1986) | *Fizzlings* | Bubble physics and chains, two-player co-op, caustics |
+| 19 | Rick Dangerous (1989) | *Relic Run* | Flip-screen platforming with traps, pistol and dynamite, demo routes |
+| 20 | Chuckie Egg (1983) | *Henhouse Heist* | Ladders, lifts, wandering hens and the goose, a graph-planning autopilot |
+
+Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
+LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own
+graphics sets). See [level-packs.md](level-packs.md).
+
 ### Bonus games that the stack makes almost free
 After each step some catalog games need little new tech and could be slotted in:
 - after #1: Sokoban (big free `.xsb` level corpus), Dig Dug-like, Pengo-like, Lode Runner-like
