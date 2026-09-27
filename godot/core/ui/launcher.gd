@@ -34,6 +34,7 @@ var _chips: Array[Button] = []
 var _hovered_card := -1
 const CARD_ROW_X := 395.0  ## places the selected card in the middle of the card window
 const WINDOW_W := 1170.0
+var _center_tween: Tween
 
 
 func _ready() -> void:
@@ -53,7 +54,11 @@ func _ready() -> void:
 	_selected = start
 	_previous = start
 	_card_box.position.x = CARD_ROW_X - start * 414.0  # back on the game played last, without sliding
-	(func(): _card_box.position.x = _row_x(_selected)).call_deferred()  # exact, once the cards are laid out
+	# exact once the row has been laid out (only then do the cards know their widths)
+	_card_box.sort_children.connect(func():
+		if _center_tween:
+			_center_tween.kill()
+		_card_box.position.x = _row_x(_selected), CONNECT_ONE_SHOT | CONNECT_DEFERRED)
 	_select_game(start, false)
 	_focus_menu(0, false)
 	_fade_from_black()
@@ -572,8 +577,13 @@ func _select_game(i: int, sound: bool = true) -> void:
 		Settings.save_settings()
 	for a in _arrows:
 		a.queue_redraw()
-	var tw := create_tween()
-	tw.tween_property(_card_box, "position:x", _row_x(i), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if _center_tween:
+		_center_tween.kill()
+	if _cards[i].size.x <= 0.0:
+		_card_box.position.x = _row_x(i)  # not laid out yet: the first layout centres it exactly
+		return
+	_center_tween = create_tween()
+	_center_tween.tween_property(_card_box, "position:x", _row_x(i), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
 ## Where the row goes so card i sits in the middle of the window, from the card's real place and width (cards are
