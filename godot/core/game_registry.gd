@@ -250,7 +250,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Traps, darts, a boulder and six sticks of dynamite.",
 		"inspired_by": "Rick Dangerous (1989)",
 		"scene": "res://games/relic/scenes/relic_game.tscn",
-		"card": "",
+		"card": "res://core/ui/cards/relic.png",
 		"accent": Color(1.0, 0.72, 0.35),
 		"props": [["res://games/relic/art/models/treasure_idol.glb", "model", 0.4],
 			["res://games/relic/art/models/boulder.glb", "model", 0.3],
