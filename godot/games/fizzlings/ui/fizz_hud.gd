@@ -1,7 +1,7 @@
 class_name FizzHud
 extends Control
 ## Fizzlings HUD: each hero's score and lives (hero 2 on the right, or a "press W to join" hint), the level and best,
-## points popping from chains and treats, HURRY UP, READY, LEVEL CLEAR, GAME OVER.
+## points popping from treats, chain counts growing along a chain and the chain's reward, HURRY UP, READY, LEVEL CLEAR, GAME OVER.
 
 const P_COL := [Color(1.0, 0.62, 0.72), Color(0.6, 0.7, 1.0)]
 
@@ -10,6 +10,8 @@ const P_COL := [Color(1.0, 0.62, 0.72), Color(0.6, 0.7, 1.0)]
 var _pops: Array[Dictionary] = []
 var _t := 0.0
 var _hurry_t := 0.0
+var _chain := 0
+var _chain_pos := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -21,10 +23,16 @@ func _ready() -> void:
 func _on_event(kind: String, d: Dictionary) -> void:
 	match kind:
 		"treat":
-			_pops.append({"text": str(d["points"]), "pos": FizzView3D.world(d["pos"], 0.5), "t": 0.0, "col": P_COL[d["p"]]})
+			var big: bool = d["points"] >= 1000
+			_pops.append({"text": str(d["points"]), "pos": FizzView3D.world(d["pos"], 0.5), "t": 0.0, "life": 1.2,
+				"size": 30 if big else 24, "col": (P_COL[d["p"]] as Color).lerp(Color.WHITE, 0.35) if not big else HudKit.GOLD})
 		"pop":
-			if d["trapped"] and d["n"] > 0:
-				_pops.append({"text": "x%d" % (d["n"] + 1), "pos": FizzView3D.world(d["pos"], 0.5), "t": 0.0, "col": HudKit.GOLD})
+			if d["trapped"]:
+				_chain += 1
+				_chain_pos = FizzView3D.world(d["pos"], 0.5)
+				if d["n"] > 0:
+					_pops.append({"text": "x%d" % (d["n"] + 1), "pos": _chain_pos, "t": 0.0, "life": 1.0,
+						"size": mini(22 + d["n"] * 6, 52), "col": HudKit.GOLD})
 		"hurry":
 			_hurry_t = 2.5
 
@@ -32,9 +40,16 @@ func _on_event(kind: String, d: Dictionary) -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_hurry_t = maxf(0.0, _hurry_t - delta)
+	if _chain > 0:  # the full bubbles popped this frame: the chain's reward, bigger the longer the chain
+		var pts: int = FizzEngine.CHAIN_POINTS[mini(_chain, FizzEngine.CHAIN_POINTS.size()) - 1]
+		var col: Color = [HudKit.GOLD, Color(1.0, 0.6, 0.25), Color(1.0, 0.4, 0.55), Color(0.75, 0.5, 1.0), Color(0.4, 0.9, 1.0)][mini(_chain - 1, 4)]
+		var text := "+%d" % pts if _chain == 1 else "CHAIN x%d  +%d" % [_chain, pts]
+		_pops.append({"text": text, "pos": _chain_pos + Vector3(0, 0.6, 0), "t": 0.0, "life": 1.3 + _chain * 0.15,
+			"size": mini(26 + _chain * 9, 72), "col": col})
+		_chain = 0
 	for p in _pops:
 		p["t"] += delta
-	_pops = _pops.filter(func(p): return p["t"] < 1.2)
+	_pops = _pops.filter(func(p): return p["t"] < p["life"])
 	queue_redraw()
 
 
@@ -58,9 +73,17 @@ func _draw() -> void:
 	var cam: Camera3D = get_viewport().get_camera_3d()
 	for p in _pops:
 		if cam:
-			var sp := cam.unproject_position(p["pos"]) + Vector2(0, -44.0 * p["t"])
+			# pops in with an overshoot, floats up, fades at the end
+			var t: float = p["t"]
+			var k: float = t / p["life"]
+			var grow := minf(1.0, t / 0.12) * (1.0 + 0.35 * exp(-t * 8.0) * sin(t * 30.0))
+			var sp := cam.unproject_position(p["pos"]) + Vector2(0, -40.0 * t)
 			var c: Color = p["col"]
-			HudKit.text(self, sp, p["text"], 26, Color(c, 1.0 - p["t"] / 1.2), HudKit.font(true), HudKit.CENTER)
+			var a := clampf((1.0 - k) * 3.0, 0.0, 1.0)
+			var fs := maxi(4, int(p["size"] * grow))
+			var half := HudKit.width(p["text"], fs, HudKit.font(true)) * 0.5 + 16.0
+			sp.x = clampf(sp.x, half, maxf(half, vp.x - half))
+			HudKit.text(self, sp, p["text"], fs, Color(c, a), HudKit.font(true), HudKit.CENTER)
 	if _hurry_t > 0.0:
 		HudKit.banner(self, vp, vp.y * 0.5, "HURRY UP", "", HudKit.BAD, minf(1.0, _hurry_t), 1.0 + 0.1 * sin(_t * 12.0))
 	if e.phase == FizzEngine.Phase.READY:
