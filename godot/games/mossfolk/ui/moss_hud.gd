@@ -18,6 +18,7 @@ var _map_dirty := true
 var _buttons: Array = []   ## [rect, action]
 var _passed := false
 var _map_t := 0.0
+var _map_drag := false
 
 
 func _ready() -> void:
@@ -48,6 +49,12 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if game.demo or game.engine == null:
 		return
+	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_map_drag = false
+	if event is InputEventMouseMotion and _map_drag:
+		_map_jump(event.position)
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		for b in _buttons:
 			if (b[0] as Rect2).has_point(event.position):
@@ -55,13 +62,20 @@ func _unhandled_input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				return
 		if event.position.y >= size.y * (1.0 - BAR):
-			# the map: jump there
-			var mr := _map_rect()
-			if mr.has_point(event.position):
-				_view().cam_x = (event.position.x - mr.position.x) / mr.size.x * game.engine.level.w
+			# the map: jump there (hold and drag to sweep along)
+			if _map_rect().has_point(event.position):
+				_map_drag = true
+				_map_jump(event.position)
+				get_viewport().set_input_as_handled()
 			return
 		if game.give(game.hover):
 			get_viewport().set_input_as_handled()
+
+
+func _map_jump(at: Vector2) -> void:
+	var mr := _map_rect()
+	var p := (at - mr.position) / mr.size
+	_view().jump_to(clampf(p.x, 0.0, 1.0) * game.engine.level.w, clampf(p.y, 0.0, 1.0) * game.engine.level.h)
 
 
 func _press(action: String) -> void:
@@ -126,6 +140,10 @@ func _draw() -> void:
 			HudKit.GOOD if _passed else HudKit.BAD, 1.0)
 		if not game.demo:
 			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.4 + 120), [["ENTER", "next level" if _passed else "try again"], ["ESC", "menu"]])
+	if not game.demo and not game.result and e.frame < 260:
+		var fade := clampf((260 - e.frame) / 40.0, 0.0, 1.0)
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * (1.0 - BAR) - 34), [["RIGHT DRAG", "move"], ["WHEEL", "zoom"],
+			["SPACE", "busiest"], ["MAP", "jump"]], fade)
 	if game.demo:
 		var msg := "DEMO  -  PRESS ANY KEY TO PLAY"
 		var wd := HudKit.width(msg, 22, HudKit.label_font()) + 60.0
@@ -192,7 +210,10 @@ func _draw_bar(e: MossEngine) -> void:
 	draw_rect(Rect2(mr.position + Vector2(e.level.exit) * k - Vector2(3, 6), Vector2(6, 6)), Color(1.0, 0.6, 0.2))
 	var v := _view()
 	if v:
+		# what the camera sees of the level (a slight trapezoid: the camera looks down a little)
 		var vis := v.get_viewport().get_visible_rect().size
-		var l := v.pixel_at(Vector2(0, vis.y * 0.3)).x
-		var r2 := v.pixel_at(Vector2(vis.x, vis.y * 0.3)).x
-		draw_rect(Rect2(mr.position.x + l * k, mr.position.y, (r2 - l) * k, mr.size.y), Color(1, 1, 1, 0.8), false, 2.0)
+		var pts := PackedVector2Array()
+		for s in [Vector2(0, 0), Vector2(vis.x, 0), Vector2(vis.x, vis.y * (1.0 - BAR)), Vector2(0, vis.y * (1.0 - BAR)), Vector2(0, 0)]:
+			var p := v.pixel_at(s)
+			pts.append(mr.position + Vector2(clampf(p.x, 0.0, e.w), clampf(p.y, 0.0, e.h)) * k)
+		draw_polyline(pts, Color(1, 1, 1, 0.85), 2.0)

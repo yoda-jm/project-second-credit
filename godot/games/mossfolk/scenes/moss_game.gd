@@ -2,7 +2,7 @@ class_name MossGame
 extends Node
 ## Runs Mossfolk: the levels in turn (a level is passed by saving enough; otherwise it is played again), 17 logic
 ## steps a second. Keys 1-8 (or the skill bar) pick a skill, a click gives it to the mossling under the cursor;
-## - and + change the release rate, P pauses, N twice pops them all, the arrows (or the screen edges) scroll.
+## - and + change the release rate, P pauses, N twice pops them all; the view pans and zooms (see MossView3D).
 ## The demo plays each level's recorded solution. "--level=N" (user argument) starts at a level.
 
 signal level_started(engine: MossEngine)
