@@ -124,5 +124,8 @@ decisions below are settled unless the owner reopens them.
 21. Game 19, **Relic Run** (Rick Dangerous-like, `godot/games/relic/`): flip-screen temple levels in
    `levels/*.relic` (screens of 20 x 12 tiles), spikes, darts, the boulder, crushers, pistol and dynamite; each level
    carries a route the demo plays and a test checks. `--level=N`.
-22. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+22. Game 20, **Henhouse Heist** (Chuckie Egg-like, `godot/games/henhouse/`): three farm levels in `levels/*.hen`
+   (32 x 26), ladders, lifts, grain that stops the clock, wandering hens, the goose; the autopilot plans on a graph of
+   walks, climbs, drops and jumps.
+23. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

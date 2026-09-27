@@ -256,6 +256,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/relic/art/models/boulder.glb", "model", 0.3],
 			["res://games/relic/art/models/dynamite.glb", "model", 0.3]],
 	},
+	{
+		"id": "henhouse",
+		"style": "Arcade",
+		"title": "Henhouse Heist",
+		"tagline": "Every egg, before the clock, the hens or the goose.",
+		"inspired_by": "Chuckie Egg (1983)",
+		"scene": "res://games/henhouse/scenes/henhouse_game.tscn",
+		"card": "",
+		"accent": Color(1.0, 0.78, 0.35),
+		"props": [["res://games/henhouse/art/models/hen.glb", "model", 0.4],
+			["res://games/henhouse/art/models/egg.glb", "model", 0.3],
+			["res://games/henhouse/art/models/goose.glb", "model", 0.3]],
+	},
 ]
 
 

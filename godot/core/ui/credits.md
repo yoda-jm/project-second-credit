@@ -154,6 +154,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   script (in the scratchpad history) into `godot/games/relic/levels/temple.relic`; sound effects and music by
   `tools/audio/relic_sfx.py` and `relic_music.py`.
 
+## Game 20 (Henhouse Heist, working title)
+
+- Inspired by *Chuckie Egg* (A&F Software, 1983). None of its code, graphics, sounds or levels are in this repo:
+  the farmhand, the hens, the goose, our farm levels and the bluegrass score are original.
+- Models by `tools/blender/henhouse_models.py` (the farmhand on the shared humanoid rig); levels drawn by a script
+  (in the scratchpad history) into `godot/games/henhouse/levels/farm.hen`; sound effects and music by
+  `tools/audio/henhouse_sfx.py` and `henhouse_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
