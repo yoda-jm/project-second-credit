@@ -130,6 +130,8 @@ h2::before { content: "▸ "; color: var(--gold); }
 .game.fizzlings { --accent: var(--neon); grid-template-columns: 1fr 1.25fr; }
 .game.fizzlings video { order: 2; }
 .game.relic { --accent: var(--amber); grid-template-columns: 1.25fr 1fr; }
+.game.henhouse { --accent: var(--gold); grid-template-columns: 1fr 1.25fr; }
+.game.henhouse video { order: 2; }
 .game.bastion video { order: 2; }
 .game:hover { border-color: var(--accent); }
 .game video { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; background: #000; }
