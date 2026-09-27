@@ -33,6 +33,7 @@ var _style := ""  ## "" shows every game; otherwise only the games of that style
 var _chips: Array[Button] = []
 var _hovered_card := -1
 const CARD_ROW_X := 395.0  ## places the selected card in the middle of the card window
+const WINDOW_W := 1170.0
 
 
 func _ready() -> void:
@@ -52,6 +53,7 @@ func _ready() -> void:
 	_selected = start
 	_previous = start
 	_card_box.position.x = CARD_ROW_X - start * 414.0  # back on the game played last, without sliding
+	(func(): _card_box.position.x = _row_x(_selected)).call_deferred()  # exact, once the cards are laid out
 	_select_game(start, false)
 	_focus_menu(0, false)
 	_fade_from_black()
@@ -321,7 +323,7 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	var window := Control.new()
 	window.clip_contents = true
 	window.position = Vector2(610, 520)
-	window.size = Vector2(1170, 530)
+	window.size = Vector2(WINDOW_W, 530)
 	window.mouse_filter = Control.MOUSE_FILTER_PASS
 	_ui.add_child(window)
 	_card_box = HBoxContainer.new()
@@ -571,8 +573,16 @@ func _select_game(i: int, sound: bool = true) -> void:
 	for a in _arrows:
 		a.queue_redraw()
 	var tw := create_tween()
-	tw.tween_property(_card_box, "position:x", CARD_ROW_X - maxi(0, _visible_games().find(i)) * 414.0, 0.35) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(_card_box, "position:x", _row_x(i), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## Where the row goes so card i sits in the middle of the window, from the card's real place and width (cards are
+## not all the same width: a long title widens one).
+func _row_x(i: int) -> float:
+	var c := _cards[i]
+	if c.size.x <= 0.0:
+		return CARD_ROW_X - maxi(0, _visible_games().find(i)) * 414.0  # before the first layout
+	return WINDOW_W * 0.5 - (c.position.x + c.size.x * 0.5)
 
 
 ## The games shown under the current style, in collection order.
