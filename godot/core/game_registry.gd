@@ -243,6 +243,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/fizzlings/art/models/bubble.glb", "model", 0.3],
 			["res://games/fizzlings/art/models/treat_cupcake.glb", "model", 0.3]],
 	},
+	{
+		"id": "relic",
+		"style": "Action",
+		"title": "Relic Run",
+		"tagline": "Traps, darts, a boulder and six sticks of dynamite.",
+		"inspired_by": "Rick Dangerous (1989)",
+		"scene": "res://games/relic/scenes/relic_game.tscn",
+		"card": "",
+		"accent": Color(1.0, 0.72, 0.35),
+		"props": [["res://games/relic/art/models/treasure_idol.glb", "model", 0.4],
+			["res://games/relic/art/models/boulder.glb", "model", 0.3],
+			["res://games/relic/art/models/dynamite.glb", "model", 0.3]],
+	},
 ]
 
 

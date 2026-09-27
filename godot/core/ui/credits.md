@@ -146,6 +146,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   `godot/games/fizzlings/levels/toybox.fizz`; sound effects and music are synthesised by
   `tools/audio/fizzlings_sfx.py` and `fizzlings_music.py`.
 
+## Game 19 (Relic Run, working title)
+
+- Inspired by *Rick Dangerous* (Core Design, 1989). None of its code, graphics, sounds, music or levels are in this
+  repo: the explorer, the temple automatons, our levels and the score are original.
+- The explorer is built on the shared humanoid rig; models by `tools/blender/relic_models.py`; levels drawn by a
+  script (in the scratchpad history) into `godot/games/relic/levels/temple.relic`; sound effects and music by
+  `tools/audio/relic_sfx.py` and `relic_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
