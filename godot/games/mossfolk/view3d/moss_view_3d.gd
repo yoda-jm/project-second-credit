@@ -9,6 +9,7 @@ extends Node3D
 ## mouse button, or at the screen's left and right edges; the wheel zooms towards the cursor; Space jumps to the
 ## busiest mossling (again for the next); Home shows the whole height. The demo directs itself: it opens on the
 ## hatch, pulls back to the crowd and dollies in on whoever is digging, bashing, mining or building.
+## The view breathes with a slow drift and kicks a little on big moments (a pop, the hatch opening).
 
 const E = preload("res://games/mossfolk/engine/moss_engine.gd")
 const M := "res://games/mossfolk/art/models/"
@@ -67,6 +68,9 @@ var _hatch_light: OmniLight3D
 var _burrow_light: OmniLight3D
 var _water_mats: Array[StandardMaterial3D] = []
 var _fx: Bursts
+var _garden: MossGarden
+var _punch := 0.0           ## a camera kick on big moments (a pop, the hatch), decaying
+var _shake := Vector3.ZERO
 var _time := 0.0
 var _lv: MossLevel
 
@@ -162,7 +166,11 @@ func _on_level(e: MossEngine) -> void:
 	_props.clear()
 	_water_mats.clear()
 	var th: Dictionary = THEMES[_lv.theme % THEMES.size()]
-	_env.background_color = th["cave"] * 0.6
+	_garden = MossGarden.new()
+	_garden.fx = _fx
+	_stage.add_child(_garden)
+	_garden.build_backdrop(_lv.w, _lv.h, _lv.theme, _lv.name.hash())
+	_env.background_color = (_garden.pal["top"] as Color)
 	_env.ambient_light_color = th["light"].lerp(Color.WHITE, 0.4)
 	_env.volumetric_fog_albedo = th["cave"].lerp(th["light"], 0.35)
 	(get_node("Rim") as DirectionalLight3D).light_color = th["light"]
@@ -303,22 +311,9 @@ func _refresh(r: Rect2i, e: MossEngine) -> void:
 			_mask.set_pixel(x, y, Color(1.0 if v != E.AIR else 0.0, 1.0 if v == E.STEEL else 0.0, 0))
 
 
-## The cave behind: a far wall, glowing crystals and mushrooms along the ground, roots from the ceiling.
+## The cave's dressing: glowing crystals and mushrooms along the ground, roots from the ceiling (the grotto beyond,
+## the giant mushrooms and the light are MossGarden's).
 func _backdrop(th: Dictionary) -> void:
-	var wall := MeshInstance3D.new()
-	var wm := QuadMesh.new()
-	wm.size = Vector2(_lv.w * PX + 60.0, _lv.h * PX + 30.0)
-	wall.mesh = wm
-	var sm := ShaderMaterial.new()
-	sm.shader = load("res://games/mossfolk/shaders/cave_wall.gdshader")
-	sm.set_shader_parameter("tint", th["cave"].lightened(0.12))
-	sm.set_shader_parameter("glow", th["light"])
-	sm.set_shader_parameter("extent", wm.size)
-	sm.set_shader_parameter("rock_albedo", load(TEX + "dark_rock/albedo.jpg"))
-	sm.set_shader_parameter("rock_normal", load(TEX + "dark_rock/normal.jpg"))
-	wall.material_override = sm
-	wall.position = Vector3(_lv.w * PX * 0.5, _lv.h * PX * 0.5, -9.0)
-	_stage.add_child(wall)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = _lv.name.hash()
 	# along the ground tops, on the slab's upper faces behind the mosslings' lane
@@ -336,6 +331,23 @@ func _backdrop(th: Dictionary) -> void:
 		n.scale = Vector3.ONE * rng.randf_range(0.8, 1.7)
 		_stage.add_child(n)
 		_props.append([n, x, y])
+		if kind.begins_with("mushroom"):
+			# the mushrooms are the stars of the ledges: bigger, glossy, bouncing, with a smaller one or two beside
+			var big := kind == "mushroom_big"
+			n.scale = Vector3.ONE * (rng.randf_range(1.5, 2.3) if big else rng.randf_range(1.8, 2.6))
+			_garden.add_shroom(n, x, y, big, _stage)
+			for j in rng.randi_range(1, 2):
+				var xx := clampi(x + rng.randi_range(4, 9) * (1 if j == 1 else -1), 1, _lv.w - 2)
+				var yy := _top(xx)
+				if yy < 0 or absi(yy - y) > 6:
+					continue
+				var m := _scene("mushroom_small" if big else "mushroom_big", Vector3(0.3, 0.4, 0.3), th["moss"])
+				m.position = px(xx, yy, n.position.z + rng.randf_range(-0.3, 0.4))
+				m.rotation.y = rng.randf() * TAU
+				m.scale = Vector3.ONE * rng.randf_range(0.9, 1.4)
+				_stage.add_child(m)
+				_props.append([m, xx, yy])
+				_garden.add_shroom(m, xx, yy, not big, _stage)
 		if kind == "crystal_cluster":
 			_glow(n, th["light"], 0.45)
 			_omni(n, th["light"], 1.0, 2.6, Vector3(0, 0.5, 0.2), 0.6)
@@ -344,6 +356,7 @@ func _backdrop(th: Dictionary) -> void:
 		r.position = Vector3(rng.randf_range(0.0, _lv.w * PX), _lv.h * PX + 0.5, rng.randf_range(-MossSlab.DEPTH, -0.8))
 		r.scale = Vector3.ONE * rng.randf_range(1.0, 2.0)
 		_stage.add_child(r)
+	_garden.add_giants(_lv.w, _lv.h, load(M + "mushroom_big.glb"))
 	# big crystals deep in the cave, glowing through the haze
 	for i in _lv.w / 90:
 		var c := _scene("crystal_cluster", Vector3(0.3, 0.4, 0.3), th["light"])
@@ -462,6 +475,8 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			if ap and ap.has_animation("open"):
 				ap.play("open")
 			_hatch_light.light_energy = 5.0
+			_garden.bump(_lv.entrance.x, _lv.entrance.y, 0.7, 2000.0, 1.0)   # a ripple of bounces along the level
+			_punch = maxf(_punch, 0.5)
 			_fx.burst(_hatch.position + Vector3(0, -0.3, 0.3), Color(1.0, 0.85, 0.5), 20, 1.5, 0.9, 0.08, 1.0, -1.0, -1.0, "glow")
 		"stroke":
 			var c: Dictionary = e.folk[d["id"]]
@@ -470,6 +485,8 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"pop":
 			_fx.burst(px(d["x"], d["y"], 0.3), Color(1.0, 0.7, 0.3), 36, 4.0, 0.7, 0.14, 1.0, -4.0, 1.0, "glow")
 			_fx.flash(px(d["x"], d["y"], 0.3) - Vector3(0, 2.5, -1.0), Color(1.0, 0.6, 0.3), 3.0)
+			_garden.bump(d["x"], d["y"], 1.3, 90.0)
+			_punch = maxf(_punch, 1.0)
 		"death":
 			if d["how"] == "drown":
 				_fx.burst(px(d["x"], d["y"], 0.2), Color(0.6, 0.85, 1.0), 14, 1.2, 0.8, 0.06, 1.0, 1.0, 1.0, "glow")
@@ -478,6 +495,7 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"saved":
 			_fx.burst(px(_lv.exit.x, _lv.exit.y - 8, 0.4), Color(1.0, 0.85, 0.4), 12, 1.5, 0.6, 0.08, 1.0, 1.0, 1.0, "glow")
 			_burrow_light.light_energy = 5.0
+			_garden.bump(_lv.exit.x, _lv.exit.y, 0.5, 45.0)
 
 
 func _process(delta: float) -> void:
@@ -522,6 +540,11 @@ func _process(delta: float) -> void:
 			node.queue_free()
 			_folk.erase(id)
 			continue
+		# a landing shakes the mushrooms round it
+		var st: String = c["state"]
+		if f.get("st", "") in ["fall", "glide"] and st in ["walk", "shrug", "block"]:
+			_garden.bump(c["x"], c["y"], 0.9 if f["st"] == "fall" else 0.6, 36.0)
+		f["st"] = st
 		var target := px(c["x"], c["y"] + 1, 0.0)
 		f["pos"] = (f["pos"] as Vector3).lerp(target, minf(1.0, delta * 18.0))
 		node.position = f["pos"]
@@ -541,6 +564,7 @@ func _process(delta: float) -> void:
 		if lb.visible:
 			lb.text = str(5 - int(b * E.TICK))
 			lb.modulate = Color(1.0, 0.85 - b / 170.0, 0.4)
+	_garden.update(delta, e.folk)
 	_place_camera(delta)
 
 
@@ -550,6 +574,7 @@ func _sink_props(r: Rect2i) -> void:
 	for p in _props:
 		var n: Node3D = p[0]
 		if n.visible and grown.has_point(Vector2i(p[1], p[2])) and game.engine.terrain[int(p[2]) * _lv.w + int(p[1])] == E.AIR:
+			n.set_meta("sinking", true)
 			var tw := n.create_tween()
 			tw.tween_property(n, "scale", Vector3.ONE * 0.01, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 			tw.tween_callback(n.hide)
@@ -676,8 +701,16 @@ func _place_camera(delta: float) -> void:
 	# the play area is the screen above the bar: its centre sits a little above the screen's
 	var look := Vector3(_x * PX, (_lv.h - _y) * PX - hh * BAR, 0.0)
 	var off := Basis(Vector3.UP, deg_to_rad(_yaw)) * Basis(Vector3.RIGHT, deg_to_rad(-_pitch)) * Vector3(0, 0, dist)
-	camera.position = look + off
-	camera.look_at(look, Vector3.UP)
+	# a slow breathing drift, and a kick on big moments that settles in a moment
+	_punch = maxf(0.0, _punch - delta * 2.5)
+	if _punch > 0.0:
+		_shake = Vector3(sin(_time * 53.0), sin(_time * 41.0 + 1.3), 0.0) * _punch * _punch * 0.06 * hh / 10.0
+	else:
+		_shake = Vector3.ZERO
+	var drift := Vector3(sin(_time * 0.21), sin(_time * 0.17 + 1.1), 0.0) * 0.12 * hh / 10.0
+	camera.position = look + off + drift + _shake
+	camera.look_at(look + drift * 0.6, Vector3.UP)
+	camera.fov = 30.0 - 1.2 * _punch * _punch
 	# focus on the slab's front; the far cave softens
 	_attr.dof_blur_far_distance = dist + 3.0
 	_attr.dof_blur_far_transition = 6.0 + dist * 0.2
