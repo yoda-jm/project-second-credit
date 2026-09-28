@@ -30,16 +30,16 @@ func _on_event(kind: String, d: Dictionary) -> void:
 				return
 			var pct := float(d["cells"]) / ((InkEngine.W - 2) * (InkEngine.H - 2)) * 100.0
 			_pops.append({"text": "+%.1f%%%s" % [pct, "  x2" if d["slow"] else ""], "pos": InkView3D.world(c / n, 0.6), "t": 0.0,
-				"col": Color(0.6, 0.85, 1.0) if d["slow"] else HudKit.GOLD})
+				"col": Color(0.6, 0.85, 1.0) if d["slow"] else HudKit.GOLD, "big": pct > 10.0, "size": clampf(26.0 + pct * 1.2, 28.0, 46.0)})
 		"split":
-			_pops.append({"text": "SPLIT  +2000", "pos": Vector3(0, 0.8, 0), "t": 0.0, "col": Color(0.8, 0.6, 1.0)})
+			_pops.append({"text": "SPLIT  +2000", "pos": Vector3(0, 0.8, 0), "t": 0.0, "col": Color(0.8, 0.6, 1.0), "big": false, "size": 30.0})
 
 
 func _process(delta: float) -> void:
 	_t += delta
 	for p in _pops:
 		p["t"] += delta
-	_pops = _pops.filter(func(p): return p["t"] < 1.6)
+	_pops = _pops.filter(func(p): return p["t"] < (2.4 if p["big"] else 1.8))
 	queue_redraw()
 
 
@@ -65,9 +65,22 @@ func _draw() -> void:
 	var cam: Camera3D = get_viewport().get_camera_3d()
 	for p in _pops:
 		if cam:
-			var sp := cam.unproject_position(p["pos"]) + Vector2(0, -40.0 * p["t"])
+			# the share pops in with a springy overshoot, rises, shimmers, and fades
+			var t: float = p["t"]
+			var life := 2.4 if p["big"] else 1.8
+			var pop := 1.0 - exp(-7.0 * t) * cos(11.0 * t)
+			var sp := cam.unproject_position(p["pos"]) + Vector2(0, -30.0 * t - 14.0 * pop)
 			var c: Color = p["col"]
-			HudKit.text(self, sp, p["text"], 28, Color(c, 1.0 - p["t"] / 1.6), HudKit.font(true), HudKit.CENTER)
+			var a := clampf((life - t) / 0.5, 0.0, 1.0)
+			var shimmer := 0.5 + 0.5 * sin(t * 14.0)
+			var col := c.lerp(Color.WHITE, shimmer * 0.35 * a)
+			var size := maxi(8, int(float(p["size"]) * maxf(pop, 0.05)))
+			HudKit.text(self, sp, p["text"], size, Color(col, a), HudKit.font(true), HudKit.CENTER)
+			if p["big"]:
+				var bs := maxi(8, int(20.0 * maxf(1.0 - exp(-6.0 * (t - 0.15)) * cos(10.0 * (t - 0.15)), 0.05))) if t > 0.15 else 0
+				if bs > 0:
+					HudKit.text(self, sp + Vector2(0, -size * 1.05), "GRAND CLAIM!", bs, Color(Color.WHITE.lerp(c, shimmer), a),
+						HudKit.label_font(), HudKit.CENTER)
 	if e.phase == InkEngine.Phase.READY and e.time < 2.0:
 		HudKit.banner(self, vp, vp.y * 0.45, "STAGE %d" % (game.stage + 1), land.to_upper(), ACCENT, clampf(e.phase_t * 2.0, 0.0, 1.0))
 	elif e.phase == InkEngine.Phase.CLEARED:

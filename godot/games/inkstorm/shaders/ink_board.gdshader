@@ -39,10 +39,32 @@ float fbm(vec2 p) {
 	return v;
 }
 
+// a damped spring: overshoots by about 15%, then settles (the game script has the same curve)
+float spring(float s) {
+	return s <= 0.0 ? 0.0 : 1.0 - exp(-6.0 * s) * cos(10.0 * s);
+}
+
+// the claim time, bilinear over the claimed cells only (smooth wave fronts, no cell steps); -1 if none is claimed
+float claim_t(vec2 uv) {
+	vec2 p = uv * vec2(128.0, 96.0) - 0.5;
+	vec2 f = fract(p);
+	ivec2 i = ivec2(floor(p));
+	float sum = 0.0;
+	float wsum = 0.0;
+	for (int k = 0; k < 4; k++) {
+		ivec2 o = ivec2(k & 1, k >> 1);
+		ivec2 c = clamp(i + o, ivec2(0), ivec2(127, 95));
+		float t = texelFetch(claimed_at, c, 0).r;
+		float w = (o.x == 1 ? f.x : 1.0 - f.x) * (o.y == 1 ? f.y : 1.0 - f.y);
+		if (!(t < -0.5 && t > -1.5)) { sum += t * w; wsum += w; }
+	}
+	return wsum > 0.001 ? sum / wsum : -1.0;
+}
+
 float rise_at(vec2 uv) {
-	float t = texture(claimed_at, uv).r;
+	float t = claim_t(uv);
 	if (t < -0.5 && t > -1.5) return 0.0;  // never claimed (-1)
-	return smoothstep(0.0, rise_time, now - t);
+	return spring((now - t) / rise_time);
 }
 
 float disp(vec2 uv) {
@@ -55,7 +77,7 @@ float disp(vec2 uv) {
 void vertex() {
 	float d = disp(UV);
 	v_h = texture(height_map, UV).r;
-	v_land = d > 0.0005 ? smoothstep(0.35, 0.65, texture(mask, UV).r) * rise_at(UV) : 0.0;
+	v_land = d > 0.0005 ? clamp(smoothstep(0.35, 0.65, texture(mask, UV).r) * rise_at(UV) * 1.4, 0.0, 1.0) : 0.0;
 	VERTEX.y += d;
 	// the normal from the neighbouring heights (board 12.8 x 9.6, sampled a cell's half apart)
 	vec2 e = vec2(1.0 / 256.0, 1.0 / 192.0);
@@ -96,7 +118,22 @@ void fragment() {
 	edge = smoothstep(0.55, 0.95, edge);
 	vec3 col = mix(open_col, land_col, land);
 	col = mix(col, col_gilt, edge * 0.85);
+	// the claim wave: a band of gold at its front, a warm sheen and sparkles behind it
+	float t0 = claim_t(uv);
+	float age = (t0 < -0.5 && t0 > -1.5) ? 99.0 : now - t0 + (fbm(uv * 30.0) - 0.5) * 0.12;
+	float front = smoothstep(-0.03, 0.01, age) * (1.0 - smoothstep(0.02, 0.12, age)) * smoothstep(0.3, 0.6, m);
+	float sheen = step(0.0, age) * exp(-max(age, 0.0) * 2.5) * step(0.5, m);
+	vec2 sc = floor(uv * vec2(256.0, 192.0));
+	float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+	vec2 sf = fract(uv * vec2(256.0, 192.0)) - 0.5;
+	float star = max(0.0, 1.0 - length(sf) * 3.2) + max(0.0, 1.0 - abs(sf.x) * 14.0) * max(0.0, 1.0 - abs(sf.y) * 2.2) * 0.6
+		+ max(0.0, 1.0 - abs(sf.y) * 14.0) * max(0.0, 1.0 - abs(sf.x) * 2.2) * 0.6;
+	float twinkle = step(0.93, hs) * star * pow(max(0.0, sin(now * (5.0 + hs * 6.0) + hs * 80.0)), 12.0) * exp(-max(age - 0.3, 0.0) * 1.0) * step(0.2, age);
+	// the gilt edge is polished metal, with light running along it
+	float run = pow(0.5 + 0.5 * sin((uv.x * 12.8 + uv.y * 9.6) * 5.0 - now * 1.5), 10.0);
 	ALBEDO = col * (0.9 + grain * 0.15);
-	ROUGHNESS = mix(0.95, h < water_level ? 0.25 : 0.85, land);
-	EMISSION = col_gilt * edge * 0.9 + open_col * (1.0 - land) * 0.15;
+	ROUGHNESS = mix(mix(0.95, h < water_level ? 0.25 : 0.85, land), 0.35, edge * flat_);
+	METALLIC = edge * flat_ * 0.8;
+	EMISSION = col_gilt * edge * (0.55 + run * 0.9) + open_col * (1.0 - land) * 0.15
+		+ col_gilt * front * 1.3 + vec3(1.0, 0.8, 0.45) * sheen * 0.08 + vec3(1.0, 0.95, 0.8) * twinkle * 4.0;
 }
