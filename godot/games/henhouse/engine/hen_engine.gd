@@ -60,6 +60,11 @@ func _init(lv: HenLevel, stage_ := 0, seed_ := 1, lives_ := 5, score_ := 0) -> v
 		grain[c] = true
 	for i in mini(lv.hen_count + stage / 4, lv.hens.size()):
 		var c: Vector2i = lv.hens[i]
+		# a hen drawn over a gap starts on the nearest floor of her row
+		for dx in [0, 1, -1, 2, -2, 3, -3]:
+			if c.x + dx >= 0 and c.x + dx < W and _standable_at(lv, c.x + dx, c.y + 1):
+				c.x += dx
+				break
 		hens.append({"id": i, "pos": Vector2(c.x + 0.5, c.y + 1.0), "dir": Vector2i(1 if i % 2 == 0 else -1, 0), "climb": false,
 			"peck": 0.0, "speed": 2.2 + minf(stage, 8) * 0.12})
 	if lv.lift_col >= 0:
@@ -96,6 +101,10 @@ func lift_under(p: Vector2, reach := 0.2) -> int:
 
 
 ## Can one stand at (x, y) (feet on the top of the row y)?
+static func _standable_at(lv, x: int, row: int) -> bool:
+	return row < H and lv.solid[row * W + x] == 1
+
+
 func standable(x: float, y: float) -> bool:
 	var row := int(round(y))
 	if absf(y - row) > 0.05:
@@ -307,7 +316,7 @@ func _move_hens() -> void:
 			var opts: Array[Vector2i] = []
 			if standable(at.x, at.y):
 				for dx in [-1, 1]:
-					if standable(at.x + dx, at.y):
+					if at.x + dx > 0.0 and at.x + dx < W and standable(at.x + dx, at.y):  # never off the side of the level
 						opts.append(Vector2i(dx, 0))
 			if ladder(c.x, c.y - 1):
 				opts.append(Vector2i(0, -1))
