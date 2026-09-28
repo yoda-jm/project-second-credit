@@ -64,6 +64,7 @@ func run(_l: bool, _r: bool, a: bool) -> void:
 				if _lip_time < 0.0:
 					takeoff = 0.15  # no jump: slides off the lip
 				stage = Stage.FLIGHT
+				fly = Vector2(cos(SkiHill.ALPHA), -sin(SkiHill.ALPHA)) * (along - INRUN)  # just past the lip
 				# along the table (11 degrees down), plus the jump's push square to it
 				var push := 1.0 + 1.8 * takeoff
 				var ta := SkiHill.ALPHA

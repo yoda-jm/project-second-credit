@@ -86,7 +86,9 @@ func height(x: float, z: float) -> float:
 		var t := clampf(g.y, 0.0, 1.0)
 		var surf := lerpf(_gh.x, _gh.y, pow(t, 0.8)) + 12.0
 		h = lerpf(h, surf, g.x * 0.9)
-	return maxf(h, 0.0) + relief(x, z) * (1.0 - smoothstep(0.0, 40.0, h))
+	# the biathlon venue brings its own rolling ground (BiathlonCourse), in place of the valley's swells
+	var bm := BiathlonCourse.mask(x, z)
+	return maxf(h, 0.0) + relief(x, z) * (1.0 - smoothstep(0.0, 40.0, h)) * (1.0 - bm) + (BiathlonCourse.ground(x, z) if bm > 0.0 else 0.0)
 
 
 ## The frozen river's centre line (z for an x), winding along the north of the valley.
@@ -194,6 +196,8 @@ func _build_floor() -> void:
 			var z := C.z - size * 0.5 + size * k / n
 			var r := Vector2(x - C.x, z - C.z).length()
 			var y := height(x, z) - 3.0 * smoothstep(985.0, 1010.0, r) - 0.1
+			if FrostpeakBiathlon.covers(Vector3(x, 0, z)):  # under the venue's own finer ground
+				y -= 1.5 * FrostpeakBiathlon.inside(Vector3(x, 0, z))
 			if FrostpeakHill.covers(Vector3(x, 0, z)):
 				var l := FrostpeakHill.frame().affine_inverse() * Vector3(x, 0, z)
 				var inner := minf(minf(l.x - FrostpeakHill.X0, FrostpeakHill.X1 - l.x), FrostpeakHill.Z1 - absf(l.z))
@@ -221,7 +225,7 @@ func _build_floor() -> void:
 		if clump < 0.05 and rng.randf() > 0.12:  # woods in stands, a few lone trees between
 			continue
 		var p := Vector3(cos(a) * rr + C.x, 0, sin(a) * rr + C.z)
-		if FrostpeakHill.covers(p) or p.distance_to(FrostpeakView3D.PLAZA) < 60.0:
+		if FrostpeakHill.covers(p) or p.distance_to(FrostpeakView3D.PLAZA) < 60.0 or FrostpeakBiathlon.covers(p, 10.0):
 			continue
 		if absf(p.z) < 95.0 and p.x > -120.0 and p.x < 180.0:  # the oval, its stand and car park
 			continue
@@ -390,6 +394,7 @@ func build_roads(ground: Callable) -> void:
 		[Vector3(-60, 0, 112), Vector3(60, 0, 112), Vector3(80, 0, 330), VILLAGE + Vector3(-200, 0, -60)],
 		[VILLAGE + Vector3(220, 0, 70), Vector3(470, 0, 380), Vector3(430, 0, 200), Vector3(490, 0, 110)],
 		[VILLAGE + Vector3(60, 0, 125), Vector3(420, 0, 640), Vector3(520, 0, 660), STATION + Vector3(-20, 0, -10)],
+		[FrostpeakView3D.PLAZA + Vector3(25, 0, -28), Vector3(-455, 0, -95), Vector3(-450, 0, -160), Vector3(-418, 0, -186)],
 	]
 	var poles: Array[Transform3D] = []
 	for r in routes:

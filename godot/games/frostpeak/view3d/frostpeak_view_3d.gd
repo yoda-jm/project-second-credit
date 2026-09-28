@@ -1,8 +1,9 @@
 class_name FrostpeakView3D
 extends Node3D
-## Frostpeak Games in 3D: three venues in one alpine valley (FrostpeakValley). The speed-skating oval sits at the
-## origin, the large jump hill (FrostpeakHill) at the valley's head backing onto the mountains, the medal plaza with
-## the podium and the cauldron at PLAZA. The venues are built from the events' own geometry (lane lengths, the
+## Frostpeak Games in 3D: four venues in one alpine valley (FrostpeakValley). The speed-skating oval sits at the
+## origin, the large jump hill (FrostpeakHill) at the valley's head backing onto the mountains, the biathlon stadium
+## and its course (FrostpeakBiathlon) in the woods to the north-west, the medal plaza with the podium and the
+## cauldron at PLAZA. The venues are built from the events' own geometry (lane lengths, the
 ## hill's profile) so the picture matches the rules. Between venues the camera flies (FrostpeakFlight) high over
 ## the valley. Banners and painted lettering are drawn once into textures at start (invented names only).
 
@@ -17,8 +18,8 @@ const SUN_ELEVATION := 20.0  ## a low winter sun, beside the jump hill (on its l
 const SUN_AZIMUTH := -58.0
 const SHADOW_FAR := 700.0  ## how far the sun's shadows reach (4 cascades, the nearest a few centimetres a texel)
 const RIM_LAYER := 1 << 10  ## render layer 11: the athletes, lit by the rim light too
-const INTRO_FLIGHT := 10.5  ## seconds of flight to the jump hill before its title card
-const VALLEY_WAY := Vector3(-120, 170, 330)  ## the flight to the hill swings out over the valley here
+const MAX_TURN := 1.2  ## the camera never turns faster than this (radians a second)
+const WIPE_COVER := 0.32  ## a replay wipe covers the screen this long after it starts (the cut is hidden there)
 const BOARDS := 10.5  ## the padded boards, out from the inner radius
 const STAND_Z := RADIUS + 13.0  ## the grandstand's front wall, along the front straight
 const STAGE_Y := 0.46  ## the medal stage lifts the podium blocks
@@ -38,6 +39,8 @@ const COATS: Array[Color] = [Color(0.8, 0.12, 0.12), Color(0.15, 0.3, 0.75), Col
 const HATS: Array[Color] = [Color(0.95, 0.95, 0.95), Color(0.85, 0.1, 0.12), Color(0.1, 0.25, 0.7), Color(0.95, 0.8, 0.1),
 	Color(0.1, 0.5, 0.25), Color(0.95, 0.5, 0.1), Color(0.6, 0.2, 0.6), Color(0.1, 0.1, 0.1)]
 
+signal tv_sound(name: String, db: float, pitch: float)  ## the replay's sounds (slowed down with it)
+
 @export var game: FrostpeakGame
 
 var _camera: Camera3D
@@ -48,17 +51,21 @@ var _ice_mat: ShaderMaterial
 var _skater: Node3D
 var _rival: Node3D
 var _jumper: Node3D
+var _jumper_wait: Node3D  ## the next athletes, waiting at the start while the last ones stay where they finished
+var _skater_wait: Node3D
+var _rival_wait: Node3D
 var _podium_people: Array[Node3D] = []
 var _flags: Array[MeshInstance3D] = []
 var _snowfall: GPUParticles3D
 var _cam_pos := Vector3(0, 30, 80)
 var _cam_look := Vector3.ZERO
+var _cam_vel := Vector3.ZERO
+var _look_vel := Vector3.ZERO
 var _t := 0.0
 var _stage_t := 0.0
 var _landed_x := 0.0
 var _slide := 0.0
 var _slide_v := -1.0
-var _jump_stage := -1  ## the camera cuts (rather than glides) when the jumper changes stage
 var _paint: Array = []  ## [SubViewport, Callable(texture)]: text drawn once, then baked into mipmapped textures
 var _boards: Array[Label3D] = []  ## scoreboard lines, rewritten live
 var _crowd_mats := {}
@@ -67,12 +74,42 @@ var _rng := RandomNumberGenerator.new()
 var _into: Node3D = self  ## where props, instanced sets and flags are added (the hill builds in its own frame)
 var valley: FrostpeakValley
 var hill: FrostpeakHill
+var biathlon: FrostpeakBiathlon
+var bview: FrostpeakBiathlonView
 var _flight: FrostpeakFlight
+var _fly_v0 := Vector3.ZERO  ## how the camera was moving when the flight took over
+var _fly_lv0 := Vector3.ZERO
 var _flight_key := ""  ## which move the current flight is (so a stage starts it once)
 var _shafts: ShaderMaterial
 var _to_sun := Vector3.UP
-var _jump_cam := ""  ## the jump's current camera: "gate", "inrun", "chase", "side", "outrun"
-var _reveal: Array[Vector3] = []  ## the hill's reveal: where the flight lands, what it looks at, where it pushes in to
+var _stage := -1
+var _jcam: FrostpeakJumpCam
+var _rec := FrostpeakReplay.new()
+var _fov := 50.0
+var _fov_cut := false
+var _cam_q := Quaternion.IDENTITY
+var _turn_v := Vector3.ZERO  ## how the lens is turning (radians a second, about each axis)
+var _turn_w := 30.0  ## how closely it follows (1/s): tight on the athletes, softer in flights
+var _in_flight := false
+var _have_q := false
+var _hand_pos := Vector3.ZERO  ## a glide from where the camera was (see _handoff)
+var _hand_look := Vector3.ZERO
+var _hand_len := 0.0
+var _hand_left := 0.0
+var _stop_turn := 0.0  ## how far the jumper has turned side-on, stopping in the arena
+var _rp_active := false  ## the replay
+var _rp_shots: Array = []
+var _rp_i := -1
+var _rp_t := 0.0  ## live time the replay shows
+var _rp_wiped := 0
+var _rp_cut := false
+var _rp_live: Array = []  ## the live picture to come back to: camera, look, lens, the jumper
+var _wipe_t := -1.0
+var _ticked := {}  ## values the events move tick by tick: [the previous tick's, the last tick's, which tick]
+var _last_lp := Vector3.ZERO  ## the jumper as last drawn (hill frame)
+var _land_drop := 0.0  ## how far the jumper still sinks onto the snow, just landed
+var _glide := 0.0  ## the skater's glide on past the finish
+var _glide_v := 0.0
 
 
 func _ready() -> void:
@@ -88,13 +125,20 @@ func _ready() -> void:
 	_build_oval()
 	hill = FrostpeakHill.new(self, valley)
 	hill.build()
+	biathlon = FrostpeakBiathlon.new(self, valley)
+	biathlon.build()
 	valley.build_roads(ground_y)
-	# the reveal: high over the arena, the whole hill ahead, from the crowd to the start tower
-	_reveal = [hill.world(Vector3(345, 16, -26)), hill.world(Vector3(-5, -8, 0)), hill.world(Vector3(300, 6, -18))]
+	_jcam = FrostpeakJumpCam.new(func(x: float, z: float) -> float: return hill.terrain_y(x, z))
 	_build_plaza()
 	_skater = _athlete("skater")
 	_rival = _athlete("skater")
 	_jumper = _athlete("jumper")
+	_jumper_wait = _athlete("jumper")
+	_skater_wait = _athlete("skater")
+	_rival_wait = _athlete("skater")
+	for n in [_jumper_wait, _skater_wait, _rival_wait]:
+		n.visible = false
+	bview = FrostpeakBiathlonView.new(self, biathlon)
 	game.stage_changed.connect(_on_stage)
 	game.attempt_started.connect(_on_attempt)
 	_bake.call_deferred()
@@ -151,7 +195,7 @@ func _athlete(kind: String) -> Node3D:
 		(mi as VisualInstance3D).layers |= RIM_LAYER
 	var ap: AnimationPlayer = n.find_child("AnimationPlayer", true, false)
 	for a in ap.get_animation_list():
-		ap.get_animation(a).loop_mode = Animation.LOOP_LINEAR if a in ["idle", "skate", "glide", "ready", "tuck", "flight", "wave", "celebrate", "telemark"] else Animation.LOOP_NONE
+		ap.get_animation(a).loop_mode = Animation.LOOP_LINEAR if a in ["idle", "skate", "glide", "ready", "tuck", "flight", "wave", "celebrate", "telemark", "prone"] else Animation.LOOP_NONE
 	return n
 
 
@@ -324,7 +368,7 @@ func _crowd_overrides(hop: float) -> Dictionary:
 
 
 ## Conifers, a mix of broad pines and slender spruces, with snow lying on the branches.
-func _forest(xforms: Array[Transform3D], seed: int, shadows := false) -> void:
+func _forest(xforms: Array[Transform3D], seed: int, shadows := false, vis_end := 1400.0) -> void:
 	var tm := ShaderMaterial.new()
 	tm.shader = load(SH + "tree.gdshader")
 	var rng := RandomNumberGenerator.new()
@@ -334,8 +378,8 @@ func _forest(xforms: Array[Transform3D], seed: int, shadows := false) -> void:
 	for x in xforms:
 		(pines if rng.randf() < 0.55 else spruces).append(x)
 	# only the woods lining the hill cast sun shadows (soft, from the low sun); the wide forests cast none
-	_multi("snowy_pine", pines, {"pine_needles": tm}, [], [], 1400.0, shadows, _shadow_proxy("pine"))
-	_multi("snowy_spruce", spruces, {"pine_needles": tm}, [], [], 1400.0, shadows, _shadow_proxy("spruce"))
+	_multi("snowy_pine", pines, {"pine_needles": tm}, [], [], vis_end, shadows, _shadow_proxy("pine"))
+	_multi("snowy_spruce", spruces, {"pine_needles": tm}, [], [], vis_end, shadows, _shadow_proxy("spruce"))
 
 
 ## Shadow stand-ins for the crowds and the woods: a person is a tapered column with a head, a pine or a spruce
@@ -688,7 +732,7 @@ func _shadow_range(far: float) -> void:
 
 ## The rim light shines from behind the athlete towards the camera, from a little above and to the sun's side.
 func _update_rim() -> void:
-	var target := _jumper if _jumper.visible else _skater
+	var target := _jumper if _jumper.visible else (bview.athlete if bview.athlete.visible else _skater)
 	var back := (target.global_position - _camera.global_position)
 	back.y = 0.0
 	if back.length() < 0.01:
@@ -868,7 +912,7 @@ func _build_oval() -> void:
 
 
 ## One grandstand section at `xf` (its front wall at the origin, facing +Z), full of fans, lettering on the fascia.
-func _stand(xf: Transform3D, seed: int) -> void:
+func _stand(xf: Transform3D, seed: int, fill := 0.9) -> void:
 	var st := _prop("grandstand", xf.origin, 0.0)
 	st.basis = xf.basis
 	var rng := RandomNumberGenerator.new()
@@ -877,7 +921,7 @@ func _stand(xf: Transform3D, seed: int) -> void:
 	var yaw := xf.basis.get_euler().y
 	for r in ROWS:
 		for sidx in SEATS:
-			if rng.randf() < 0.1:
+			if rng.randf() > fill:
 				continue
 			var xb := -SEC * 0.5 + 1.2 + (sidx + 0.5) * (SEC - 2.4) / SEATS + rng.randf_range(-0.05, 0.05)
 			var p := xf * Vector3(xb, Z0 + r * RISE, -(Y0 + r * TREAD + 0.14))
@@ -996,6 +1040,8 @@ func _build_plaza() -> void:
 	for i in 60:
 		var a := rng.randf() * TAU
 		var r := rng.randf_range(32.0, 55.0)
+		if sin(a) < -0.8:  # the camera comes in from the north
+			continue
 		trees.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.2, 2.4)), PLAZA + Vector3(cos(a) * r - 4.0, 0, sin(a) * r)))
 	_forest(trees, 31)
 
@@ -1011,39 +1057,89 @@ func _set_flag(i: int, nation: int) -> void:
 # ------------------------------------------------------------------ stages
 
 func _on_stage(stage: int) -> void:
+	var prev := _stage
+	_stage = stage
 	_stage_t = 0.0
 	var ev := game.comp.event_name() if game.comp else ""
+	if prev == S.REPLAY and _rp_active:
+		_end_replay()
 	_skater.visible = false
 	_rival.visible = false
 	_jumper.visible = false
+	# whoever has just finished stays where they are as the camera leaves (another model waits at the start)
+	var stays: bool = stage in [S.STANDINGS, S.NEXT] and prev in [S.RESULT, S.REPLAY]
+	bview.athlete.visible = stays and ev == "biathlon"
+	bview.waiting.node.visible = false
+	_jumper_wait.visible = false
+	_skater_wait.visible = false
+	_rival_wait.visible = false
+	if stays and ev == "speed_skating":
+		_skater.visible = true
+		_rival.visible = true
+	if stays and ev == "ski_jump" and stage == S.NEXT:
+		_jumper.visible = true
 	for p in _podium_people:
 		p.visible = false
-	if stage == S.PODIUM:
-		var rk := game.comp.ranking(game.comp.programme[game.comp.current])
-		# the podium model is turned to face the camera: silver stands to the winner's right, on screen left
-		var spots := [Vector3(0, 1.2 + STAGE_Y, 0), Vector3(1.45, 0.85 + STAGE_Y, 0), Vector3(-1.45, 0.55 + STAGE_Y, 0)]
-		for place in mini(3, rk.size()):
-			var a := _podium_people[place]
-			a.visible = true
-			a.position = PLAZA + spots[place]
-			a.rotation.y = PI
-			_dress(a, game.comp.athletes[rk[place]]["nation"])
-			_anim(a, "wave" if place == 0 else "idle")
-			_set_flag([1, 2, 0][place], game.comp.athletes[rk[place]]["nation"])
-			_flags[[1, 2, 0][place]].position.y = 1.0
+	match stage:
+		S.PODIUM:
+			var rk := game.comp.ranking(game.comp.programme[game.comp.current])
+			# the podium model is turned to face the camera: silver stands to the winner's right, on screen left
+			var spots := [Vector3(0, 1.2 + STAGE_Y, 0), Vector3(1.45, 0.85 + STAGE_Y, 0), Vector3(-1.45, 0.55 + STAGE_Y, 0)]
+			for place in mini(3, rk.size()):
+				var a := _podium_people[place]
+				a.visible = true
+				a.position = PLAZA + spots[place]
+				a.rotation.y = PI
+				_dress(a, game.comp.athletes[rk[place]]["nation"])
+				_anim(a, "wave" if place == 0 else "idle")
+				_set_flag([1, 2, 0][place], game.comp.athletes[rk[place]]["nation"])
+				_flags[[1, 2, 0][place]].position.y = 1.0
+		S.INTRO, S.NEXT:
+			# the next athlete waits at the start while the camera flies in
+			var nation: int = game.comp.athletes[game.current_athlete()]["nation"]
+			match ev:
+				"ski_jump":
+					_jumper_at_gate(nation)
+					_fly_to_gate(game.stage_seconds(stage), stage == S.INTRO)
+				"speed_skating":
+					_skaters_at_start(nation)
+					_fly_to_oval(game.stage_seconds(stage), stage == S.INTRO)
+				"biathlon":
+					bview.wait_at_start(nation)
+					_fly_to_stadium(game.stage_seconds(stage), stage == S.INTRO)
+		S.REPLAY:
+			_jumper.visible = true
+			_start_replay()
+		S.STANDINGS:
+			if ev == "ski_jump" and not _rec.empty():  # the jumper waits in the arena as the camera leaves
+				_jumper.visible = true
+				_jumper.transform = _rec.xforms[_rec.xforms.size() - 1]
+				_anim(_jumper, "celebrate" if not (game.ev as SkiJump).fell else "idle")
+			_fly_to_plaza()
 
 
 func _on_attempt(ev: WinterEvent) -> void:
 	var nation: int = game.comp.athletes[game.humans()[game.athlete]]["nation"]
-	_jump_stage = -1
-	_jump_cam = ""
+	_rec.clear()
+	_ticked.clear()  # a new athlete: nothing to draw between from the last one
 	if ev is SpeedSkating:
 		_dress(_skater, nation)
 		_dress(_rival, (nation + 3) % Competition.NATIONS.size())
+		_take_over(_skater, _skater_wait)
+		_take_over(_rival, _rival_wait)
+	elif ev is Biathlon:
+		bview.at_start(nation)
+		ev.event.connect(bview.on_event)
+		if not _flight_done():
+			_handoff(1.4)
 	else:
 		_dress(_jumper, nation)
+		_take_over(_jumper, _jumper_wait)
 		_slide = 0.0
 		_slide_v = -1.0
+		_jcam.reset(FrostpeakJumpCam.GATE)
+		if not _flight_done():  # an intro skipped part-way: glide over from where the camera is
+			_handoff(1.4)
 
 
 func _process(delta: float) -> void:
@@ -1054,6 +1150,11 @@ func _process(delta: float) -> void:
 		_plaza_camera(delta, true)
 		_update_shafts()
 		return
+	bview.update_waiting(delta)
+	if _wipe_t >= 0.0:
+		_wipe_t += delta
+		if _wipe_t > 2.0 * WIPE_COVER:
+			_wipe_t = -1.0
 	var fov := 50.0
 	match game.stage:
 		S.ATTEMPT, S.RESULT:
@@ -1061,46 +1162,124 @@ func _process(delta: float) -> void:
 				_update_skating(game.ev as SpeedSkating, delta)
 			elif game.ev is SkiJump:
 				fov = _update_jump(game.ev as SkiJump, delta)
-		S.INTRO:
-			if game.comp.event_name() == "ski_jump":
-				_intro_hill(delta)
-				fov = lerpf(50.0, 58.0, smoothstep(INTRO_FLIGHT - 3.0, INTRO_FLIGHT, _stage_t))
-			else:
-				_flyby(delta)
+			elif game.ev is Biathlon:
+				var b := game.ev as Biathlon
+				bview.update(b, delta, game.stage == S.RESULT)
+				var pl: Array = bview.camera(b, delta)
+				_set_camera(pl[0], pl[1], delta)
+				fov = pl[2]
+				_fov_cut = true  # the rig glides its own lens (into the sight it narrows fast)
+		S.REPLAY:
+			fov = _update_replay(delta)
+		S.INTRO, S.NEXT:
+			if not _fly(delta):
+				_hold_camera(delta)
+			var end_fov: float = {"ski_jump": FrostpeakJumpCam.GATE["fov"], "biathlon": FrostpeakBiathlonView.START["fov"]}.get(game.comp.event_name(), 50.0)
+			fov = end_fov if _flight_done() else lerpf(50.0, end_fov, smoothstep(0.6, 1.0, _flight.t / _flight.duration))
 		S.STANDINGS:
-			if _flight_key != "plaza":
-				_fly_to_plaza()
-			_fly(delta)
+			if not _fly(delta):
+				_hold_camera(delta)
 		S.PODIUM:
 			for i in 3:
 				var f := _flags[i]
-				var top := 6.8 - i * 0.0 - (0.0 if i == 1 else 0.5)
+				var top := 6.8 - (0.0 if i == 1 else 0.5)
 				f.position.y = move_toward(f.position.y, top, delta * 1.6)
 			if not _fly(delta):
 				_move_camera(PLAZA + Vector3(0, 3.0, -11.0 + sin(_t * 0.2) * 0.5), PLAZA + Vector3(0, 2.2, 1.5), delta, 2.0)
-		S.FINAL, S.SETUP:
+		S.FINAL, S.SETUP, S.MENU:
 			_flight_key = ""
 			_plaza_camera(delta, false)
-	_camera.fov = fov
+	# the lens glides too (a replay cut sets it outright)
+	if _fov_cut:
+		_fov = fov
+		_fov_cut = false
+	else:
+		_fov = lerpf(_fov, fov, 1.0 - exp(-delta * 4.0))
+	_camera.fov = _fov
 	_snowfall.position = _camera.position + Vector3(0, 12, 0)
 	_update_boards()
 	_update_shafts()
 	_update_rim()
 
 
+## Puts the camera at `pos` looking at `look`. Every camera move ends here: a camera that has to take over from
+## somewhere else (an intro skipped part-way) glides over from where it was, and the camera never turns faster
+## than MAX_TURN, so nothing ever snaps. `cut` is for the replay's cuts (behind a wipe).
+func _set_camera(pos: Vector3, look: Vector3, delta: float, cut := false, max_turn := MAX_TURN) -> void:
+	if delta > 0.0 and not cut:  # how the camera is moving, so a spring can take over without a jolt
+		_cam_vel = (pos - _cam_pos) / delta
+		_look_vel = (look - _cam_look) / delta
+	else:
+		_cam_vel = Vector3.ZERO
+		_look_vel = Vector3.ZERO
+	_cam_pos = pos
+	_cam_look = look
+	if cut:
+		_hand_left = 0.0
+	elif _hand_left > 0.0:
+		_hand_left = maxf(0.0, _hand_left - delta)
+		var k := 1.0 - _hand_left / maxf(_hand_len, 0.001)
+		k = k * k * (3.0 - 2.0 * k)
+		pos = _hand_pos.lerp(pos, k)
+		look = _hand_look.lerp(look, k)
+	var want := Basis.looking_at(look - pos, Vector3.UP).get_rotation_quaternion()
+	var q := want
+	# the lens follows softly in flights, tightly on the athletes; the change between the two is gradual too
+	_turn_w = move_toward(_turn_w, 6.0 if _in_flight else 30.0, delta * 12.0)
+	_in_flight = false
+	if not cut and _have_q and delta > 0.0:
+		# the lens follows where it should look on a critically damped spring (a turn that starts or stops at once
+		# still starts and stops smoothly), never faster than max_turn
+		var off := _cam_q * want.inverse()
+		if off.w < 0.0:
+			off = -off
+		var x := off.get_axis() * off.get_angle() if off.get_angle() > 0.00001 else Vector3.ZERO
+		var d := x
+		var e := exp(-_turn_w * delta)
+		var tmp := (_turn_v + _turn_w * d) * delta
+		var x1 := (d + tmp) * e
+		_turn_v = (_turn_v - _turn_w * tmp) * e
+		if _turn_v.length() > max_turn:
+			_turn_v = _turn_v.normalized() * max_turn
+		q = (Quaternion(x1.normalized(), x1.length()) * want) if x1.length() > 0.00001 else want
+	else:
+		_turn_v = Vector3.ZERO
+	_cam_q = q.normalized()
+	_have_q = true
+	_camera.transform = Transform3D(Basis(_cam_q), pos)
+
+
+## Starts a glide from where the camera is now to wherever the next move puts it, over `seconds`.
+func _handoff(seconds: float) -> void:
+	_hand_pos = _camera.position
+	_hand_look = _camera.position - _camera.global_basis.z * maxf(10.0, _camera.position.distance_to(_cam_look))
+	_hand_len = seconds
+	_hand_left = seconds
+
+
+## Glides the camera towards a pose on critically damped springs (no jolt when it sets off, no overshoot).
 func _move_camera(pos: Vector3, look: Vector3, delta: float, speed := 3.0) -> void:
-	var k := 1.0 - exp(-delta * speed)
-	_cam_pos = _cam_pos.lerp(pos, k)
-	_cam_look = _cam_look.lerp(look, k)
-	_camera.position = _cam_pos
-	_camera.look_at(_cam_look)
+	var p := _spring3(_cam_pos, _cam_vel, pos, speed, delta)
+	var l := _spring3(_cam_look, _look_vel, look, speed, delta)
+	_set_camera(p[0], l[0], delta)
+	_cam_vel = p[1]
+	_look_vel = l[1]
+
+
+static func _spring3(x: Vector3, v: Vector3, to: Vector3, w: float, dt: float) -> Array[Vector3]:
+	var d := x - to
+	var e := exp(-w * dt)
+	var tmp := (v + w * d) * dt
+	return [to + (d + tmp) * e, (v - w * tmp) * e]
 
 
 func _snap_camera(pos: Vector3, look: Vector3) -> void:
-	_cam_pos = pos
-	_cam_look = look
-	_camera.position = pos
-	_camera.look_at(look)
+	_set_camera(pos, look, 0.0, true)
+
+
+## Keeps the camera where it is (a flight has landed and nothing else drives it).
+func _hold_camera(delta: float) -> void:
+	_set_camera(_cam_pos, _cam_look, delta)
 
 
 func _plaza_camera(delta: float, snap: bool) -> void:
@@ -1111,12 +1290,6 @@ func _plaza_camera(delta: float, snap: bool) -> void:
 		_snap_camera(pos, look)
 	else:
 		_move_camera(pos, look, delta, 1.5)
-
-
-## The speed-skating intro: a slow sweep over the oval.
-func _flyby(delta: float) -> void:
-	var a := 0.6 + _stage_t * 0.12
-	_move_camera(Vector3(cos(a) * 110.0, 32.0, sin(a) * 90.0), Vector3(0, 0, 0), delta, 1.2)
 
 
 ## The ground's height at a world point: the jump hill's terrain on its patch, the valley's elsewhere.
@@ -1142,62 +1315,219 @@ func _clearance(p: Vector3) -> float:
 	return need
 
 
-func _start_flight(key: String, pts: Array[Vector3], looks: Array[Vector3], seconds: float) -> void:
+## For the glide up the hill: over the prepared slope (nothing stands on it) the camera may come down to a dozen
+## metres; off it, where the woods, masts and towers are, it keeps high; over the in-run it keeps above the lamps.
+func _clearance_hill(p: Vector3) -> float:
+	if not FrostpeakHill.covers(p):
+		return valley.height(p.x, p.z) + 45.0
+	var l := hill.local(p)
+	var ground := hill.terrain_y(l.x, l.z) + hill.xf.origin.y
+	var open := hill.half_width(l.x) + (4.0 if l.x < 200.0 else 12.0)
+	var need := ground + (11.0 if absf(l.z) < open else 34.0)
+	if l.x > -125.0 and l.x < 6.0 and absf(l.z) < 7.0:
+		need = maxf(need, hill.xf.origin.y + _inrun_y(l.x) + 4.0)
+	return need
+
+
+## The in-run's height (hill frame) over x.
+func _inrun_y(x: float) -> float:
+	var lo := SkiHill.TOP
+	var hi := SkiHill.INRUN
+	for i in 24:
+		var m := (lo + hi) * 0.5
+		if SkiHill.inrun_point(m).x < x:
+			lo = m
+		else:
+			hi = m
+	return SkiHill.inrun_point(lo).y
+
+
+func _start_flight(key: String, pts: Array[Vector3], looks: Array[Vector3], seconds: float, clearance := Callable(),
+		paces: Array[float] = [], hold := 0.06) -> void:
 	_flight_key = key
-	_flight = FrostpeakFlight.new(pts, looks, seconds, _clearance)
+	_flight = FrostpeakFlight.new(pts, looks, seconds, clearance if clearance.is_valid() else _clearance, hold, paces)
+	_fly_v0 = _cam_vel  # the camera keeps its way on for a moment, fading into the flight
+	_fly_lv0 = _look_vel
+
+
+func _flight_done() -> bool:
+	return _flight == null or _flight.done()
 
 
 ## Flies the current flight; false when there is none (or it has landed).
 func _fly(delta: float) -> bool:
-	if _flight == null or _flight.done():
+	if _flight_done():
 		return false
 	var pl := _flight.step(delta)
-	_snap_camera(pl[0], pl[1])
+	var drift := _flight.t * exp(-_flight.t / 0.6)
+	_in_flight = true
+	_set_camera(pl[0] + _fly_v0 * drift, pl[1] + _fly_lv0 * drift, delta)
 	return true
 
 
-## From wherever the camera is (the plaza, the oval) up over the valley, across the village with the gondola and
-## the peaks beyond, round in a wide arc and down into the arena, where the jump hill rises ahead.
-func _fly_to_hill() -> void:
-	var from := _cam_pos
-	var ahead := (VALLEY_WAY - from)
-	ahead.y = 0.0
-	ahead = ahead.normalized()
-	var pts: Array[Vector3] = [from, from + Vector3(0, 80, 0) + ahead * 25.0, VALLEY_WAY,
-		FrostpeakValley.VILLAGE + Vector3(110, 150, 10), hill.world(Vector3(520, 60, -230)),
-		hill.world(Vector3(260, 70, -260)), _reveal[0]]
-	var horn := Vector3(FrostpeakValley.PEAKS[0][0], 1100.0, FrostpeakValley.PEAKS[0][1])
-	var looks: Array[Vector3] = [_cam_look, VALLEY_WAY + ahead * 400.0 - Vector3(0, 80, 0), FrostpeakValley.VILLAGE + Vector3(80, 0, 40),
-		(FrostpeakValley.STATION + FrostpeakValley.SUMMIT) * 0.5 + Vector3(0, 250, 0), horn, hill.world(Vector3(20, -5, 0)), _reveal[1]]
-	_start_flight("hill", pts, looks, INTRO_FLIGHT)
+## The jumper on the bar at the gate, waiting.
+func _jumper_at_gate(nation: int) -> void:
+	_dress(_jumper_wait, nation)
+	_jumper_wait.visible = true
+	var lp := hill.inrun_at(0.0, 0.0, 0.08)
+	var lb := Basis(Vector3.BACK, -SkiHill.inrun_angle(0.0)) * Basis(Vector3.UP, PI * 0.5)
+	_jumper_wait.transform = Transform3D(hill.xf.basis * lb, hill.world(lp))
+	_anim(_jumper_wait, "idle")
 
 
-## The ski jump's intro: the flight in, then the reveal: a slow push up the arena towards the hill.
-func _intro_hill(delta: float) -> void:
-	if _flight_key != "hill":
-		_fly_to_hill()
-	if _fly(delta):
+## The racing model takes over from the one that waited at the start, in the same pose (no pop).
+func _take_over(racer: Node3D, waiter: Node3D) -> void:
+	if not waiter.visible:
 		return
-	var k := clampf((_stage_t - INTRO_FLIGHT) / 4.0, 0.0, 1.0)
-	var e := k * k * (3.0 - 2.0 * k)
-	_snap_camera(_reveal[0].lerp(_reveal[2], e * 0.6 + k * 0.1), _reveal[1])
+	racer.transform = waiter.transform
+	racer.visible = true
+	var a: AnimationPlayer = racer.find_child("AnimationPlayer", true, false)
+	var b: AnimationPlayer = waiter.find_child("AnimationPlayer", true, false)
+	a.play(b.current_animation, 0.0)
+	a.seek(b.current_animation_position, true)
+	waiter.visible = false
 
 
-## After an event, over the valley to the medal plaza (the standings board shows on the way).
+## Into the ski jump, as one slow glide: from far out in the valley the whole hill ahead, in over the arena and up
+## the landing slope, past the knoll and the take-off table, up beside the in-run, and round behind the jumper on
+## the bar, where the live camera takes over (FrostpeakJumpCam.GATE). `far` starts the glide from the valley (the
+## event's intro); otherwise (the next jumper) it starts from the arena.
+func _fly_to_gate(seconds: float, far: bool) -> void:
+	var gate := hill.inrun_at(0.0, 0.0, 0.08)
+	var end := _jcam.pose(gate, FrostpeakJumpCam.GATE)
+	var jumper := hill.world(hill.inrun_at(0.0, 0.0, 1.1))
+	var pts: Array[Vector3] = [_cam_pos]
+	var looks: Array[Vector3] = [_cam_look]
+	var paces: Array[float] = [1.0]
+	var up := func(x: float, z: float, h: float) -> Vector3: return hill.world(hill.ground(x, z) + Vector3(0, h, 0))
+	if far:
+		# out over the valley: the whole hill ahead, from the arena to the start tower on the mountainside
+		var ahead := hill.world(Vector3(640.0, 20.0, 190.0))
+		if _cam_pos.distance_to(ahead) > 500.0:
+			var mid := _cam_pos.lerp(ahead, 0.45)
+			mid.y = maxf(_cam_pos.y, ahead.y) + 30.0
+			pts.append(mid)
+			looks.append(_cam_look.lerp(hill.world(Vector3(0, 0, 0)), 0.6))
+			paces.append(1.5)
+		pts.append_array([ahead, hill.world(Vector3(470.0, -20.0, 110.0))])
+		looks.append_array([hill.world(Vector3(40.0, -30.0, 0.0)), hill.world(Vector3(30.0, -22.0, 0.0))])
+		paces.append_array([1.5, 1.2])
+	pts.append_array([up.call(320.0, 12.0, 28.0), up.call(190.0, 12.0, 21.0), up.call(105.0, 11.0, 16.0),
+		up.call(40.0, 10.0, 13.0), hill.world(hill.inrun_at(62.0, 10.0, 9.0)), hill.world(hill.inrun_at(24.0, 8.5, 6.5)),
+		hill.world(hill.inrun_at(1.0, 8.0, 5.0)), hill.world(end[0])])
+	looks.append_array([hill.world(hill.inrun_at(70.0, 0.0, 0.0)), hill.world(hill.inrun_at(40.0, 0.0, 2.0)), jumper,
+		jumper, jumper, jumper, jumper.lerp(hill.world(end[1]), 0.45), hill.world(end[1])])
+	paces.append_array([0.85, 0.6, 0.45, 0.36, 0.3, 0.22, 0.09, 0.045])
+	_start_flight("gate", pts, looks, seconds, _clearance_hill, paces, 0.08)
+
+
+## The oval's TV camera at the start: beside the track, level with the skater, a little ahead.
+func _skate_cam(pos: float) -> Array[Vector3]:
+	var me := oval_point(pos, LANES[0])
+	var cam := me.origin - me.basis.x * 10.0 + Vector3(0, 3.2, 0) - me.basis.z * 2.0
+	return [cam, me.origin + Vector3(0, 1.0, 0) - me.basis.z * 4.0]
+
+
+func _skaters_at_start(nation: int) -> void:
+	_dress(_skater_wait, nation)
+	_dress(_rival_wait, (nation + 3) % Competition.NATIONS.size())
+	_skater_wait.visible = true
+	_rival_wait.visible = true
+	var me := oval_point(0.0, LANES[0])
+	var them := oval_point(0.0, LANES[1])
+	_skater_wait.transform = Transform3D(me.basis.rotated(me.basis.y, PI), me.origin)
+	_rival_wait.transform = Transform3D(them.basis.rotated(them.basis.y, PI), them.origin)
+	_anim(_skater_wait, "ready")
+	_anim(_rival_wait, "ready")
+
+
+## Into the oval: over the valley, down past the west curve and along the back straight to the start, where the
+## TV camera waits beside the skaters. From close by (the next skater), a low glide back along the straight.
+func _fly_to_oval(seconds: float, far: bool) -> void:
+	var end := _skate_cam(0.0)
+	var pts: Array[Vector3] = [_cam_pos]
+	var looks: Array[Vector3] = [_cam_look]
+	var paces: Array[float] = [0.7]
+	if far and _cam_pos.distance_to(end[0]) > 250.0:
+		var dir := Vector3(end[0].x - _cam_pos.x, 0, end[0].z - _cam_pos.z).normalized()
+		pts.append_array([_cam_pos + Vector3(0, 40, 0) + dir * 110.0, Vector3(-260, 70, -150), Vector3(-130, 34, -60)])
+		looks.append_array([_cam_look.lerp(Vector3(0, 0, 0), 0.5), Vector3(0, 0, -10), Vector3(-20, 0, -20)])
+		paces.append_array([1.6, 1.6, 1.0])
+	else:
+		var mid := (_cam_pos + end[0]) * 0.5 + Vector3(0, 9, 0)
+		pts.append(mid)
+		looks.append((_cam_look + end[1]) * 0.5)
+		paces.append(1.4)
+	pts.append_array([end[0] + Vector3(-26, 6, -6), end[0]])
+	looks.append_array([end[1], end[1]])
+	paces.append_array([0.6, 0.35])
+	var clear := func(p: Vector3) -> float:
+		return valley.height(p.x, p.z) + 45.0 if Vector2(p.x, p.z).length() > 190.0 else -INF
+	_start_flight("oval", pts, looks, seconds, clear, paces, 0.12)
+
+
+## Into the biathlon stadium: out over the woods, a sweep round past the range and its targets, and down to the
+## start line, where the camera waits beside the skier (FrostpeakBiathlonView.START). From close by (the next
+## skier), a low glide back along the straight.
+func _fly_to_stadium(seconds: float, far: bool) -> void:
+	var end := bview.start_pose()
+	var pts: Array[Vector3] = [_cam_pos]
+	var looks: Array[Vector3] = [_cam_look]
+	var paces: Array[float] = [0.7]
+	var stadium := Vector3(-335.0, 0.0, -215.0)
+	if far and _cam_pos.distance_to(end[0]) > 200.0:
+		var dir := Vector3(stadium.x - _cam_pos.x, 0, stadium.z - _cam_pos.z).normalized()
+		var rise := _cam_pos + Vector3(0, 45, 0) + dir * minf(120.0, _cam_pos.distance_to(stadium) * 0.2)
+		pts.append_array([rise, Vector3(-475, 70, -160), Vector3(-440, 40, -268), Vector3(-330, 22, -272), Vector3(-306, 11, -222)])
+		looks.append_array([_cam_look.lerp(stadium, 0.5), stadium + Vector3(0, 0, -30), BiathlonCourse.targets(),
+			BiathlonCourse.mat(), end[1]])
+		paces.append_array([1.6, 1.3, 0.8, 0.55, 0.4])
+	else:
+		var mid := (_cam_pos + end[0]) * 0.5 + Vector3(0, 7, 0)
+		pts.append(mid)
+		looks.append((_cam_look + end[1]) * 0.5)
+		paces.append(1.2)
+	pts.append_array([end[0] + Vector3(12, 4, -3), end[0]])
+	looks.append_array([end[1], end[1]])
+	paces.append_array([0.32, 0.24])
+	var clear := func(p: Vector3) -> float:
+		if FrostpeakBiathlon.covers(p, 20.0):
+			return valley.height(p.x, p.z) + (8.0 if biathlon.near(p) < 40.0 else 32.0)
+		return valley.height(p.x, p.z) + 45.0
+	_start_flight("stadium", pts, looks, seconds, clear, paces, 0.12)
+
+
+## After an event, to the medal plaza (the standings board shows on the way): the camera rises, crosses the valley
+## high enough that it drifts by slowly (higher the further it goes), and comes in over the crowd from the north to
+## the podium.
 func _fly_to_plaza() -> void:
 	var from := _cam_pos
 	var end := PLAZA + Vector3(0, 3.0, -11.0)
-	var dir := Vector3(end.x - from.x, 0, end.z - from.z).normalized()
-	var far := from.distance_to(end)
-	var mid := (from + end) * 0.5
-	mid.y = maxf(from.y, end.y) + clampf(far * 0.1, 50.0, 150.0)
-	var approach := PLAZA - dir * 260.0 + Vector3(0, 70, 0)
-	var pts: Array[Vector3] = [from, from + Vector3(0, 35.0 + far * 0.03, 0) + dir * 30.0, mid, approach,
-		PLAZA + Vector3(0, 22, -75), end]
-	# looking ahead, level, into the low sun over the western ridges, then down to the plaza
-	var looks: Array[Vector3] = [_cam_look, mid + dir * 900.0 + Vector3(0, 30, 0), PLAZA + Vector3(0, 60, 0),
-		PLAZA + Vector3(0, 10, 0), PLAZA + Vector3(0, 3, 0), PLAZA + Vector3(0, 2.2, 1.5)]
-	_start_flight("plaza", pts, looks, game.stage_seconds(S.STANDINGS))
+	var north := PLAZA + Vector3(0, 30, -120)
+	var dir := Vector3(north.x - from.x, 0, north.z - from.z).normalized()
+	var far := Vector2(north.x - from.x, north.z - from.z).length()
+	var back := Vector3(from.x - _cam_look.x, 0, from.z - _cam_look.z).normalized()
+	var rise := from + Vector3(0, 18.0 + far * 0.02, 0) + back * 14.0 + dir * far * 0.06  # up and back, still on the athlete
+	var mid := from.lerp(north, 0.5)
+	mid.y = maxf(from.y, 20.0) + clampf(far * 0.12, 30.0, 160.0)
+	# the last leg curves round wide, so the camera is already heading south when it comes in from the north
+	var side := 1.0 if from.x > PLAZA.x else -1.0
+	var swing := PLAZA + Vector3(side * 90.0, 42.0, -210.0)
+	# craning up and away while still on the athlete, then turning to the plaza high over the valley
+	var pts: Array[Vector3] = [from, rise, mid]
+	var looks: Array[Vector3] = [_cam_look, _cam_look + Vector3(0, 4, 0), _cam_look.lerp(PLAZA + Vector3(0, 0, 120), 0.6) + Vector3(0, 25, 0)]
+	var paces: Array[float] = [0.3, 0.45, 0.85]
+	if absf(mid.x - PLAZA.x) > 150.0:  # from far east or west: round by the north first
+		pts.append(swing)
+		looks.append(PLAZA + Vector3(0, 12, 0))
+		paces.append(0.6)
+	pts.append_array([north, PLAZA + Vector3(0, 21, -58), end])
+	looks.append_array([PLAZA + Vector3(0, 4, 30), PLAZA + Vector3(0, 3, 6), PLAZA + Vector3(0, 2.2, 1.5)])
+	paces.append_array([0.45, 0.36, 0.24])
+	var clear := func(p: Vector3) -> float:
+		var r := Vector2(p.x - PLAZA.x, p.z - PLAZA.z).length()
+		return valley.height(p.x, p.z) + 34.0 * smoothstep(40.0, 120.0, r)
+	_start_flight("plaza", pts, looks, game.stage_seconds(S.STANDINGS), clear, paces, 0.2)
 
 
 func _update_shafts() -> void:
@@ -1216,11 +1546,37 @@ func _update_shafts() -> void:
 
 # ------------------------------------------------------------------ the events
 
+## A value the event moves once a tick, drawn between its last two ticks, so it moves evenly at any frame rate.
+func _between(key: String, value: Variant) -> Variant:
+	var e: Array = _ticked.get(key, [])
+	if e.is_empty() or game.ticks < e[2] or game.ticks - e[2] > 6:
+		_ticked[key] = [value, value, game.ticks]
+		return value
+	if game.ticks != e[2]:
+		var k: int = game.ticks - e[2]
+		e[0] = e[1] if k == 1 else lerp(e[1], value, float(k - 1) / k)
+		e[1] = value
+		e[2] = game.ticks
+	return lerp(e[0], e[1], game.tick_alpha())
+
+
 func _update_skating(s: SpeedSkating, delta: float) -> void:
 	_skater.visible = true
 	_rival.visible = true
-	var me := oval_point(s.pos, LANES[0])
-	var them := oval_point(s.rival_pos, LANES[1])
+	# past the finish the skater glides on, slowing
+	if game.stage == S.RESULT:
+		if _glide_v < 0.0:
+			_glide_v = s.speed  # (the glide starts next frame: this one still draws the last tick)
+		else:
+			_glide_v = maxf(0.0, _glide_v - delta * (1.2 + _glide_v * 0.12))
+			_glide += _glide_v * delta
+	else:
+		_glide = 0.0
+		_glide_v = -1.0
+	var sp: float = _between("skater", s.pos) + _glide
+	var rp: float = _between("rival", s.rival_pos) + _glide * s.rival_speed / maxf(s.speed, 1.0)
+	var me := oval_point(sp, LANES[0])
+	var them := oval_point(rp, LANES[1])
 	_skater.transform = Transform3D(me.basis.rotated(me.basis.y, PI), me.origin)
 	_rival.transform = Transform3D(them.basis.rotated(them.basis.y, PI), them.origin)
 	if s.phase == WinterEvent.Phase.READY:
@@ -1231,106 +1587,262 @@ func _update_skating(s: SpeedSkating, delta: float) -> void:
 		_anim(_rival, "skate", clampf(s.rival_speed / 9.0, 0.5, 1.6))
 	else:
 		_anim(_skater, "celebrate" if s.result < 42.0 else "glide")
-	# the TV camera: beside the track, level with the skater, a little ahead
-	var side := -me.basis.x * 10.0
-	var cam := me.origin + side + Vector3(0, 3.2, 0) - me.basis.z * 2.0
-	if game.stage == S.ATTEMPT and s.phase == WinterEvent.Phase.READY and s.phase_left > 2.7:
-		_snap_camera(cam, me.origin)
-	_move_camera(cam, me.origin + Vector3(0, 1.0, 0) - me.basis.z * 4.0, delta, 4.0)
+	# the TV camera: beside the track, level with the skater, a little ahead (the intro flight ends right here)
+	var pl := _skate_cam(sp)
+	_set_camera(pl[0], pl[1], delta)
 
 
-## The jump, shot like television: at the gate a wide shot down the whole hill, then the camera riding the
-## in-run behind the jumper, the chase camera locked beside them in the air, a cut to the side camera on its
-## tower by the landing slope, which pans with them through the landing, and the arena camera for the finish.
-## Returns the lens (field of view) for the shot.
+## The jump, shot like television by one camera that never cuts (FrostpeakJumpCam): settled behind the jumper on
+## the bar, riding down the in-run behind them, swinging round to a three-quarter side view at the take-off,
+## tracking the flight and the landing, and coming round in front as they stop in the arena. Every frame is
+## recorded for the replay. Returns the lens (field of view).
 func _update_jump(j: SkiJump, delta: float) -> float:
 	_jumper.visible = true
-	_jump_stage = j.stage
 	var lp := Vector3.ZERO  # the jumper, in the hill's frame
 	var lb := Basis.IDENTITY
-	var fov := 50.0
 	var hb := hill.xf.basis
+	var c := _jcam
 	match j.stage:
 		SkiJump.Stage.INRUN:
-			lp = hill.inrun_at(j.along, 0.0, 0.08)
+			lp = _between("jumper", hill.inrun_at(j.along, 0.0, 0.08))
 			lb = Basis(Vector3.BACK, -SkiHill.inrun_angle(j.along)) * Basis(Vector3.UP, PI * 0.5)
 			_anim(_jumper, "tuck" if j.tuck > 0.5 else "idle")
-			if j.phase == WinterEvent.Phase.READY and j.phase_left > 1.3:
-				# the establishing shot: from the start platform down the whole hill to the valley
-				var k := 1.0 - (j.phase_left - 1.3) / 1.7
-				var cam := lp + Vector3(-14.0 + k * 3.0, 14.0 - k * 2.0, -1.5 - k * 1.0)
-				var look := lp.lerp(Vector3(150.0, -80.0, 0.0), 0.36 - k * 0.08)
-				_snap_camera(hill.world(cam), hill.world(look))
-				_jump_cam = "gate"
-				fov = 58.0
+			if j.phase == WinterEvent.Phase.READY:
+				# settling in behind the jumper as the countdown runs
+				c.aim("az", 0.32, 0.9)  # a little to the side: the gate's board hides less of the jumper
+				c.aim("el", 0.46, 0.9)  # high enough to see over the gate's back board
+				c.aim("dist", 8.0, 0.9)
+				c.aim("ahead", 9.0, 0.8)
+				c.aim("lift", 0.6, 0.9)
+				c.aim("fov", 52.0, 1.0)
 			else:
-				# behind and above, riding down the track with the jumper
-				var cam := hill.inrun_at(maxf(SkiHill.TOP, j.along - 7.5), 0.7, 3.3)
-				var ahead := hill.inrun_at(minf(SkiJump.INRUN + 12.0, j.along + 9.0), 0.0, 0.0)
-				if _jump_cam != "inrun":
-					_snap_camera(hill.world(cam), hill.world(ahead))
-					_jump_cam = "inrun"
-				_move_camera(hill.world(cam), hill.world(ahead), delta, 6.0)
+				c.aim("az", 0.0, 1.6)
+				c.aim("el", 0.27, 1.4)
+				c.aim("dist", 7.0 + j.speed * 0.04, 1.5)
+				c.aim("pitch", SkiHill.inrun_angle(j.along + 4.0), 3.0)
+				c.aim("ahead", 11.0, 1.2)
+				c.aim("lift", 0.4, 1.5)
+				c.aim("fov", 52.0 + j.speed * 0.18, 1.2)
 		SkiJump.Stage.FLIGHT:
-			lp = Vector3(j.fly.x, j.fly.y + 0.3, 0)
+			_rec.mark("takeoff")
+			lp = Vector3(j.fly.x, j.fly.y + lerpf(0.08, 0.3, smoothstep(0.0, 10.0, j.fly.x)), 0)
 			lp.y = maxf(lp.y, SkiHill.ground_y(j.fly.x) + 0.45)  # the hill mesh must never swallow the skis
+			lp = _between("jumper", lp)
 			lb = Basis(Vector3.BACK, -0.15 - j.angle * 0.8) * Basis(Vector3.UP, PI * 0.5)
 			_anim(_jumper, "flight")
-			_landed_x = j.fly.x
-			if j.fly.x < 62.0:
-				# the chase camera: locked to the jumper, beside and a little above, easing out as the flight goes on
-				var out := clampf(j.fly.x / 62.0, 0.0, 1.0)
-				var cam := lp + Vector3(-2.5 - out * 1.5, 1.4 + out * 1.8, 6.5 + out * 2.5)
-				cam.y = maxf(cam.y, SkiHill.ground_y(cam.x) + 2.5)
-				_snap_camera(hill.world(cam), hill.world(lp + Vector3(2.5 + out * 2.0, -0.4 - out * 0.8, 0)))
-				_jump_cam = "chase"
-			else:
-				fov = _side_cam(lp)
+			var out := clampf(j.fly.x / 110.0, 0.0, 1.0)
+			c.aim("az", 1.02, 1.5)
+			c.aim("el", 0.16, 1.4)
+			c.aim("dist", 9.0 + out * 6.0, 1.2)
+			c.aim("pitch", atan2(-j.vel.y, j.vel.x), 2.5)
+			c.aim("ahead", 1.5, 1.2)  # a little room ahead of the jumper, no more
+			c.aim("lift", 0.2, 1.5)
+			c.aim("fov", 46.0, 1.0)
 		SkiJump.Stage.LANDED:
-			if _slide_v < 0.0:
+			_rec.mark("landed")
+			if _slide_v < 0.0:  # touchdown: slide on from where the jumper was drawn, sinking onto the snow
 				_slide_v = 26.0
+				_landed_x = _last_lp.x
+				_land_drop = maxf(0.0, _last_lp.y - SkiHill.ground_y(_last_lp.x) - 0.05)
+			_land_drop = move_toward(_land_drop, 0.0, delta * 3.0)
 			var x0 := _landed_x + _slide
 			_slide_v = maxf(0.0, _slide_v - delta * (1.0 if x0 < 175.0 else 7.5))
 			_slide += _slide_v * delta
 			var x := minf(_landed_x + _slide, FrostpeakHill.OUTRUN_STOP)
 			var slope := atan2(SkiHill.ground_y(x) - SkiHill.ground_y(x + 1.0), 1.0)
-			lp = Vector3(x, SkiHill.ground_y(x) + 0.05, 0)
+			lp = Vector3(x, SkiHill.ground_y(x) + 0.05 + _land_drop, 0)
 			var stopped := _slide_v < 0.5
-			var turn := PI * 0.5 if not stopped else PI * 0.5 + 0.9
-			lb = Basis(Vector3.BACK, -slope) * Basis(Vector3.UP, turn)
+			_stop_turn = move_toward(_stop_turn, 0.9 if stopped else 0.0, delta * 2.5)
+			lb = Basis(Vector3.BACK, -slope) * Basis(Vector3.UP, PI * 0.5 - _stop_turn)
 			_anim(_jumper, "fall" if j.fell else ("telemark" if _slide < 25.0 else ("celebrate" if stopped else "idle")))
-			if x < FrostpeakHill.SIDE_CAM + 50.0 and _jump_cam != "outrun":
-				fov = _side_cam(lp)
-			else:
-				# the arena camera, low by the barrier, looking up at the jumper coming to a halt
-				var cam := Vector3(FrostpeakHill.OUTRUN_STOP - 22.0, SkiHill.outrun_y() + 3.2, 20.0)
-				var look := lp + Vector3(0, 1.0, 0)
-				if _jump_cam != "outrun":
-					_snap_camera(hill.world(cam), hill.world(look))
-					_jump_cam = "outrun"
-				fov = clampf(rad_to_deg(2.0 * atan(6.0 / maxf(1.0, cam.distance_to(lp)))), 18.0, 50.0)
-				_move_camera(hill.world(cam), _above(hill.world(cam), hill.world(look), fov), delta, 5.0)
+			var slow := clampf(_slide_v / 26.0, 0.0, 1.0)
+			c.aim("az", lerpf(2.2, 1.42, slow), 0.7)
+			c.aim("el", lerpf(0.17, 0.2, slow), 0.8)
+			c.aim("dist", lerpf(10.5, 13.0, slow), 0.8)
+			c.aim("pitch", slope, 2.5)
+			c.aim("ahead", 6.0 * slow, 0.8)
+			c.aim("lift", 1.0, 0.8)
+			c.aim("fov", 42.0, 0.8)
+	if game.stage == S.RESULT:  # the result card goes across the middle: frame the jumper low in the picture
+		c.aim("lift", 1.0 + c.value["dist"] * tan(deg_to_rad(c.value["fov"] * 0.28)), 1.2)
+	if j.phase == WinterEvent.Phase.READY:
+		_stop_turn = 0.0
+	_last_lp = lp
+	c.step(delta)
+	var pl := c.pose(lp)
+	_set_camera(hill.world(pl[0]), hill.world(pl[1]), delta)
 	_jumper.transform = Transform3D(hb * lb, hill.world(lp))
+	if j.phase != WinterEvent.Phase.READY:
+		var ap: AnimationPlayer = _jumper.find_child("AnimationPlayer", true, false)
+		_rec.record(delta, _jumper.transform, StringName(ap.current_animation), ap.current_animation_position)
+	return c.value["fov"]
+
+
+# ------------------------------------------------------------------ the replay
+
+## The replay's shots, each [the cut, the end] in live time with a slow-motion window; built once the attempt is
+## recorded, then timed by stepping through it, so the game knows how long the replay runs.
+func _start_replay() -> void:
+	_rp_active = false
+	if _rec.empty():
+		game.replay_seconds = 0.5
+		return
+	var tk: float = _rec.marks.get("takeoff", _rec.length() * 0.4)
+	var ld: float = _rec.marks.get("landed", tk + 3.0)
+	var end := _rec.length()
+	_rp_shots = [{"cam": "takeoff", "from": maxf(0.0, tk - 1.1), "to": tk + 0.6, "slow": Vector2(tk - 0.2, tk + 0.35), "rate": 0.33}]
+	if ld - 0.8 - (tk + 0.6) > 0.8:
+		_rp_shots.append({"cam": "flight", "from": tk + 0.6, "to": ld - 0.8, "slow": Vector2(-9, -9), "rate": 1.0})
+	_rp_shots.append({"cam": "impact", "from": ld - 0.8 if _rp_shots.size() > 1 else tk + 0.6, "to": minf(ld + 0.9, end),
+		"slow": Vector2(ld - 0.4, ld + 0.3), "rate": 0.28})
+	# time each shot: the cut comes under a wipe (WIPE_COVER after it starts)
+	var real := WIPE_COVER
+	for sh in _rp_shots:
+		sh["start"] = real
+		var t: float = sh["from"]
+		while t < sh["to"]:
+			t += (1.0 / 60.0) * _rp_rate(sh, t)
+			real += 1.0 / 60.0
+		sh["end"] = real
+	game.replay_seconds = real + WIPE_COVER + 0.05
+	_rp_i = -1
+	_rp_t = 0.0
+	_rp_wiped = 0
+	_rp_active = true
+	_rp_live = [_cam_pos, _cam_look, _fov, _jumper.transform]
+
+
+## Replay speed at live time t: full speed, easing into slow motion round the moment that matters and back out.
+func _rp_rate(sh: Dictionary, t: float) -> float:
+	var w: Vector2 = sh["slow"]
+	var k := smoothstep(w.x - 0.25, w.x, t) * (1.0 - smoothstep(w.y, w.y + 0.3, t))
+	return lerpf(1.0, sh["rate"], k)
+
+
+func rp_rate() -> float:
+	if not _rp_active or _rp_i < 0 or _rp_i >= _rp_shots.size():
+		return 1.0
+	return _rp_rate(_rp_shots[_rp_i], _rp_t)
+
+
+## What the replay shows now: "" before the first cut and after the last, else the shot's name.
+func rp_shot() -> String:
+	if game.stage != S.REPLAY or not _rp_active or _rp_i < 0 or _rp_i >= _rp_shots.size():
+		return ""
+	return _rp_shots[_rp_i]["cam"]
+
+
+## How big a biathlon target's hit zone looks on the screen (radius, pixels), for the sight's ring.
+func target_px() -> float:
+	var p := biathlon.plate()
+	if _camera.is_position_behind(p):
+		return 20.0
+	var a := _camera.unproject_position(p)
+	var b := _camera.unproject_position(p + _camera.global_basis.x * Biathlon.TARGET_R)
+	return clampf(a.distance_to(b), 4.0, 400.0)
+
+
+## Seconds since the current wipe started (the screen is covered at WIPE_COVER), or -1.
+func wipe_time() -> float:
+	return _wipe_t
+
+
+func _update_replay(delta: float) -> float:
+	if not _rp_active:
+		_hold_camera(delta)
+		return _fov
+	var rt := _stage_t
+	# which shot: the next one starts at its cut
+	var want := -1
+	for i in _rp_shots.size():
+		if rt >= _rp_shots[i]["start"]:
+			want = i
+	if rt >= _rp_shots[_rp_shots.size() - 1]["end"]:
+		want = _rp_shots.size()
+	# a wipe leads each cut, covering the screen as it comes
+	while _rp_wiped <= _rp_shots.size():
+		var cut: float = _rp_shots[_rp_wiped]["start"] if _rp_wiped < _rp_shots.size() else _rp_shots[_rp_wiped - 1]["end"]
+		if rt < cut - WIPE_COVER:
+			break
+		_wipe_t = rt - (cut - WIPE_COVER)
+		_rp_wiped += 1
+	if want != _rp_i:
+		_rp_i = want
+		if want < _rp_shots.size():
+			_rp_t = _rp_shots[want]["from"]
+			_fov_cut = true
+			_rp_cut = true
+		else:
+			_end_replay()
+			return _fov
+	if _rp_i < 0:  # the live picture holds until the first cut
+		_hold_camera(delta)
+		return _fov
+	if _rp_i >= _rp_shots.size():
+		_hold_camera(delta)
+		return _fov
+	var sh: Dictionary = _rp_shots[_rp_i]
+	var before := _rp_t
+	if not _rp_cut:
+		_rp_t = minf(_rp_t + delta * _rp_rate(sh, _rp_t), _rec.length())
+	var rate := _rp_rate(sh, _rp_t)
+	# the take-off and the landing are heard again, as slowed as the picture
+	for m in [["takeoff", "takeoff", -4.0], ["landed", "land", -1.0]]:
+		var at: float = _rec.marks.get(m[0], -1.0)
+		if at >= 0.0 and before < at and _rp_t >= at:
+			tv_sound.emit(m[1], m[2], clampf(0.35 + rate * 0.65, 0.4, 1.0))
+	var xf := _rec.xform_at(_rp_t)
+	_jumper.visible = true
+	_jumper.transform = xf
+	var an: Array = _rec.anim_at(_rp_t)
+	var ap: AnimationPlayer = _jumper.find_child("AnimationPlayer", true, false)
+	if ap.current_animation != an[0]:
+		ap.play(an[0], 0.0 if _rp_cut else 0.2 * rate, 1.0)
+		ap.seek(an[1], true)
+	elif _rp_cut or absf(ap.current_animation_position - float(an[1])) > 0.12:
+		ap.seek(an[1], true)
+	ap.speed_scale = rate
+	var p := hill.local(xf.origin)  # the jumper in the hill's frame
+	var cam := Vector3.ZERO
+	var look := p + Vector3(0, 0.6, 0)
+	var half := 2.4  # half the height the lens frames round the jumper, metres
+	match sh["cam"]:
+		"takeoff":  # low beside the knoll, square to the lip: the jumper springs off the table across the picture
+			cam = Vector3(10.0, 2.0, 7.0)  # just above the lip's height, clear of the table's walls and the fences
+			half = 2.2
+		"flight":  # from the other side, a rail camera running level with the jumper
+			var tk: float = _rec.marks.get("takeoff", 0.0)
+			var ahead := hill.local(_rec.xform_at(minf(_rp_t + 0.15, _rec.length())).origin)
+			cam = p + Vector3(-5.0, 3.5, -9.0)  # (inside the fences, which stand some 12-18 m out)
+			cam.y = maxf(cam.y, hill.terrain_y(cam.x, cam.z) + 3.0)
+			look = p.lerp(ahead, 0.5) + Vector3(0, 0.4, 0)
+			half = 3.2 + (_rp_t - tk) * 0.2
+		"impact":  # low on the slope below the landing, looking up at the touchdown
+			var lx := hill.local(_rec.xform_at(_rec.marks.get("landed", _rp_t)).origin).x
+			cam = Vector3(lx + 24.0, 0, 10.5)
+			cam.y = hill.terrain_y(cam.x, cam.z) + 1.4
+			half = 2.0
+	var fov := clampf(rad_to_deg(2.0 * atan(half / maxf(1.0, cam.distance_to(look)))), 8.0, 55.0)
+	_set_camera(hill.world(cam), hill.world(look), delta, _rp_cut, 4.0)
+	_rp_cut = false
 	return fov
 
 
-## The side camera on its tower beside the landing slope: pans with the jumper, zooming to keep them framed.
-func _side_cam(lp: Vector3) -> float:
-	var cam := hill.side_cam()
-	var target := hill.world(lp + Vector3(1.5, 0.4, 0))
-	if _jump_cam != "side":
-		_jump_cam = "side"
-	var fov := clampf(rad_to_deg(2.0 * atan(7.5 / maxf(1.0, cam.distance_to(target)))), 14.0, 50.0)
-	_snap_camera(cam, _above(cam, target, fov))
-	return fov
-
-
-## Once the result card is up (across the middle of the screen), the camera frames the jumper low in the picture.
-func _above(cam: Vector3, target: Vector3, fov: float) -> Vector3:
-	if game.stage != S.RESULT:
-		return target
-	var d := cam.distance_to(target)
-	return target + Vector3.UP * d * tan(deg_to_rad(fov * 0.3))
+## Back to the live picture: the jumper where they stopped, the camera where it was.
+func _end_replay() -> void:
+	if not _rp_active:
+		return
+	_rp_active = false
+	_rp_i = _rp_shots.size()
+	_jumper.transform = _rp_live[3]
+	var ap: AnimationPlayer = _jumper.find_child("AnimationPlayer", true, false)
+	ap.speed_scale = 1.0
+	if not _rec.empty():
+		ap.play(_rec.anims[_rec.anims.size() - 1], 0.0)
+	_set_camera(_rp_live[0], _rp_live[1], 0.0, true)
+	_fov = _rp_live[2]
+	if _wipe_t < 0.0 or _wipe_t > 2.0 * WIPE_COVER:
+		_wipe_t = WIPE_COVER  # skipped: the wipe's second half uncovers the live picture
 
 
 ## The scoreboards follow the event: the running time and the rival's distance on the oval, the distance on the hill.
@@ -1353,6 +1865,10 @@ func _update_boards() -> void:
 		var j := game.ev as SkiJump
 		a = "%s  %s" % [code, ("%.1f M" % j.distance) if j.stage == SkiJump.Stage.LANDED else "- - -"]
 		b = "HS 134"
+	elif game.ev is Biathlon:
+		var bi := game.ev as Biathlon
+		a = "%s  %s" % [code, Competition.format("biathlon", bi.result if bi.result > 0.0 else bi.time)]
+		b = "RANGE" if bi.stage == Biathlon.Stage.RANGE else ("PENALTY" if bi.stage == Biathlon.Stage.PENALTY else "LAP %d / %d" % [bi.lap() + 1, Biathlon.LAPS])
 	for i in _boards.size():
 		var lb := _boards[i]
 		var txt := a if i % 2 == 0 else b

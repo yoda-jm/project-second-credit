@@ -3,9 +3,10 @@ extends RefCounted
 ## A Frostpeak Games competition: athletes (players in hot seat, or CPU rivals), a programme of events, results and
 ## medals. Each event is played by every athlete in turn; CPU athletes get results drawn from their skill.
 
-const EVENTS := ["speed_skating", "ski_jump"]
-const EVENT_TITLES := {"speed_skating": "SPEED SKATING 500 M", "ski_jump": "SKI JUMP  LARGE HILL"}
-const LOWER_IS_BETTER := {"speed_skating": true, "ski_jump": false}
+const EVENTS := ["speed_skating", "ski_jump", "biathlon"]
+const EVENT_TITLES := {"speed_skating": "SPEED SKATING 500 M", "ski_jump": "SKI JUMP  LARGE HILL", "biathlon": "BIATHLON  SPRINT"}
+const EVENT_SHORT := {"speed_skating": "SPEED SKATING", "ski_jump": "SKI JUMP", "biathlon": "BIATHLON"}
+const LOWER_IS_BETTER := {"speed_skating": true, "ski_jump": false, "biathlon": true}
 ## Our own nations: names and flag colours (three stripes).
 const NATIONS := [
 	{"name": "Norvalia", "code": "NVL", "flag": [Color(0.8, 0.1, 0.15), Color(1, 1, 1), Color(0.1, 0.2, 0.6)]},
@@ -43,6 +44,14 @@ func _init(players: Array = [], cpu_rivals := 3, seed := 1, events: Array = EVEN
 		results[ev] = {}
 
 
+## A result as the scoreboards show it: seconds for races (minutes and seconds for the long ones), points for jumps.
+static func format(ev: String, value: float) -> String:
+	if ev == "biathlon":
+		var m := int(value / 60.0)
+		return "%d:%04.1f" % [m, value - m * 60.0]
+	return ("%.2f S" % value) if LOWER_IS_BETTER[ev] else ("%.1f PTS" % value)
+
+
 func event_name() -> String:
 	return programme[current] if current < programme.size() else ""
 
@@ -66,6 +75,8 @@ func play_cpus() -> void:
 		match ev:
 			"speed_skating": record(i, snappedf(SpeedSkating.cpu_time(form), 0.01))
 			"ski_jump": record(i, snappedf(lerpf(80.0, 140.0, form) + rng.randf_range(-4.0, 4.0), 0.1))
+			"biathlon": record(i, snappedf(Biathlon.cpu_time(form) + Biathlon.cpu_misses(form, rng) * Biathlon.pen_seconds()
+				+ rng.randf_range(-1.5, 1.5), 0.1))
 
 
 ## Athlete indices for an event, best first.

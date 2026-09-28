@@ -141,6 +141,12 @@ func test_competition_ranks_and_awards_medals() -> void:
 	assert_int(m[0][0]).is_equal(1)
 	assert_bool(c.finished()).is_false()
 	c.next_event()
+	assert_str(c.event_name()).is_equal("biathlon")
+	c.record(0, 100.0)  # a clean, quick race wins it
+	c.play_cpus()
+	assert_int(c.ranking("biathlon")[0]).is_equal(0)
+	assert_int(c.medals()[0][0]).is_equal(2)
+	c.next_event()
 	assert_bool(c.finished()).is_true()
 
 
@@ -150,3 +156,184 @@ func test_cpu_results_are_deterministic() -> void:
 	a.play_cpus()
 	b.play_cpus()
 	assert_dict(a.results).is_equal(b.results)
+
+
+# ------------------------------------------------------------------ biathlon
+
+func test_biathlon_course_is_a_closed_loop_with_a_range() -> void:
+	var lap := BiathlonCourse.lap()
+	assert_float(lap).is_between(400.0, 470.0)
+	assert_vector(BiathlonCourse.point(0.0)).is_equal_approx(BiathlonCourse.point(lap), Vector3(0.01, 0.01, 0.01))
+	# climbs and descents a skater can manage, the stadium level
+	var s := 0.0
+	while s < lap:
+		assert_float(absf(BiathlonCourse.slope(s))).is_less(0.16)
+		s += 2.0
+	assert_float(BiathlonCourse.point(BiathlonCourse.RANGE_S).y).is_equal_approx(0.0, 0.05)
+	# the mat beside the straight, the targets fifty metres off
+	var m := BiathlonCourse.mat()
+	assert_float(m.distance_to(BiathlonCourse.point(BiathlonCourse.RANGE_S))).is_equal_approx(BiathlonCourse.MAT_OFF, 0.01)
+	assert_float(Vector2(m.x, m.z).distance_to(Vector2(BiathlonCourse.targets().x, BiathlonCourse.targets().z))).is_equal_approx(50.0, 0.01)
+	# the penalty loop leaves the straight and comes back to it
+	assert_float(BiathlonCourse.pen_loop()).is_between(45.0, 70.0)
+	var p0 := BiathlonCourse.pen_point(0.0)
+	assert_vector(Vector3(p0.x, 0, p0.z)).is_equal_approx(Vector3(BiathlonCourse.xz(BiathlonCourse.PEN_S).x, 0, BiathlonCourse.xz(BiathlonCourse.PEN_S).y), Vector3(0.05, 0.05, 0.05))
+
+
+func test_biathlon_clean_race_takes_about_two_minutes() -> void:
+	var b := Biathlon.new(3)
+	b.auto = true
+	b.skill = 1.0
+	_play(b, 400.0)
+	assert_int(b.phase).is_equal(W.Phase.DONE)
+	assert_int(b.misses).is_equal(0)
+	assert_int(b.shot).is_equal(Biathlon.SHOTS)
+	assert_float(b.result).is_between(105.0, 135.0)
+	# a CPU in top form is on the same scale
+	assert_float(Biathlon.cpu_time(1.0)).is_equal_approx(b.result, 8.0)
+
+
+func test_biathlon_rhythm_beats_rushing() -> void:
+	var good := Biathlon.new(5)
+	good.auto = true
+	good.skill = 1.0
+	_play(good, 400.0)
+	var poor := Biathlon.new(5)
+	poor.auto = true
+	poor.skill = 0.3
+	_play(poor, 400.0)
+	assert_float(poor.result).is_greater(good.result + 15.0)
+
+
+func test_biathlon_misses_are_penalty_loops() -> void:
+	var b := Biathlon.new(9)
+	b.auto = true
+	b.skill = 0.25
+	var saw_penalty := false
+	var n := 0
+	while b.phase != W.Phase.DONE and n < 60 * 400:
+		b.tick()
+		saw_penalty = saw_penalty or b.stage == Biathlon.Stage.PENALTY
+		n += 1
+	assert_int(b.misses).is_greater(0)
+	assert_bool(saw_penalty).is_true()
+	assert_float(b.pen_total).is_equal_approx(b.misses * BiathlonCourse.pen_loop(), 0.01)
+	assert_float(b.pen_done).is_greater_equal(b.pen_total)
+
+
+func test_biathlon_heart_races_then_settles_at_the_range() -> void:
+	var b := Biathlon.new(4)
+	b.auto = true
+	b.skill = 0.9
+	var hr_in := 0.0
+	var n := 0
+	while n < 60 * 400 and not (b.stage == Biathlon.Stage.RANGE and b.range_t > Biathlon.SETTLE):
+		b.tick()
+		if b.stage == Biathlon.Stage.RANGE and hr_in == 0.0:
+			hr_in = b.hr
+		n += 1
+	assert_float(hr_in).is_greater(135.0)  # skied hard
+	assert_float(b.hr).is_less(hr_in - 12.0)  # lying still, it comes down
+	# the calmer the pulse, the steadier the sight
+	var calm := b.sway()
+	b.hr = 180.0
+	assert_float(b.sway()).is_greater(calm * 1.5)
+
+
+func test_biathlon_hits_close_the_targets_only_on_target() -> void:
+	var b := Biathlon.new(6)
+	b.phase = W.Phase.RUN
+	b.stage = Biathlon.Stage.RANGE
+	b.range_t = Biathlon.SETTLE + 0.1
+	b.hr = 72.0
+	b._base_to = Biathlon.target(0)
+	b.base = Biathlon.target(0)
+	b.press("action")
+	b.tick()
+	assert_int(b.shot).is_equal(1)
+	# the aim was on the first target (the sway at rest is smaller than the target)
+	assert_bool(b.hits[0]).is_true()
+	# far off the plate: a miss
+	for i in 40:
+		b.tick()
+	b._base_to = Vector2(0.5, 0.5)
+	b.base = Vector2(0.5, 0.5)
+	b.press("action")
+	b.tick()
+	assert_bool(b.hits[1]).is_false()
+	assert_int(b.misses).is_equal(1)
+
+
+func test_biathlon_is_deterministic() -> void:
+	var a := Biathlon.new(12)
+	a.auto = true
+	a.skill = 0.7
+	_play(a, 400.0)
+	var b := Biathlon.new(12)
+	b.auto = true
+	b.skill = 0.7
+	_play(b, 400.0)
+	assert_float(a.result).is_equal(b.result)
+	assert_int(a.misses).is_equal(b.misses)
+
+
+# ------------------------------------------------------------------ the games: menu, practice, replay
+
+func _run_game(g: FrostpeakGame, seconds: float) -> Array:
+	var seen := []
+	g.stage_changed.connect(func(st: int) -> void: seen.append(st))
+	for i in int(seconds * 60.0):
+		g._process(1.0 / 60.0)
+	return seen
+
+
+func test_menu_offers_competition_and_practice_at_every_event() -> void:
+	var g := FrostpeakGame.new()
+	assert_int(g.menu_items().size()).is_equal(Competition.EVENTS.size() + 1)
+	g.free()
+
+
+func test_practice_repeats_one_event_with_a_replay_and_no_medals() -> void:
+	var g := FrostpeakGame.new()
+	g.demo = true
+	g.practice = "ski_jump"
+	g.start(3)
+	assert_array(g.comp.programme).is_equal(["ski_jump"])
+	assert_int(g.comp.athletes.size()).is_equal(1)
+	var seen := _run_game(g, 110.0)
+	var S := FrostpeakGame.Stage
+	assert_array(seen).contains([S.ATTEMPT, S.RESULT, S.REPLAY, S.NEXT])
+	assert_array(seen).not_contains([S.STANDINGS, S.PODIUM, S.FINAL])
+	assert_bool(g.best.has(0)).is_true()
+	g.free()
+
+
+func test_competition_flows_through_replay_to_the_standings() -> void:
+	var g := FrostpeakGame.new()
+	g.demo = true
+	g.start(4, 1)
+	var seen := _run_game(g, 100.0)
+	var S := FrostpeakGame.Stage
+	var i := seen.find(S.REPLAY)
+	assert_int(i).is_greater(0)
+	assert_int(seen[i - 1]).is_equal(S.RESULT)
+	assert_int(seen[i + 1]).is_equal(S.STANDINGS)
+	g.free()
+
+
+func test_demo_competition_runs_every_event_to_the_medal_table() -> void:
+	var g := FrostpeakGame.new()
+	g.demo = true
+	g.start(8)
+	var S := FrostpeakGame.Stage
+	var seen := []
+	g.stage_changed.connect(func(st: int) -> void: seen.append(st))
+	var n := 0
+	while g.stage != S.FINAL and n < 60 * 600:
+		g._process(1.0 / 60.0)
+		n += 1
+	assert_array(seen).contains([S.FINAL])
+	assert_int(seen.count(S.PODIUM)).is_equal(Competition.EVENTS.size())
+	for ev in Competition.EVENTS:
+		assert_int(g.comp.results[ev].size()).is_equal(g.comp.athletes.size())
+	g.free()

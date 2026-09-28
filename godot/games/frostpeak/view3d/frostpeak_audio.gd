@@ -1,12 +1,14 @@
 class_name FrostpeakAudio
 extends Node
 ## Music and sound for Frostpeak Games: the theme between attempts, the crowd and the wind during them, the
-## countdown and the pistol, strides, take-offs and landings, cheers and the medal fanfare.
+## countdown and the pistol, strides, take-offs and landings, cheers and the medal fanfare; the replay's wipes and its
+## slow-motion take-off and landing; the biathlon's pushes, the rifle, the targets and the heart at the range.
 
 const SFX := "res://games/frostpeak/audio/sfx/"
 const S := preload("res://games/frostpeak/scenes/frostpeak_game.gd").Stage
 
 @export var game: FrostpeakGame
+@export var view: FrostpeakView3D
 
 var _streams := {}
 var _players: Array[AudioStreamPlayer] = []
@@ -15,10 +17,12 @@ var _music: AudioStreamPlayer
 var _crowd: AudioStreamPlayer
 var _wind: AudioStreamPlayer
 var _last_count := -1
+var _last_wipe := -1.0
 
 
 func _ready() -> void:
-	for n in ["cheer", "stride", "pistol", "beep", "beep_go", "takeoff", "land", "fall", "fanfare"]:
+	for n in ["cheer", "stride", "pistol", "beep", "beep_go", "takeoff", "land", "fall", "fanfare", "swoosh", "rifle",
+			"target_hit", "target_miss", "heartbeat", "ski_push"]:
 		_streams[n] = load(SFX + n + ".wav")
 	for i in 10:
 		var p := AudioStreamPlayer.new()
@@ -30,6 +34,8 @@ func _ready() -> void:
 	_wind = _loop(_looping_wav("wind"), "SFX")
 	game.stage_changed.connect(_on_stage)
 	game.attempt_started.connect(func(ev): ev.event.connect(_on_event))
+	if view:
+		view.tv_sound.connect(func(n: String, db: float, pitch: float) -> void: play(n, db, pitch))
 
 
 func _looping_wav(name: String) -> AudioStreamWAV:
@@ -72,6 +78,9 @@ func _on_stage(stage: int) -> void:
 		S.RESULT:
 			_fade(_crowd, -8.0, 0.4)
 			play("cheer", -4.0)
+		S.REPLAY:
+			_fade(_crowd, -18.0, 0.6)
+			_fade(_wind, -60.0, 0.4)
 		S.PODIUM:
 			_fade(_music, -30.0, 0.5)
 			play("fanfare", -2.0)
@@ -84,8 +93,24 @@ func _on_stage(stage: int) -> void:
 
 func _on_event(kind: String, d: Dictionary) -> void:
 	match kind:
-		"go": play("pistol" if game.ev is SpeedSkating else "beep_go", -2.0)
-		"stride": play("stride", -6.0 if d["quality"] == "perfect" else -10.0, randf_range(0.9, 1.1))
+		"go": play("beep_go" if game.ev is SkiJump else "pistol", -2.0)
+		"stride":
+			if game.ev is Biathlon:
+				play("ski_push", -7.0 if d["quality"] == "perfect" else -11.0, randf_range(0.9, 1.1))
+			else:
+				play("stride", -6.0 if d["quality"] == "perfect" else -10.0, randf_range(0.9, 1.1))
+		"shot":
+			play("rifle", -3.0)
+			var sound := "target_hit" if d["hit"] else "target_miss"
+			get_tree().create_timer(0.17).timeout.connect(func() -> void: play(sound, -6.0))
+		"beat":
+			if view and view.bview.scope_k > 0.5:
+				play("heartbeat", -14.0, 1.0)
+		"range_done":
+			if d["misses"] == 0:
+				play("cheer", -4.0)
+		"penalty":
+			_fade(_crowd, -12.0, 1.0)
 		"stumble": play("fall", -10.0, 1.4)
 		"false_start": play("pistol", -4.0, 0.8)
 		"takeoff":
@@ -98,6 +123,11 @@ func _on_event(kind: String, d: Dictionary) -> void:
 
 
 func _process(_delta: float) -> void:
+	if view:  # a wipe sweeps across
+		var w := view.wipe_time()
+		if w >= 0.0 and (_last_wipe < 0.0 or w < _last_wipe):
+			play("swoosh", -8.0)
+		_last_wipe = w
 	var ev := game.ev
 	if ev == null or game.stage != S.ATTEMPT:
 		return
@@ -106,6 +136,10 @@ func _process(_delta: float) -> void:
 		if c != _last_count and c <= 3 and c >= 1:
 			play("beep", -8.0)
 		_last_count = c
+	if ev is Biathlon:
+		var b := ev as Biathlon
+		_wind.volume_db = lerpf(_wind.volume_db, lerpf(-40.0, -14.0, clampf((b.speed - 6.0) / 7.0, 0.0, 1.0)) if b.tuck > 0.5 else -40.0, 0.05)
+		_crowd.volume_db = lerpf(_crowd.volume_db, -12.0 if b.stage == Biathlon.Stage.RANGE else -16.0, 0.02)
 	if ev is SkiJump:
 		var j := ev as SkiJump
 		var target := -40.0

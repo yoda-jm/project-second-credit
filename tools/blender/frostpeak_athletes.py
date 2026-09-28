@@ -1,9 +1,11 @@
 """Frostpeak Games athletes on the shared humanoid rig (smooth skin, IK feet): the speed skater (skin suit, hood,
-glasses, clap skates) and the ski jumper (suit, helmet, goggles, long skis on their own bones under the feet, so they
-open into a V). The materials "suit" and "suit_accent" are recoloured per nation in the game. One glTF animation per
-action, 30 fps. Deterministic; output CC BY-SA 4.0; provenance: this script.
-Run: blender -b --factory-startup -P tools/blender/frostpeak_athletes.py -- godot/games/frostpeak/art/models
-About 1.8 m tall, facing -Y; the skater's blades and the jumper's skis stand on z = 0 in every animation.
+glasses, clap skates), the ski jumper (suit, helmet, goggles, long skis on their own bones under the feet, so they
+open into a V) and the biathlete (race suit and bib, a knitted hat, sports glasses, narrow skating skis; the rifle
+and the poles are props of their own, "rifle" and "ski_pole", which the game puts in the hands or on the back).
+The materials "suit" and "suit_accent" are recoloured per nation in the game. One glTF animation per action, 30 fps.
+Deterministic; output CC BY-SA 4.0; provenance: this script.
+Run: blender -b --factory-startup -P tools/blender/frostpeak_athletes.py -- godot/games/frostpeak/art/models [names]
+About 1.8 m tall, facing -Y; the skater's blades and the skis stand on z = 0 in every animation.
 """
 import bpy, math, os, sys
 from mathutils import Vector
@@ -54,9 +56,11 @@ def body(kind, sk):
     number = mat("bib_number", (0.08, 0.08, 0.1), 0.4)
     seam = mat("seam", (0.05, 0.05, 0.07), 0.6)
     shape = {"chest": 0.98, "waist": 0.95, "hips": 0.98, "legs": 1.06, "arms": 0.96}
+    if kind == "biathlete":
+        shape = {"chest": 1.0, "waist": 0.95, "hips": 0.97, "legs": 1.04, "arms": 0.98}
     human_body(sk, skin, suit, suit, white, iris, hair=mat("hair", (0.25, 0.17, 0.1), 0.6), shoes=boot, sole=boot,
-               glove=glove, sleeves="long", hands="relaxed", shape=shape, shoe_height=0.16 if kind == "skater" else 0.24,
-               neck_mat=suit if kind == "skater" else None)
+               glove=glove, sleeves="long", hands="fist" if kind == "biathlete" else "relaxed", shape=shape,
+               shoe_height={"skater": 0.16, "jumper": 0.24}.get(kind, 0.2), neck_mat=suit if kind != "jumper" else None)
     torso = torso_rings(0.8, 1.51, 0.0, shape)
     # accent panels down both sides of the body, from the armpit to the hip
     for a0, a1 in ((-26, 26), (154, 206)):
@@ -92,6 +96,45 @@ def body(kind, sk):
             tube([(x, -0.28, -SKATE_Z + 0.04, 0.011), (x, 0.13, -SKATE_Z + 0.04, 0.011)], f, holder, 8, 0.04)
             box((0.034, 0.05, 0.05), (x, -0.13, -0.012), f, holder, bevel=0.008)   # the clap hinge
             box((0.03, 0.04, 0.05), (x, 0.06, -0.012), f, holder, bevel=0.008)    # the heel post
+    elif kind == "biathlete":
+        torso2 = torso_rings(0.8, 1.51, 0.0, shape)
+        for a0, a1 in ((-150, -30), (30, 150)):   # the bib, front and back, with its number
+            shell(grown(torso2, 1.05, 1.02, 1.4), a0, a1, "~body", trim, segs=10)
+        box((0.12, 0.01, 0.07), (0, -0.117, 1.25), "~body", number, bevel=0.004)
+        box((0.12, 0.01, 0.07), (0, 0.115, 1.25), "~body", number, bevel=0.004)
+        # the rifle harness: two straps over the shoulders to a pad between the shoulder blades
+        strap = mat("strap", (0.1, 0.1, 0.1), 0.5)
+        for s in (1, -1):
+            tube([(s * 0.1, -0.1, 1.2, 0.008), (s * 0.13, -0.08, 1.42, 0.008), (s * 0.1, 0.03, 1.47, 0.008),
+                  (s * 0.07, 0.12, 1.36, 0.008), (s * 0.04, 0.115, 1.22, 0.008)], "~body", strap, 6, 0.02, ell=(1.6, 0.5))
+        box((0.1, 0.02, 0.12), (0, 0.125, 1.3), "~body", strap, bevel=0.008)
+        # a knitted hat with a folded brim and a pompom, and wraparound sports glasses
+        cx, cy, cz = H
+        knit = mat("hat", (0.95, 0.95, 0.96), 0.85)
+        hat = [(cz + 0.02, 0.1, 0.108, cy + 0.012), (cz + 0.06, 0.1, 0.108, cy + 0.012), (cz + 0.1, 0.086, 0.094, cy + 0.012),
+               (cz + 0.13, 0.055, 0.06, cy + 0.012), (cz + 0.145, 0.02, 0.02, cy + 0.012)]
+        shell(hat, -180, 180, "head", knit, thick=0.01, segs=24)
+        tube([(p[0], p[1], p[2], 0.016) for p in arc((0, cy + 0.012), 0.104, 0.112, cz + 0.035, -180, 180, 25)], "head", accent, 8, 0.012)
+        sphere(0.03, (0, cy + 0.012, cz + 0.16), "head", accent, (1, 1, 0.9), 12, 8)
+        tube([(p[0], p[1], p[2], 0.015) for p in arc((0, cy + 0.004), 0.1, 0.106, cz + 0.012, -160, -20)], "head", visor, 8, 0.012)
+        tube([(p[0], p[1], p[2], 0.004) for p in arc((0, cy + 0.004), 0.103, 0.11, cz + 0.03, -165, -15)], "head", frame, 6, 0.012)
+        # narrow skating skis: a thin ski, its edge, a stripe, a gently turned-up tip, a small binding
+        ski = mat("ski", (0.08, 0.1, 0.14), 0.25, coat=0.8)
+        ski_edge = mat("ski_edge", (0.75, 0.77, 0.8), 0.3, 0.8)
+        stripe_m = mat("ski_stripe", (0.95, 0.45, 0.08), 0.3, coat=0.8)
+        binding = mat("binding", (0.2, 0.2, 0.22), 0.3, 0.6)
+        for X in "LR":
+            x = sk.head("foot." + X).x
+            b = "ski." + X
+            box((0.046, 1.62, 0.014), (x, -0.08, -0.01), b, ski, bevel=0.004)
+            box((0.047, 1.62, 0.004), (x, -0.08, -0.018), b, ski_edge, bevel=0.0015)
+            box((0.014, 1.5, 0.003), (x, -0.1, -0.002), b, stripe_m, bevel=0.001)
+            py, pz = -0.89, -0.01
+            for i, th in enumerate((0.12, 0.3, 0.5, 0.7)):
+                dy, dz = -math.cos(th) * 0.06, math.sin(th) * 0.06
+                box((0.046 - i * 0.004, 0.066, 0.014), (x, py + dy * 0.5, pz + dz * 0.5), b, ski, rot=(-th, 0, 0), bevel=0.003)
+                py, pz = py + dy, pz + dz
+            box((0.05, 0.16, 0.02), (x, -0.08, 0.006), b, binding, bevel=0.006)
     else:
         for a0, a1 in ((-145, -35), (35, 145)):   # the big bib, front and back
             shell(grown(torso, 1.06, 1.1, 1.39), a0, a1, "~body", trim, segs=10)
@@ -290,15 +333,160 @@ def jumper_actions(sk):
             "flight": Anim(flight, loop=True), "telemark": Anim(tele, loop=True), "fall": Anim(fall)}
 
 
+def biathlete_actions(sk):
+    z0 = SKI_Z
+    ank = 0.09 + z0
+    # skating on skis with a double push of both poles on every stride (the V2): the skis angle out in a V, each
+    # pushes out and back and lifts to come round; the arms swing up together, plant and push through behind
+    crouch = {"hips": (26, 0, 0), "spine": (10, 0, 0), "chest": (6, 0, 0), "neck": (-18, 0, 0), "head": (-16, 0, 0),
+              "ikw.L": 1.0, "ikw.R": 1.0, "hand.L": (0, 0, 0), "hand.R": (0, 0, 0)}
+    path = [(0.0, (0.3, 0.08, 0.0, 14, 16)), (0.18, (0.38, -0.05, 0.0, 10, 16)), (0.34, (0.46, -0.2, 0.05, 0, 14)),
+            (0.44, (0.3, -0.12, 0.09, -2, 10)), (0.56, (0.14, 0.12, 0.03, -4, 6)), (0.7, (0.14, 0.2, 0.0, -2, 8)),
+            (0.86, (0.22, 0.16, 0.0, 6, 12)), (1.0, (0.3, 0.08, 0.0, 14, 16))]
+
+    def foot_at(ph):
+        ph %= 1.0
+        for (a, pa), (b, pb) in zip(path, path[1:]):
+            if a <= ph <= b:
+                u = smoothstep(0, 1, (ph - a) / (b - a))
+                return tuple(pa[i] + (pb[i] - pa[i]) * u for i in range(5))
+    # the poles, twice a leg cycle: [phase, (arm flex, arm out, forearm bend, trunk crunch)]
+    pole = [(0.0, (62, 12, 58, 0)), (0.16, (40, 10, 44, 10)), (0.32, (-4, 8, 22, 18)), (0.46, (-42, 12, 8, 8)),
+            (0.66, (-18, 12, 30, 0)), (0.84, (38, 12, 60, -2)), (1.0, (62, 12, 58, 0))]
+
+    def pole_at(ph):
+        ph %= 1.0
+        for (a, pa), (b, pb) in zip(pole, pole[1:]):
+            if a <= ph <= b:
+                u = smoothstep(0, 1, (ph - a) / (b - a))
+                return tuple(pa[i] + (pb[i] - pa[i]) * u for i in range(4))
+    skate = {}
+    for i in range(0, 31, 2):
+        t = i / 30.0
+        k = dict(crouch)
+        for X, sgn, off in (("L", 1, 0.0), ("R", -1, 0.5)):
+            x, y, z, roll, yaw = foot_at(t + off)
+            k["ik_foot." + X] = (x * sgn, y, ank + z, 0, yaw)
+            k["foot." + X] = (0, roll, 0)
+        sw = math.sin(2 * math.pi * (t - 0.3))      # +1 with the weight over the left ski
+        a, w, fa, crunch = pole_at(2.0 * t)
+        k["root"] = (0.1 * sw, 0.0, -0.16 - 0.035 * crunch / 18.0 + 0.012 * math.cos(4 * math.pi * t))
+        k["hips"] = (26 + crunch * 0.9, 3 * sw, -4 * sw)
+        k["spine"] = (10 + crunch * 0.5, -2 * sw, 3 * sw)
+        k["chest"] = (6 + crunch * 0.3, -3 * sw, 2 * sw)
+        k["head"] = (-16 - crunch * 0.9, 4 * sw, -3 * sw)
+        for X in "LR":
+            k["arm." + X] = (a, -6, w)
+            k["forearm." + X] = (fa, 0, 0)
+            k["clavicle." + X] = (4 + a * 0.08, 0, 2)
+        skate[i + 1] = k
+    tuck = {}
+    for i in range(0, 21, 5):
+        t = i / 20.0
+        s = math.sin(2 * math.pi * t)
+        tuck[i + 1] = {"ik_foot.L": (0.13, 0.02, ank, 0, 0), "ik_foot.R": (-0.13, -0.02, ank, 0, 0), "ikw.L": 1.0, "ikw.R": 1.0,
+                       "root": (0, -0.04, -0.46 - 0.006 * s), "hips": (68, 0, 0), "spine": (14 + s, 0, 0), "chest": (8, 0, 0),
+                       "neck": (-34, 0, 0), "head": (-30, 0, 0), "arm.L": (52, -20, 12), "arm.R": (52, -20, 12),
+                       "forearm.L": (92, 0, 0), "forearm.R": (92, 0, 0), "clavicle.L": (8, 0, 0), "clavicle.R": (8, 0, 0)}
+    ready = {}
+    for i in range(0, 21, 5):
+        t = i / 20.0
+        br = math.sin(2 * math.pi * t)
+        ready[i + 1] = {"ik_foot.L": (0.13, 0.05, ank, 0, 4), "ik_foot.R": (-0.13, -0.05, ank, 0, 4), "ikw.L": 1.0, "ikw.R": 1.0,
+                        "root": (0, 0.0, -0.12 - 0.006 * br), "hips": (22, 0, 0), "spine": (8, 0, 0), "chest": (4 + 1.5 * br, 0, 0),
+                        "neck": (-14, 0, 0), "head": (-12, 0, 0), "arm.L": (48, -6, 12), "arm.R": (48, -6, 12),
+                        "forearm.L": (56, 0, 0), "forearm.R": (56, 0, 0), "clavicle.L": (6, 0, 2), "clavicle.R": (6, 0, 2)}
+    # prone at the range: lying along the mat on the elbows, the left hand forward under the rifle, the right at the
+    # grip, cheek down on the stock; the legs apart, the skis flat behind
+    prone = {}
+    for i in range(0, 41, 10):
+        t = i / 40.0
+        br = math.sin(2 * math.pi * t)
+        prone[i + 1] = {"ikw.L": 0.0, "ikw.R": 0.0, "turn": (84, 0, 0), "root": (0, 0.0, 0.2 + 0.004 * br),
+                        "hips": (-4, 0, 0), "spine": (-12 - 0.8 * br, 0, 0), "chest": (-14 - 0.8 * br, 0, 0),
+                        "neck": (-26, 0, 0), "head": (-22, -4, 0), "thigh.L": (-2, 0, 9), "thigh.R": (-2, 0, 9),
+                        "shin.L": (4, 0, 0), "shin.R": (4, 0, 0), "foot.L": (-96, 0, 6), "foot.R": (-96, 0, 6),
+                        "clavicle.L": (14, 0, 10), "clavicle.R": (10, 0, 6), "arm.L": (150, -10, 4), "forearm.L": (38, 0, 0),
+                        "arm.R": (128, 10, -6), "forearm.R": (96, 0, 0), "hand.L": (0, 0, 0), "hand.R": (-10, 0, 0)}
+    return {"idle": idle(z0), "wave": wave(z0), "celebrate": celebrate(z0), "skate": Anim(skate, loop=True),
+            "tuck": Anim(tuck, loop=True), "ready": Anim(ready, loop=True), "prone": Anim(prone, loop=True)}
+
+
 def build(kind):
     clear()
-    sk = Skeleton(proportions(), skis=(kind == "jumper"))
+    sk = Skeleton(proportions(), skis=(kind != "skater"))
     body(kind, sk)
-    acts = skater_actions(sk) if kind == "skater" else jumper_actions(sk)
+    acts = {"skater": skater_actions, "jumper": jumper_actions, "biathlete": biathlete_actions}[kind](sk)
     rig_export(kind, out_dir, acts, skeleton=sk, fps=FPS)
 
 
+def export_static(name):
+    """Joins the scene's meshes and exports them as a plain model (no rig)."""
+    meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
+    for x in bpy.context.selected_objects:
+        x.select_set(False)
+    for o in meshes:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    bpy.ops.object.join()
+    o = active()
+    o.name = name
+    bpy.ops.export_scene.gltf(filepath=os.path.join(out_dir, name + ".glb"), use_selection=True, export_format="GLB",
+                              export_yup=True, export_apply=True)
+    print("exported", name, "tris", sum(len(p.vertices) - 2 for p in o.data.polygons))
+
+
+def rifle():
+    """The small-bore biathlon rifle, about 1.1 m: the butt plate at the origin, the muzzle along -Y (so +Z in the
+    game), the sights on top. A dark composite stock with a big cheek piece, spare magazines in the fore-end, a
+    diopter sight at the back and a hooded front sight, the sling and the hand stop under the fore-end."""
+    clear()
+    stock = mat("rifle_stock", (0.1, 0.11, 0.13), 0.45, coat=0.4)
+    wood = mat("rifle_wood", (0.42, 0.24, 0.12), 0.5, coat=0.5)
+    steel = mat("rifle_steel", (0.2, 0.21, 0.23), 0.3, 0.9)
+    bright = mat("rifle_bright", (0.75, 0.77, 0.8), 0.25, 1.0)
+    mag = mat("rifle_mag", (0.85, 0.12, 0.1), 0.4)
+    box((0.04, 0.03, 0.14), (0, -0.015, -0.01), "", stock, bevel=0.01)               # the butt plate
+    box((0.036, 0.36, 0.1), (0, -0.19, 0.0), "", wood, bevel=0.012)                  # the butt
+    box((0.034, 0.2, 0.05), (0, -0.2, 0.07), "", wood, bevel=0.012)                  # the cheek piece
+    box((0.034, 0.12, 0.09), (0, -0.39, -0.04), "", wood, rot=(0.5, 0, 0), bevel=0.012)   # the pistol grip
+    box((0.04, 0.38, 0.06), (0, -0.56, 0.02), "", stock, bevel=0.01)                 # the fore-end
+    for i in range(4):                                                               # spare magazines
+        box((0.012, 0.022, 0.05), (0.024 - (i % 2) * 0.048, -0.48 - (i // 2) * 0.05, 0.0), "", mag, bevel=0.003)
+    box((0.03, 0.2, 0.035), (0, -0.44, 0.07), "", steel, bevel=0.005)                # the action
+    box((0.018, 0.03, 0.05), (0, -0.37, 0.11), "", steel, bevel=0.004)               # the diopter
+    sphere(0.012, (0, -0.35, 0.125), "", steel, (1, 0.6, 1), 12, 8)
+    tube([(0, -0.54, 0.075, 0.009), (0, -1.06, 0.075, 0.008)], "", steel, 12, 0.02)  # the barrel
+    tube([(0, -1.02, 0.1, 0.012), (0, -1.08, 0.1, 0.012)], "", steel, 12, 0.01)      # the front sight's hood
+    box((0.008, 0.02, 0.025), (0, -1.05, 0.085), "", steel, bevel=0.002)
+    box((0.004, 0.04, 0.006), (0, -0.42, 0.095), "", bright, bevel=0.001)            # the bolt handle
+    box((0.02, 0.03, 0.04), (0, -0.64, -0.03), "", steel, bevel=0.004)               # the hand stop
+    tube([(0, -0.64, -0.05, 0.004), (0, -0.4, -0.12, 0.004), (0, -0.12, -0.08, 0.004)], "", steel, 6, 0.02)
+    export_static("rifle")
+
+
+def ski_pole():
+    """A skating pole, 1.6 m: the grip at the origin, the shaft down -Z, a strap, a small basket and a steel tip."""
+    clear()
+    shaft = mat("pole_shaft", (0.12, 0.13, 0.16), 0.3, 0.2, coat=0.8)
+    grip = mat("pole_grip", (0.1, 0.1, 0.1), 0.6)
+    accent = mat("pole_accent", (0.95, 0.45, 0.08), 0.4)
+    steel = mat("pole_tip", (0.7, 0.72, 0.75), 0.3, 1.0)
+    tube([(0, 0, 0.06, 0.016), (0, 0, -0.05, 0.015), (0, 0, -0.1, 0.012)], "", grip, 12, 0.01)
+    tube([(0, 0, -0.1, 0.009), (0, 0, -1.55, 0.006)], "", shaft, 10, 0.05)
+    tube([(0, 0, -0.12, 0.0095), (0, 0, -0.22, 0.0095)], "", accent, 10, 0.02)
+    tube([(0.015, 0, 0.04, 0.004), (0.04, -0.02, -0.03, 0.004), (0.02, -0.01, -0.08, 0.004)], "", grip, 6, 0.01)
+    bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=0.035, radius2=0.012, depth=0.025, location=(0, 0, -1.48))
+    tag(active(), "", accent)
+    tube([(0, 0, -1.55, 0.006), (0, 0, -1.6, 0.002)], "", steel, 8, 0.01)
+    export_static("ski_pole")
+
+
 only = sys.argv[sys.argv.index("--") + 2:] if "--" in sys.argv else []
-for k in ("skater", "jumper"):
+for k in ("skater", "jumper", "biathlete"):
     if not only or k in only:
         build(k)
+if not only or "rifle" in only:
+    rifle()
+if not only or "ski_pole" in only:
+    ski_pole()
