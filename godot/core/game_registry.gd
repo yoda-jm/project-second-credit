@@ -294,8 +294,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/tumbletop/art/models/serpent.glb", "model", 0.4],
 			["res://games/tumbletop/art/models/disc.glb", "model", 0.3]],
 	},
-]
-## The styles in collection order (for the launcher's filter).
+	{
+		"id": "popvoyage",
+		"style": "Arcade",
+		"title": "Pop Voyage",
+		"tagline": "Split every balloon around the world before the clock runs out.",
+		"inspired_by": "Pang (1989)",
+		"scene": "res://games/popvoyage/scenes/popvoyage_game.tscn",
+		"accent": Color(1.0, 0.55, 0.45),
+		"props": [["res://games/popvoyage/art/models/traveller.glb", "model", 0.4],
+			["res://games/popvoyage/art/models/balloon_2.glb", "model", 0.4],
+			["res://games/popvoyage/art/models/item_clock.glb", "model", 0.2]],
+	},
+]## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
 	var out: Array[String] = []
 	for g in GAMES:

@@ -42,6 +42,7 @@ level, apart in time or space, racing the clock and each other's shadow), **Spli
 | 20 | **Henhouse Heist** (Chuckie Egg) | Versus: two farmhands on the same screen, eggs are claimed by whoever grabs them | Ghost race; co-op against the goose | Versus |
 | 21 | **Deep Breath** (Manic Miner) | Ghost race per cavern (air left as the score) | Co-op: two miners share one air supply (tension!) | Ghost |
 | 22 | **Tumbletop** (Q*bert) | Versus on one pyramid: each player paints cubes their own colour, stealing the other's | Co-op: two hoppers share the pyramid, the serpent chases the nearer; ghost race for the fastest round | Versus |
+| 23 | **Pop Voyage** (Pang) | Co-op for two travellers (the original's two-player mode) | Versus: split screen, balloons you pop drop onto the other's stage | Co-op |
 
 ## Suggested order
 

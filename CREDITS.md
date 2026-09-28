@@ -178,6 +178,14 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Models by `tools/blender/tumbletop_models.py`; sound effects and music by `tools/audio/tumbletop_sfx.py` and
   `tumbletop_music.py`; cube, plate and cloud-sea shaders written for the game.
 
+## Game 23 (Pop Voyage, working title)
+
+- Inspired by *Pang* (Mitchell, 1989). None of its code, graphics, sounds or stages are in this repo: the traveller,
+  the balloons, our eight stages and the landmark scenes (invented places, not copies of real buildings) are original.
+- Models by `tools/blender/popvoyage_models.py`, backdrops by `tools/blender/popvoyage_backdrops.py` (with shaders
+  in `godot/games/popvoyage/shaders/`); stages written by hand in `stages/voyage.pop`; sound effects and music by
+  `tools/audio/popvoyage_sfx.py` and `popvoyage_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

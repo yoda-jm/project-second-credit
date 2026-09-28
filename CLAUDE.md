@@ -144,9 +144,12 @@ decisions below are settled unless the owner reopens them.
 25. Game 22, **Tumbletop** (Q*bert-like, `godot/games/tumbletop/`): a 28-cube pyramid, four painting rules cycling
    by level (one step, two steps, and both with undo), red/green/purple balls, the serpent lured off cloud-discs,
    imps undoing colours; the autopilot plans safe paths (Dijkstra) and a test checks it clears each rule. `--level=N`.
-26. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+26. Game 23, **Pop Voyage** (Pang-like, `godot/games/popvoyage/`): eight stages in `stages/voyage.pop` (our format:
+   balloons, blocks), four balloon sizes, items, the clock; a look-ahead autopilot (a test checks it clears every
+   stage); a landmark diorama per stage (`view3d/pop_backdrop.gd`, `tools/blender/popvoyage_backdrops.py`). `--level=N`.
+27. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-27. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+28. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

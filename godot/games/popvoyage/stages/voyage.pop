@@ -1,0 +1,74 @@
+; Pop Voyage: our own stages (CC BY-SA 4.0). The arena is 16 x 10, y up, the floor at 0.
+; ball=size,x,y,dir (size 0-3)    block=x,y,w,h[,cracked]
+
+[stage]
+name=Lighthouse Point
+theme=0
+time=80
+ball=3,4,6.5,1
+
+[stage]
+name=Windmill Meadow
+theme=1
+time=90
+ball=3,3,6.5,1
+ball=2,12,7,-1
+
+[stage]
+name=Sandstone Arch
+theme=2
+time=100
+ball=3,3,7,1
+ball=3,13,7,-1
+block=6.5,4.2,3,0.6
+
+[stage]
+name=Bamboo Temple
+theme=3
+time=100
+ball=2,2,7,1
+ball=2,6,8,1
+ball=2,10,7,-1
+ball=2,14,8,-1
+block=3,4.5,2,0.5,cracked
+block=11,4.5,2,0.5,cracked
+
+[stage]
+name=Glacier Bay
+theme=4
+time=110
+ball=3,4,7,1
+ball=3,12,7.5,-1
+ball=1,8,8.5,1
+block=7,3.6,2,0.5
+
+[stage]
+name=Ember Peak
+theme=5
+time=110
+ball=3,2.5,7,1
+ball=3,8,8,-1
+ball=3,13.5,7,-1
+block=4,5,1.6,0.5,cracked
+block=10.4,5,1.6,0.5,cracked
+
+[stage]
+name=Harbour Lights
+theme=6
+time=120
+ball=3,3,7.5,1
+ball=2,7,8.3,-1
+ball=2,9,8.3,1
+ball=3,13,7.5,-1
+block=2,4.4,2.5,0.5
+block=11.5,4.4,2.5,0.5
+block=7,6.2,2,0.5,cracked
+
+[stage]
+name=Aurora Fields
+theme=7
+time=140
+ball=2,2,7.5,1
+ball=2,6,8.2,1
+ball=2,10,8.2,-1
+ball=3,14,7.5,-1
