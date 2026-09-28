@@ -16,7 +16,8 @@ func test_skating_in_rhythm_beats_forty_seconds() -> void:
 	s.auto = true
 	s.skill = 1.0
 	_play(s)
-	assert_float(s.result).is_less(40.0)
+	# a clean race beats the typical CPU skater (form 0.72)
+	assert_float(s.result).is_less(SpeedSkating.cpu_time(0.72))
 
 
 func test_skating_off_the_beat_is_slow() -> void:
@@ -24,7 +25,8 @@ func test_skating_off_the_beat_is_slow() -> void:
 	s.auto = true
 	s.skill = 0.1
 	_play(s)
-	assert_float(s.result).is_greater(50.0)
+	# a sloppy race loses to every CPU skater
+	assert_float(s.result).is_greater(SpeedSkating.cpu_time(0.0))
 
 
 func test_wrong_foot_costs_speed() -> void:

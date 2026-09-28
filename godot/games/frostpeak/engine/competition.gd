@@ -64,7 +64,7 @@ func play_cpus() -> void:
 			continue
 		var form: float = clampf(a["skill"] + rng.randf_range(-0.12, 0.12), 0.0, 1.0)
 		match ev:
-			"speed_skating": record(i, snappedf(lerpf(45.0, 38.4, form), 0.01))
+			"speed_skating": record(i, snappedf(SpeedSkating.cpu_time(form), 0.01))
 			"ski_jump": record(i, snappedf(lerpf(80.0, 140.0, form) + rng.randf_range(-4.0, 4.0), 0.1))
 
 

@@ -6,7 +6,7 @@ extends WinterEvent
 
 const DISTANCE := 500.0
 const PERFECT := 1.7  ## m/s gained by a push in the green zone (meter 0.8 .. 1.0)
-const GOOD := 0.55  ## a little early (0.62 .. 0.8) or late (after 1.0)
+const GOOD := 1.05  ## a little early (0.62 .. 0.8) or late (after 1.0)
 const WEAK := 0.1  ## too early: the stride is wasted
 const GREEN := Vector2(0.8, 1.0)
 const DRAG := 0.012  ## per (m/s)^2
@@ -21,6 +21,12 @@ var rival_speed := 0.0
 var rival_skill := 0.75
 var false_starts := 0
 var last_push := ""  ## "perfect", "good", "weak", "wrong"
+
+
+## A CPU skater's time for a form of 0..1, on the same scale as a player: every push perfect is about 40.5 s,
+## seven in ten about 41.3 s, half and half about 42 s (measured with the stride model below).
+static func cpu_time(form: float) -> float:
+	return lerpf(46.0, 40.2, form)
 
 
 func stride_time() -> float:
@@ -62,7 +68,7 @@ func run(l: bool, r: bool, _a: bool) -> void:
 	speed = maxf(0.0, speed - (DRAG * speed * speed + FRICTION) * TICK)
 	pos += speed * TICK
 	# the rival: a steady, skill-shaped race
-	var target := lerpf(12.0, 14.6, rival_skill) * minf(1.0, time / 4.5)
+	var target := DISTANCE / (cpu_time(rival_skill) - 2.25) * minf(1.0, time / 4.5)
 	rival_speed = move_toward(rival_speed, target, 4.0 * TICK)
 	rival_pos += rival_speed * TICK
 	if pos >= DISTANCE:
