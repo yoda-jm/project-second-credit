@@ -1,10 +1,12 @@
 """Frostpeak Games athletes on the shared humanoid rig (smooth skin, IK feet): the speed skater (skin suit, hood,
 glasses, clap skates), the ski jumper (suit, helmet, goggles, long skis on their own bones under the feet, so they
 open into a V) and the biathlete (race suit and bib, a knitted hat, sports glasses, narrow skating skis; the rifle
-and the poles are props of their own, "rifle" and "ski_pole", which the game puts in the hands or on the back).
+and the poles are props of their own, "rifle" and "ski_pole", which the game puts in the hands or on the back) and the
+bobsledder (a speed suit, a bob helmet with its visor, spiked sprint shoes; pushing, jumping in, seated in the sled).
 The materials "suit" and "suit_accent" are recoloured per nation in the game. One glTF animation per action, 30 fps.
 Deterministic; output CC BY-SA 4.0; provenance: this script.
 Run: blender -b --factory-startup -P tools/blender/frostpeak_athletes.py -- godot/games/frostpeak/art/models [names]
+(names: skater, jumper, biathlete, bobber, rifle, ski_pole; all when none are given)
 About 1.8 m tall, facing -Y; the skater's blades and the skis stand on z = 0 in every animation.
 """
 import bpy, math, os, sys
@@ -58,9 +60,11 @@ def body(kind, sk):
     shape = {"chest": 0.98, "waist": 0.95, "hips": 0.98, "legs": 1.06, "arms": 0.96}
     if kind == "biathlete":
         shape = {"chest": 1.0, "waist": 0.95, "hips": 0.97, "legs": 1.04, "arms": 0.98}
+    if kind == "bobber":  # sprinters' build: broad, powerful thighs
+        shape = {"chest": 1.07, "waist": 1.0, "hips": 1.03, "legs": 1.12, "arms": 1.06}
     human_body(sk, skin, suit, suit, white, iris, hair=mat("hair", (0.25, 0.17, 0.1), 0.6), shoes=boot, sole=boot,
-               glove=glove, sleeves="long", hands="fist" if kind == "biathlete" else "relaxed", shape=shape,
-               shoe_height={"skater": 0.16, "jumper": 0.24}.get(kind, 0.2), neck_mat=suit if kind != "jumper" else None)
+               glove=glove, sleeves="long", hands="fist" if kind == "biathlete" else ("grip" if kind == "bobber" else "relaxed"), shape=shape,
+               shoe_height={"skater": 0.16, "jumper": 0.24, "bobber": 0.13}.get(kind, 0.2), neck_mat=suit if kind != "jumper" else None)
     torso = torso_rings(0.8, 1.51, 0.0, shape)
     # accent panels down both sides of the body, from the armpit to the hip
     for a0, a1 in ((-26, 26), (154, 206)):
@@ -96,6 +100,30 @@ def body(kind, sk):
             tube([(x, -0.28, -SKATE_Z + 0.04, 0.011), (x, 0.13, -SKATE_Z + 0.04, 0.011)], f, holder, 8, 0.04)
             box((0.034, 0.05, 0.05), (x, -0.13, -0.012), f, holder, bevel=0.008)   # the clap hinge
             box((0.03, 0.04, 0.05), (x, 0.06, -0.012), f, holder, bevel=0.008)    # the heel post
+    elif kind == "bobber":
+        # the start number on the chest and back, a white yoke across the shoulders
+        for a0, a1 in ((-40, 40), (140, 220)):
+            shell(grown(torso, 1.04, 1.36, 1.46), a0, a1, "~body", trim, segs=10)
+        box((0.1, 0.01, 0.06), (0, -0.117, 1.24), "~body", number, bevel=0.004)
+        box((0.1, 0.01, 0.06), (0, 0.115, 1.24), "~body", number, bevel=0.004)
+        # the helmet: a round shell over the ears, a tinted visor across the face, a ridge and a chin guard
+        cx, cy, cz = H
+        shell_m = mat("helmet", (0.96, 0.96, 0.97), 0.18, coat=1.0)
+        strap = mat("strap", (0.1, 0.1, 0.1), 0.5)
+        sphere(0.128, (0, cy + 0.01, cz + 0.02), "head", shell_m, (0.97, 1.08, 0.98))
+        tube([(0, cy - 0.11, cz + 0.1, 0.012), (0, cy - 0.02, cz + 0.145, 0.014), (0, cy + 0.08, cz + 0.13, 0.012),
+              (0, cy + 0.135, cz + 0.03, 0.011)], "head", accent, 8, 0.015)
+        tube([(p[0], p[1], p[2], 0.01) for p in arc((0, cy + 0.01), 0.125, 0.135, cz - 0.05, -205, 25, 13)], "head", accent, 8, 0.015)
+        tube([(p[0], p[1], p[2], 0.03) for p in arc((0, cy - 0.005), 0.112, 0.12, cz + 0.005, -150, -30)], "head", visor, 10, 0.012)
+        tube([(0.09, cy - 0.04, cz - 0.07, 0.012), (0.05, cy - 0.1, cz - 0.1, 0.013), (0, cy - 0.115, cz - 0.105, 0.013),
+              (-0.05, cy - 0.1, cz - 0.1, 0.013), (-0.09, cy - 0.04, cz - 0.07, 0.012)], "head", shell_m, 8, 0.012)
+        # the spiked sprint shoes: a spike plate under the ball of the foot
+        spikes = mat("spikes", (0.7, 0.72, 0.75), 0.3, 0.9)
+        for X in "LR":
+            x = sk.head("foot." + X).x
+            box((0.085, 0.13, 0.012), (x, -0.13, 0.004), "~foot." + X, spikes, bevel=0.003)
+            for i in range(3):
+                box((0.07, 0.012, 0.02), (x, -0.08 - i * 0.05, 0.034 + 0.004 * i), "~foot." + X, trim, bevel=0.003)
     elif kind == "biathlete":
         torso2 = torso_rings(0.8, 1.51, 0.0, shape)
         for a0, a1 in ((-150, -30), (30, 150)):   # the bib, front and back, with its number
@@ -412,11 +440,79 @@ def biathlete_actions(sk):
             "tuck": Anim(tuck, loop=True), "ready": Anim(ready, loop=True), "prone": Anim(prone, loop=True)}
 
 
+def bobber_actions(sk):
+    z0 = 0.0
+    ank = 0.09
+    # where the hands grip, by where the runner pushes from (character space: left, forward, up): at the rear bar
+    # straight ahead; on a side handle (the sled to the runner's right when they run on its left) one hand behind
+    # the other on the grip that points back along the sled
+    grips = {"": ((0.19, 0.8, 0.5), (-0.19, 0.8, 0.5)),
+             "_l": ((-0.19, 0.38, 0.48), (-0.27, 0.56, 0.48)),
+             "_r": ((0.27, 0.56, 0.48), (0.19, 0.38, 0.48))}
+    acts = {}
+    for suffix, (hl, hr) in grips.items():
+        lean = 3 if suffix else 0
+        twist = {"": 0, "_l": -8, "_r": 8}[suffix]
+        # the set position at the sled: crouched, one foot forward, both hands on the grip, looking down the track
+        ready = {}
+        for i in range(0, 21, 5):
+            t = i / 20.0
+            br = math.sin(2 * math.pi * t)
+            ready[i + 1] = {"ik_foot.L": (0.14, 0.28, ank, 0, 6), "ik_foot.R": (-0.14, -0.3, ank, -20, 6), "ikw.L": 1.0, "ikw.R": 1.0,
+                            "root": (0.0, 0.1, -0.3 - 0.01 * br), "hips": (48, twist * 0.5, 0), "spine": (20, twist, lean),
+                            "chest": (12 + 1.5 * br, twist * 0.5, 0), "neck": (-34, -twist, 0), "head": (-30, -twist, 0),
+                            "ik_hand.L": hl, "ik_hand.R": hr, "ikh.L": 1.0, "ikh.R": 1.0, "hand.L": (0, 0, 0), "hand.R": (0, 0, 0)}
+        # the push: sprinting bent low beside or behind the sled, the hands staying on the grip as the body drives
+        base = {"hips": (46, twist * 0.5, 0), "spine": (20, twist, lean), "chest": (12, twist * 0.5, 0), "neck": (-36, -twist, 0),
+                "head": (-30, -twist, 0), "ik_hand.L": hl, "ik_hand.R": hr, "ikh.L": 1.0, "ikh.R": 1.0, "root": (0, 0.16, 0)}
+        push = gait(sk, 16, 2.6, 0.36, lift=0.18, lift_at=0.4, strike=6.0, push=40.0, bob=-0.05, drop=-0.2, toe_out=2.0,
+                    pelvis_yaw=5.0, pelvis_roll=3.0, sway=0.006, shoulder_yaw=3.0, lean=6.0, arm_swing=0.0, arm_out=0.0,
+                    elbow=0.0, elbow_swing=0.0, base=base, step=2)
+        acts["ready" + suffix] = Anim(ready, loop=True)
+        acts["push" + suffix] = push
+    # seated in the sled: on its floor, knees up, feet forward; the pilot upright with the hands on the steering
+    # rings at the sides, the crew behind tucked down with their heads between their shoulders
+    seat = {"ikw.L": 0.0, "ikw.R": 0.0, "root": (0, 0, 0.2 - 0.93), "hips": (0, 0, 0), "thigh.L": (104, 0, 8),
+            "thigh.R": (104, 0, 8), "shin.L": (122, 0, 0), "shin.R": (122, 0, 0), "foot.L": (10, 0, 0), "foot.R": (10, 0, 0)}
+
+    def seated(n, fn):
+        keys = {}
+        for i in range(0, n + 1, max(1, n // 4)):
+            keys[i + 1] = P(seat, **fn(i / n))
+        return Anim(keys, loop=True)
+    br = lambda t: math.sin(2 * math.pi * t)
+    acts["sit"] = seated(20, lambda t: {"spine": (14 + br(t), 0, 0), "chest": (10, 0, 0), "neck": (-18, 0, 0), "head": (-14, 0, 0),
+                                        "arm.L": (40, 0, 14), "arm.R": (40, 0, 14), "forearm.L": (58, 0, 0), "forearm.R": (58, 0, 0),
+                                        "hand.L": (0, 0, 0), "hand.R": (0, 0, 0)})
+    acts["tuck"] = seated(20, lambda t: {"spine": (40 + br(t), 0, 0), "chest": (30, 0, 0), "neck": (18, 0, 0), "head": (16, 0, 0),
+                                         "arm.L": (44, 0, 30), "arm.R": (44, 0, 30), "forearm.L": (96, 0, 0), "forearm.R": (96, 0, 0),
+                                         "clavicle.L": (10, 0, -4), "clavicle.R": (10, 0, -4)})
+    # the brakeman past the line: sitting up, leaning back, both hands hauling the lever at his side
+    acts["brake"] = seated(20, lambda t: {"spine": (-12 + 2 * br(t), 0, 0), "chest": (-6, 0, 0), "neck": (-4, 0, 0), "head": (-8, 0, 0),
+                                          "arm.L": (-20, 0, 18), "arm.R": (-20, 0, 18), "forearm.L": (70 + 6 * br(t), 0, 0),
+                                          "forearm.R": (70 + 6 * br(t), 0, 0), "clavicle.L": (-6, 0, 0), "clavicle.R": (-6, 0, 0)})
+    # the joy at the bottom, each their own way: both arms up, a fist pumped, a hug for the one in front, a wave
+    acts["cheer"] = seated(16, lambda t: {"spine": (-4, 0, 3 * br(t)), "chest": (-6, 0, 0), "head": (-16, 10 * br(t), 0),
+                                          "arm.L": (160, -20, 30 + 8 * br(t)), "arm.R": (160, -20, 30 - 8 * br(t)), "forearm.L": (20, 0, 0),
+                                          "forearm.R": (20, 0, 0), "clavicle.L": (0, 0, 14), "clavicle.R": (0, 0, 14)})
+    acts["pump"] = seated(12, lambda t: {"spine": (4 + 6 * max(0.0, br(t)), 8, 0), "chest": (2, 6, 0), "head": (-10 - 8 * max(0.0, br(t)), -6, 0),
+                                         "arm.R": (120 + 40 * max(0.0, br(t)), -10, 20), "forearm.R": (70 - 50 * max(0.0, br(t)), 0, 0),
+                                         "arm.L": (30, 0, 14), "forearm.L": (60, 0, 0), "clavicle.R": (0, 0, 10 + 8 * max(0.0, br(t)))})
+    acts["hug"] = seated(20, lambda t: {"spine": (32 + 4 * br(t), 4 * br(t * 2), 0), "chest": (20, 0, 3 * br(t)), "neck": (4, 0, 0),
+                                        "head": (-6, 10, 0), "arm.L": (80, 20, 40), "arm.R": (80, 20, 40), "forearm.L": (80, 0, 0),
+                                        "forearm.R": (80, 0, 0), "clavicle.L": (14, 0, 0), "clavicle.R": (14, 0, 0)})
+    acts["wave_seat"] = seated(16, lambda t: {"spine": (2, 24, -4), "chest": (0, 16, 0), "head": (-14, 20, 0),
+                                              "arm.L": (150, -30, 40), "forearm.L": (30, 0, 26 * br(t)), "hand.L": (0, 0, 14 * br(t)),
+                                              "arm.R": (30, 0, 14), "forearm.R": (60, 0, 0)})
+    acts.update({"idle": idle(z0), "wave": wave(z0), "celebrate": celebrate(z0)})
+    return acts
+
+
 def build(kind):
     clear()
-    sk = Skeleton(proportions(), skis=(kind != "skater"))
+    sk = Skeleton(proportions(), skis=(kind not in ("skater", "bobber")))
     body(kind, sk)
-    acts = {"skater": skater_actions, "jumper": jumper_actions, "biathlete": biathlete_actions}[kind](sk)
+    acts = {"skater": skater_actions, "jumper": jumper_actions, "biathlete": biathlete_actions, "bobber": bobber_actions}[kind](sk)
     rig_export(kind, out_dir, acts, skeleton=sk, fps=FPS)
 
 
@@ -483,7 +579,7 @@ def ski_pole():
 
 
 only = sys.argv[sys.argv.index("--") + 2:] if "--" in sys.argv else []
-for k in ("skater", "jumper", "biathlete"):
+for k in ("skater", "jumper", "biathlete", "bobber"):
     if not only or k in only:
         build(k)
 if not only or "rifle" in only:

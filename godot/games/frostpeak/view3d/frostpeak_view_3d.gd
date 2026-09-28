@@ -2,7 +2,8 @@ class_name FrostpeakView3D
 extends Node3D
 ## Frostpeak Games in 3D: four venues in one alpine valley (FrostpeakValley). The speed-skating oval sits at the
 ## origin, the large jump hill (FrostpeakHill) at the valley's head backing onto the mountains, the biathlon stadium
-## and its course (FrostpeakBiathlon) in the woods to the north-west, the medal plaza with the podium and the
+## and its course (FrostpeakBiathlon) in the woods to the north-west, the bobsled run (FrostpeakBobVenue) down a
+## wooded spur at the north of the valley, the medal plaza with the podium and the
 ## cauldron at PLAZA. The venues are built from the events' own geometry (lane lengths, the
 ## hill's profile) so the picture matches the rules. Between venues the camera flies (FrostpeakFlight) high over
 ## the valley. Banners and painted lettering are drawn once into textures at start (invented names only).
@@ -76,6 +77,8 @@ var valley: FrostpeakValley
 var hill: FrostpeakHill
 var biathlon: FrostpeakBiathlon
 var bview: FrostpeakBiathlonView
+var bob: FrostpeakBobVenue
+var bobview: FrostpeakBobView
 var _flight: FrostpeakFlight
 var _fly_v0 := Vector3.ZERO  ## how the camera was moving when the flight took over
 var _fly_lv0 := Vector3.ZERO
@@ -110,6 +113,7 @@ var _last_lp := Vector3.ZERO  ## the jumper as last drawn (hill frame)
 var _land_drop := 0.0  ## how far the jumper still sinks onto the snow, just landed
 var _glide := 0.0  ## the skater's glide on past the finish
 var _glide_v := 0.0
+var _env: Environment
 
 
 func _ready() -> void:
@@ -127,6 +131,8 @@ func _ready() -> void:
 	hill.build()
 	biathlon = FrostpeakBiathlon.new(self, valley)
 	biathlon.build()
+	bob = FrostpeakBobVenue.new(self, valley)
+	bob.build()
 	valley.build_roads(ground_y)
 	_jcam = FrostpeakJumpCam.new(func(x: float, z: float) -> float: return hill.terrain_y(x, z))
 	_build_plaza()
@@ -139,6 +145,7 @@ func _ready() -> void:
 	for n in [_jumper_wait, _skater_wait, _rival_wait]:
 		n.visible = false
 	bview = FrostpeakBiathlonView.new(self, biathlon)
+	bobview = FrostpeakBobView.new(self, bob)
 	game.stage_changed.connect(_on_stage)
 	game.attempt_started.connect(_on_attempt)
 	_bake.call_deferred()
@@ -195,7 +202,8 @@ func _athlete(kind: String) -> Node3D:
 		(mi as VisualInstance3D).layers |= RIM_LAYER
 	var ap: AnimationPlayer = n.find_child("AnimationPlayer", true, false)
 	for a in ap.get_animation_list():
-		ap.get_animation(a).loop_mode = Animation.LOOP_LINEAR if a in ["idle", "skate", "glide", "ready", "tuck", "flight", "wave", "celebrate", "telemark", "prone"] else Animation.LOOP_NONE
+		ap.get_animation(a).loop_mode = Animation.LOOP_LINEAR if a in ["idle", "skate", "glide", "ready", "tuck", "flight", "wave", "celebrate", "telemark", "prone", "push", "push_l", "push_r",
+			"ready_l", "ready_r", "sit", "cheer", "brake", "pump", "hug", "wave_seat"] else Animation.LOOP_NONE
 	return n
 
 
@@ -601,6 +609,7 @@ func _build_world() -> void:
 	sky.sky_material = sky_mat
 	sky.radiance_size = Sky.RADIANCE_SIZE_128
 	var env := Environment.new()
+	_env = env
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	Look.sky_ambient(env, Color(0.7, 0.75, 0.86), 0.5)
@@ -732,7 +741,7 @@ func _shadow_range(far: float) -> void:
 
 ## The rim light shines from behind the athlete towards the camera, from a little above and to the sun's side.
 func _update_rim() -> void:
-	var target := _jumper if _jumper.visible else (bview.athlete if bview.athlete.visible else _skater)
+	var target := _jumper if _jumper.visible else (bview.athlete if bview.athlete.visible else (bobview.rig if bobview.rig.visible else _skater))
 	var back := (target.global_position - _camera.global_position)
 	back.y = 0.0
 	if back.length() < 0.01:
@@ -1061,6 +1070,11 @@ func _on_stage(stage: int) -> void:
 	_stage = stage
 	_stage_t = 0.0
 	var ev := game.comp.event_name() if game.comp else ""
+	# on the bobsled run the screen-space reflections and bounce light are hardly seen (white ice between white
+	# walls, the camera moving fast): they are left off there, for the frame rate
+	var bob_on := ev == "bobsled" and stage in [S.INTRO, S.ATTEMPT, S.RESULT, S.NEXT]
+	_env.ssr_enabled = not bob_on
+	_env.ssil_enabled = not bob_on
 	if prev == S.REPLAY and _rp_active:
 		_end_replay()
 	_skater.visible = false
@@ -1070,6 +1084,8 @@ func _on_stage(stage: int) -> void:
 	var stays: bool = stage in [S.STANDINGS, S.NEXT] and prev in [S.RESULT, S.REPLAY]
 	bview.athlete.visible = stays and ev == "biathlon"
 	bview.waiting.node.visible = false
+	bobview.rig.visible = stays and ev == "bobsled"
+	bobview.waiting.rig.visible = false
 	_jumper_wait.visible = false
 	_skater_wait.visible = false
 	_rival_wait.visible = false
@@ -1107,6 +1123,9 @@ func _on_stage(stage: int) -> void:
 				"biathlon":
 					bview.wait_at_start(nation)
 					_fly_to_stadium(game.stage_seconds(stage), stage == S.INTRO)
+				"bobsled":
+					bobview.wait_at_start(nation)
+					_fly_to_bob(game.stage_seconds(stage), stage == S.INTRO)
 		S.REPLAY:
 			_jumper.visible = true
 			_start_replay()
@@ -1130,6 +1149,11 @@ func _on_attempt(ev: WinterEvent) -> void:
 	elif ev is Biathlon:
 		bview.at_start(nation)
 		ev.event.connect(bview.on_event)
+		if not _flight_done():
+			_handoff(1.4)
+	elif ev is Bobsled:
+		bobview.at_start(nation)
+		ev.event.connect(bobview.on_event)
 		if not _flight_done():
 			_handoff(1.4)
 	else:
@@ -1169,12 +1193,19 @@ func _process(delta: float) -> void:
 				_set_camera(pl[0], pl[1], delta)
 				fov = pl[2]
 				_fov_cut = true  # the rig glides its own lens (into the sight it narrows fast)
+			elif game.ev is Bobsled:
+				var bb := game.ev as Bobsled
+				bobview.update(bb, delta, game.stage == S.RESULT)
+				var pl: Array = bobview.camera(bb, delta, game.stage == S.RESULT)
+				_set_camera(pl[0], pl[1], delta, pl[4], pl[5], pl[3])
+				fov = pl[2]
+				_fov_cut = pl[4]
 		S.REPLAY:
 			fov = _update_replay(delta)
 		S.INTRO, S.NEXT:
 			if not _fly(delta):
 				_hold_camera(delta)
-			var end_fov: float = {"ski_jump": FrostpeakJumpCam.GATE["fov"], "biathlon": FrostpeakBiathlonView.START["fov"]}.get(game.comp.event_name(), 50.0)
+			var end_fov: float = {"ski_jump": FrostpeakJumpCam.GATE["fov"], "biathlon": FrostpeakBiathlonView.START["fov"], "bobsled": 42.0}.get(game.comp.event_name(), 50.0)
 			fov = end_fov if _flight_done() else lerpf(50.0, end_fov, smoothstep(0.6, 1.0, _flight.t / _flight.duration))
 		S.STANDINGS:
 			if not _fly(delta):
@@ -1205,7 +1236,7 @@ func _process(delta: float) -> void:
 ## Puts the camera at `pos` looking at `look`. Every camera move ends here: a camera that has to take over from
 ## somewhere else (an intro skipped part-way) glides over from where it was, and the camera never turns faster
 ## than MAX_TURN, so nothing ever snaps. `cut` is for the replay's cuts (behind a wipe).
-func _set_camera(pos: Vector3, look: Vector3, delta: float, cut := false, max_turn := MAX_TURN) -> void:
+func _set_camera(pos: Vector3, look: Vector3, delta: float, cut := false, max_turn := MAX_TURN, roll := 0.0) -> void:
 	if delta > 0.0 and not cut:  # how the camera is moving, so a spring can take over without a jolt
 		_cam_vel = (pos - _cam_pos) / delta
 		_look_vel = (look - _cam_look) / delta
@@ -1223,6 +1254,8 @@ func _set_camera(pos: Vector3, look: Vector3, delta: float, cut := false, max_tu
 		pos = _hand_pos.lerp(pos, k)
 		look = _hand_look.lerp(look, k)
 	var want := Basis.looking_at(look - pos, Vector3.UP).get_rotation_quaternion()
+	if roll != 0.0:  # leaning with a bank: turned about the line of sight
+		want = (Quaternion((look - pos).normalized(), roll) * want).normalized()
 	var q := want
 	# the lens follows softly in flights, tightly on the athletes; the change between the two is gradual too
 	_turn_w = move_toward(_turn_w, 6.0 if _in_flight else 30.0, delta * 12.0)
@@ -1497,6 +1530,38 @@ func _fly_to_stadium(seconds: float, far: bool) -> void:
 	_start_flight("stadium", pts, looks, seconds, clear, paces, 0.12)
 
 
+## Into the bobsled run: across the valley to the finish area at the foot of the spur, then up the run itself,
+## over the horseshoe and the curves above it, to the start, where the dolly waits beside the crew at their sled.
+## From the finish (the next crew), straight back up over the run.
+func _fly_to_bob(seconds: float, far: bool) -> void:
+	var end := bobview.start_pose()
+	var pts: Array[Vector3] = [_cam_pos]
+	var looks: Array[Vector3] = [_cam_look]
+	var paces: Array[float] = [0.7]
+	var over := func(s: float, up: float) -> Vector3:
+		var c := FrostpeakBobVenue.centre(s)
+		return Vector3(c.x, ground_y(c) + up, c.z)
+	var fin := FrostpeakBobVenue.centre(BobTrack.FINISH)
+	if far and _cam_pos.distance_to(fin) > 250.0:
+		var dir := Vector3(fin.x - _cam_pos.x, 0, fin.z - _cam_pos.z).normalized()
+		pts.append_array([_cam_pos + Vector3(0, 45, 0) + dir * 120.0, fin + Vector3(40, 55, 150), over.call(930.0, 38.0)])
+		looks.append_array([_cam_look.lerp(fin, 0.5), fin + Vector3(0, 0, -60), FrostpeakBobVenue.centre(760.0)])
+		paces.append_array([1.6, 1.4, 1.0])
+	else:
+		pts.append(_cam_pos + Vector3(0, 25, 0))
+		looks.append(FrostpeakBobVenue.centre(maxf(0.0, BobTrack.FINISH - 200.0)))
+		paces.append(0.8)
+	pts.append_array([over.call(640.0, 42.0), over.call(420.0, 40.0), over.call(180.0, 34.0), over.call(40.0, 18.0), end[0] + Vector3(-4, 5, -6), end[0]])
+	looks.append_array([FrostpeakBobVenue.centre(420.0), FrostpeakBobVenue.centre(200.0), FrostpeakBobVenue.centre(20.0),
+		FrostpeakBobVenue.centre(0.0), end[1], end[1]])
+	paces.append_array([1.2, 1.1, 0.9, 0.55, 0.3, 0.22])
+	var clear := func(p: Vector3) -> float:
+		if FrostpeakBobVenue.covers(p, 20.0):
+			return valley.height(p.x, p.z) + (6.0 if FrostpeakBobVenue.near(p.x, p.z) < 14.0 else 26.0)
+		return valley.height(p.x, p.z) + 45.0
+	_start_flight("bob", pts, looks, seconds, clear, paces, 0.12)
+
+
 ## After an event, to the medal plaza (the standings board shows on the way): the camera rises, crosses the valley
 ## high enough that it drifts by slowly (higher the further it goes), and comes in over the crowd from the north to
 ## the podium.
@@ -1747,6 +1812,16 @@ func wipe_time() -> float:
 	return _wipe_t
 
 
+## What the wipe says under the games' name: the replay's, or on the bobsled run the camera it cuts to.
+func wipe_text() -> String:
+	if game.stage in [S.ATTEMPT, S.RESULT] and game.ev is Bobsled:
+		var out := PackedStringArray()
+		for ch in bobview.wipe_label:
+			out.append(ch)
+		return " ".join(out)
+	return "R E P L A Y"
+
+
 func _update_replay(delta: float) -> float:
 	if not _rp_active:
 		_hold_camera(delta)
@@ -1865,6 +1940,10 @@ func _update_boards() -> void:
 		var j := game.ev as SkiJump
 		a = "%s  %s" % [code, ("%.1f M" % j.distance) if j.stage == SkiJump.Stage.LANDED else "- - -"]
 		b = "HS 134"
+	elif game.ev is Bobsled:
+		var bo := game.ev as Bobsled
+		a = "%s  %s" % [code, ("%.2f" % bo.result) if bo.phase == WinterEvent.Phase.DONE and not bo.crashed else ("DNF" if bo.crashed else "%.2f" % bo.clock)]
+		b = "%d KM/H" % int(bo.speed * 3.6) if bo.phase != WinterEvent.Phase.DONE else "MAX %.1f G" % bo.max_g
 	elif game.ev is Biathlon:
 		var bi := game.ev as Biathlon
 		a = "%s  %s" % [code, Competition.format("biathlon", bi.result if bi.result > 0.0 else bi.time)]

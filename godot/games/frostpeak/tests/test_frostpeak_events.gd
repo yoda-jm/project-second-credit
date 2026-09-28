@@ -147,6 +147,12 @@ func test_competition_ranks_and_awards_medals() -> void:
 	assert_int(c.ranking("biathlon")[0]).is_equal(0)
 	assert_int(c.medals()[0][0]).is_equal(2)
 	c.next_event()
+	assert_str(c.event_name()).is_equal("bobsled")
+	c.record(0, Bobsled.CRASH_RESULT)  # a crash: last, and no time
+	c.play_cpus()
+	assert_int(c.ranking("bobsled")[c.athletes.size() - 1]).is_equal(0)
+	assert_str(Competition.format("bobsled", Bobsled.CRASH_RESULT)).is_equal("DNF")
+	c.next_event()
 	assert_bool(c.finished()).is_true()
 
 
@@ -178,6 +184,49 @@ func test_biathlon_course_is_a_closed_loop_with_a_range() -> void:
 	assert_float(BiathlonCourse.pen_loop()).is_between(45.0, 70.0)
 	var p0 := BiathlonCourse.pen_point(0.0)
 	assert_vector(Vector3(p0.x, 0, p0.z)).is_equal_approx(Vector3(BiathlonCourse.xz(BiathlonCourse.PEN_S).x, 0, BiathlonCourse.xz(BiathlonCourse.PEN_S).y), Vector3(0.05, 0.05, 0.05))
+
+
+## The shortest distance from a point to the course's centre line and to the penalty loop's (x, z).
+func _to_course(p: Vector3) -> Array[float]:
+	var best := INF
+	var at := 0.0
+	var s := 0.0
+	while s < BiathlonCourse.lap():
+		var d := BiathlonCourse.xz(s).distance_to(Vector2(p.x, p.z))
+		if d < best:
+			best = d
+			at = s
+		s += 0.25
+	var pen := INF
+	var u := 0.0
+	while u < BiathlonCourse.pen_loop():
+		var q := BiathlonCourse.pen_point(u)
+		pen = minf(pen, Vector2(q.x, q.z).distance_to(Vector2(p.x, p.z)))
+		u += 0.25
+	return [best, at, pen]
+
+
+func test_biathlon_fences_never_cross_the_course() -> void:
+	var panels := FrostpeakBiathlon.fence_panels()
+	assert_int(panels.size()).is_greater(40)
+	for f in panels:
+		for k in 5:
+			var p: Vector3 = (f[0] as Vector3).lerp(f[1], k / 4.0)
+			var d := _to_course(p)
+			# clear of the groomed course (half its width) and of the penalty loop (4 m wide)
+			assert_float(d[0] - FrostpeakBiathlon.width(d[1]) * 0.5).is_greater(0.5)
+			assert_float(d[2]).is_greater(2.3)
+
+
+func test_biathlon_arch_spans_the_course() -> void:
+	var xf := FrostpeakBiathlon.arch_xform()
+	var d := BiathlonCourse.dir(0.0)
+	# the beam (the model's x) runs across the course, the skier goes through along its z, upright
+	assert_float(absf(xf.basis.x.normalized().dot(Vector3(d.x, 0.0, d.y)))).is_less(0.01)
+	assert_float(absf(xf.basis.z.normalized().dot(Vector3(d.x, 0.0, d.y)))).is_greater(0.99)
+	assert_float(xf.basis.y.normalized().y).is_greater(0.99)
+	# its legs (5.5 m either side) stand off the groomed course
+	assert_float(5.5 - 0.45).is_greater(FrostpeakBiathlon.width(0.0) * 0.5)
 
 
 func test_biathlon_clean_race_takes_about_two_minutes() -> void:
@@ -275,6 +324,122 @@ func test_biathlon_is_deterministic() -> void:
 	_play(b, 400.0)
 	assert_float(a.result).is_equal(b.result)
 	assert_int(a.misses).is_equal(b.misses)
+
+
+# ------------------------------------------------------------------ bobsled
+
+## A bob run with the CPU pushing and loading, and the pilot's steering from `mode`: "auto" (the CPU pilot), "none"
+## (hands off), "into" (steering into every curve all the way round).
+func _bob_run(mode: String, seed := 1, skill := 1.0) -> Bobsled:
+	var b := Bobsled.new(seed)
+	b.auto = true
+	b.skill = skill
+	var n := 0
+	while b.phase != W.Phase.DONE and n < 60 * 120:
+		if mode != "auto" and b.stage == Bobsled.Stage.RIDE:
+			b.auto = false
+			var k := BobTrack.kappa(b.s + 5.0)
+			b.hold_right = mode == "into" and k > 0.002
+			b.hold_left = mode == "into" and k < -0.002
+		b.tick()
+		n += 1
+	return b
+
+
+func test_bob_track_runs_down_the_spur() -> void:
+	var len := BobTrack.length()
+	assert_float(len).is_between(1000.0, 1100.0)
+	assert_int(BobTrack.curves().size()).is_equal(11)
+	assert_float(BobTrack.y(0.0) - BobTrack.y(BobTrack.FINISH)).is_between(90.0, 120.0)
+	# a gentle push stretch, then never steeper than 16.5 %, and always downhill to the finish
+	var s := 2.0
+	while s < BobTrack.FINISH:
+		var g := BobTrack.grade(s)
+		assert_float(g).is_less(0.0)
+		assert_float(g).is_greater(-0.165 if s > BobTrack.PUSH_END else -0.06)
+		s += 2.0
+	# the line is continuous and the curves' turns add up to its heading
+	s = 0.0
+	while s < len - 1.0:
+		assert_float(BobTrack.xz(s).distance_to(BobTrack.xz(s + 1.0))).is_between(0.95, 1.05)
+		s += 1.0
+	var turn := 0.0
+	for c in BobTrack.curves():
+		turn += c[2]
+	assert_float(BobTrack.heading(len) - BobTrack.heading(0.0)).is_equal_approx(turn, 0.02)
+	# the banks: tall on the outside of a curve, low on its inside and on the straights
+	var hs: Array = BobTrack.curves()[3]
+	var mid: float = (hs[0] + hs[1]) * 0.5
+	assert_float(BobTrack.wall(mid, -signf(hs[2]))).is_equal_approx(BobTrack.BANK, 0.01)
+	assert_float(BobTrack.wall(mid, signf(hs[2]))).is_equal_approx(BobTrack.WALL, 0.01)
+	assert_float(BobTrack.wall(30.0, 1.0)).is_equal_approx(BobTrack.WALL, 0.01)
+
+
+func test_bob_clean_run_is_on_the_cpu_scale() -> void:
+	var b := _bob_run("auto")
+	assert_bool(b.crashed).is_false()
+	assert_int(b.hits).is_equal(0)
+	assert_float(b.result).is_between(36.0, 42.0)
+	assert_float(Bobsled.cpu_time(1.0)).is_equal_approx(b.result, 0.6)
+	# splits at every timing eye, in order, and the speed and g of a real run
+	assert_int(b.splits.size()).is_equal(BobTrack.SPLITS.size())
+	for i in range(1, b.splits.size()):
+		assert_float(b.splits[i]).is_greater(b.splits[i - 1])
+	assert_float(b.max_g).is_between(3.5, 5.5)
+	assert_float(b.speed * 3.6).is_between(110.0, 140.0)
+
+
+func test_bob_hands_off_flips_on_a_bank() -> void:
+	var b := _bob_run("none")
+	assert_bool(b.crashed).is_true()
+	assert_float(b.result).is_equal(Bobsled.CRASH_RESULT)
+	assert_str(b.result_text).is_equal("CRASHED")
+
+
+func test_bob_oversteering_hits_the_walls_and_costs_time() -> void:
+	var good := _bob_run("auto")
+	var over := _bob_run("into")
+	assert_bool(over.crashed).is_false()
+	assert_int(over.hits).is_greater(0)
+	assert_float(over.result).is_greater(good.result + 0.2)
+
+
+func test_bob_push_rhythm_and_loading_in_time() -> void:
+	var good := _bob_run("auto", 2, 1.0)
+	var poor := _bob_run("auto", 2, 0.2)
+	assert_float(poor.splits[0]).is_greater(good.splits[0] + 0.1)
+	# a crew that never jumps in scrambles in late at the end of the ramp, and loses time for it
+	var b := Bobsled.new(2)
+	b.phase = W.Phase.RUN
+	var n := 0
+	while b.stage == Bobsled.Stage.PUSH and n < 60 * 20:
+		if b.meter >= 0.85:
+			b.press(b.next_foot)
+		b.tick()
+		n += 1
+	assert_bool(b.late).is_true()
+	assert_float(b.s).is_greater_equal(BobTrack.PUSH_END)
+
+
+func test_bob_is_deterministic() -> void:
+	var a := _bob_run("auto", 7, 0.7)
+	var b := _bob_run("auto", 7, 0.7)
+	assert_float(a.result).is_equal(b.result)
+	assert_array(a.splits).is_equal(b.splits)
+
+
+func test_practice_bobsled_runs_attempt_after_attempt() -> void:
+	var g := FrostpeakGame.new()
+	g.demo = true
+	g.practice = "bobsled"
+	g.start(3)
+	var seen := _run_game(g, 150.0)
+	var S := FrostpeakGame.Stage
+	assert_int(seen.count(S.RESULT)).is_greater(1)
+	assert_array(seen).not_contains([S.STANDINGS, S.PODIUM, S.FINAL])
+	assert_bool(g.best.has(0)).is_true()
+	assert_float(g.best[0]).is_less(Bobsled.CRASH_RESULT)
+	g.free()
 
 
 # ------------------------------------------------------------------ the games: menu, practice, replay

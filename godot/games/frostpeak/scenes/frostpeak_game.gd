@@ -14,7 +14,7 @@ enum Stage { SETUP, INTRO, ATTEMPT, RESULT, STANDINGS, PODIUM, FINAL, MENU, REPL
 const STAGE_SECONDS := {Stage.INTRO: 9.0, Stage.RESULT: 3.2, Stage.STANDINGS: 14.0, Stage.PODIUM: 6.0, Stage.REPLAY: 10.5,
 	Stage.NEXT: 6.0}
 ## How long each event's intro flies (the camera glides from wherever it is to the venue), and when its title card shows.
-const INTRO_SECONDS := {"ski_jump": 24.0, "speed_skating": 12.0, "biathlon": 17.0}
+const INTRO_SECONDS := {"ski_jump": 24.0, "speed_skating": 12.0, "biathlon": 17.0, "bobsled": 20.0}
 const INTRO_CARD := {"ski_jump": Vector2(5.0, 11.0)}
 ## Events with a TV replay after each attempt.
 const REPLAYS := ["ski_jump"]
@@ -78,15 +78,16 @@ func _set_stage(s: Stage) -> void:
 func stage_seconds(s: Stage) -> float:
 	var ev_name := comp.event_name() if comp != null else ""
 	var jump := ev_name == "ski_jump"
+	var bob := ev_name == "bobsled"
 	match s:
 		Stage.INTRO:
 			return INTRO_SECONDS.get(ev_name, STAGE_SECONDS[Stage.INTRO])
 		Stage.RESULT:
-			return 4.5 if jump else 3.2
+			return 7.0 if bob else (4.5 if jump else 3.2)  # (the bob brakes to a stop, and the crew celebrates)
 		Stage.NEXT:
-			return 12.0 if jump else STAGE_SECONDS[Stage.NEXT]
+			return 12.0 if jump or bob else STAGE_SECONDS[Stage.NEXT]  # (the bob's start is a kilometre up the run)
 		Stage.STANDINGS:
-			return 18.0 if jump else STAGE_SECONDS[Stage.STANDINGS]  # the hill is furthest from the plaza
+			return 18.0 if jump else (16.0 if bob else STAGE_SECONDS[Stage.STANDINGS])  # the hill is furthest from the plaza
 		Stage.REPLAY:
 			return replay_seconds
 	return STAGE_SECONDS.get(s, 3.0)
@@ -129,6 +130,8 @@ func _new_attempt() -> void:
 			(ev as SpeedSkating).rival_skill = 0.6 + 0.1 * comp.current
 		"biathlon":
 			ev = Biathlon.new(_seed * 31 + comp.current * 7 + athlete)
+		"bobsled":
+			ev = Bobsled.new(_seed * 31 + comp.current * 7 + athlete)
 		_:
 			ev = SkiJump.new(_seed * 31 + comp.current * 7 + athlete)
 	ev.auto = demo
@@ -153,6 +156,9 @@ func _process(delta: float) -> void:
 				if ev is Biathlon:
 					(ev as Biathlon).hold_left = Input.is_action_pressed("ui_left")
 					(ev as Biathlon).hold_right = Input.is_action_pressed("ui_right")
+				elif ev is Bobsled:
+					(ev as Bobsled).hold_left = Input.is_action_pressed("ui_left")
+					(ev as Bobsled).hold_right = Input.is_action_pressed("ui_right")
 			ev.tick()
 		if ev.phase == WinterEvent.Phase.DONE:
 			var who := humans()[athlete]

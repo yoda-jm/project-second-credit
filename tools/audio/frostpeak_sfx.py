@@ -112,3 +112,32 @@ push = s.highpass(s.noise(d), 1800) * env(n(d), 0.02, 0.25, 2.5)
 click = np.zeros(n(d))
 mix(click, n(0.02), 0.5 * s.highpass(s.noise(0.03), 4000) * env(n(0.03), 0.0005, 0.01, 5))
 s.save("ski_push", lp(push, 7000) + click, 0.35)
+
+# ---- the bobsled (added after the biathlon, so every sound above keeps its noise)
+
+d = 3.0  # the runners on the ice (loops): a deep rumble through the sled, the steel's hiss, a tremble from the joins
+rum = lp(s.noise(d), 90) * 2.5 + 0.5 * lp(s.noise(d), 260)
+hiss = s.highpass(s.noise(d), 2500) * 0.18
+trem = 0.8 + 0.2 * np.sin(2 * np.pi * 7.0 * t(d)) * np.sin(2 * np.pi * 0.9 * t(d))
+x = (rum + lp(hiss, 8000)) * trem
+fade = n(0.3)
+x[:fade] = x[:fade] * np.linspace(0, 1, fade) + x[-fade:] * np.linspace(1, 0, fade)
+s.save("bob_run", x[:-fade], 0.55)
+
+d = 0.7  # a wall hit: the cowling slams the ice, the runners screech along it
+slam = s.sweep(120, 55, d) * env(n(d), 0.001, 0.12, 3)
+screech = s.highpass(s.noise(d), 2200) * env(n(d), 0.005, 0.5, 2) * (0.7 + 0.3 * np.sin(2 * np.pi * 31 * t(d)))
+s.save("bob_scrape", slam + 0.6 * lp(screech, 7000) + 0.4 * lp(s.noise(d), 700) * env(n(d), 0.001, 0.1, 3), 0.75)
+
+d = 0.16  # a push step: spikes biting the ice
+bite = s.highpass(s.noise(d), 2600) * env(n(d), 0.0008, 0.05, 4)
+thud = lp(s.noise(d), 350) * env(n(d), 0.001, 0.06, 4)
+s.save("bob_step", bite * 0.7 + thud, 0.45)
+
+d = 0.45  # a crewman drops into the sled: a hollow knock of the fibreglass, a thump
+knock = s.bell(210, d, ((1, 1.0), (2.1, 0.4), (3.3, 0.2)), 0.08) * env(n(d), 0.001, 0.12, 3)
+s.save("bob_load", knock * 0.8 + lp(s.noise(d), 400) * env(n(d), 0.001, 0.08, 4), 0.6)
+
+d = 1.8  # the brake on the run-out: the claw grinding into the ice, slowing
+grind = s.highpass(s.noise(d), 1400) * (0.6 + 0.4 * np.sin(2 * np.pi * np.linspace(18, 6, n(d)) * t(d)))
+s.save("bob_brake", lp(grind, np.geomspace(6000, 1500, n(d))) * env(n(d), 0.03, 1.2, 1.5), 0.6)

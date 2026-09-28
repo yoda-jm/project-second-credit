@@ -79,11 +79,11 @@ decisions below are settled unless the owner reopens them.
    (`engine/platform_body.gd`), the alley hub and five rooms (`engine/rooms/`), rigged cat, lady cat and bulldog
    (`tools/blender/whisker_animals.py`). `--room=N` (user argument) starts a capture inside a room. Rules from
    memory: check against the original.
-7. Game 5, **Frostpeak Games** (working title, `godot/games/frostpeak/`): playable with speed skating, the ski jump
-   and the biathlon sprint, 1-4 players in hot seat, CPU rivals, podium and medal table, and a practice menu for any
+7. Game 5, **Frostpeak Games** (working title, `godot/games/frostpeak/`): playable with speed skating, the ski jump,
+   the biathlon sprint and the four-man bobsled (push start, banked curves, brake, crash card), 1-4 players in hot seat, CPU rivals, podium and medal table, and a practice menu for any
    single event. One continuous camera (`view3d/jump_camera.gd`, flights in `camera_flight.gd`), a TV replay of each
-   jump (`view3d/replay.gd`). `--event=N` starts a capture at an event, `--practice` at the menu. Open items: bobsled,
-   hot dog, figure skating; the opening ceremony; the biathlon scope overlay wants polish.
+   jump (`view3d/replay.gd`). `--event=N` starts a capture at an event, `--practice` at the menu. Open items: the two-man
+   bob, hot dog, figure skating; a steady 60 fps (bob and biathlon run about 55 at 1080p); the opening ceremony; the biathlon scope overlay wants polish.
 8. Game 6, **Muddy Boots** (working title, `godot/games/boots/`): playable campaign of three missions; squad
    orders, grenades, rockets, huts, hostages, mines; importer for the original map files (`engine/cf_import.gd`).
    Campaign packs (`packs/`: First Tour, The Long Monsoon) with story cards and a chooser (shared: `core/packs/`,

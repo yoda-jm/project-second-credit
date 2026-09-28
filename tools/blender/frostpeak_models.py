@@ -1,8 +1,11 @@
 """Props for game 5 (Frostpeak Games): podium on a medal stage, flagpole, spectators (tinted per instance), snowy
 pine and spruce, torch cauldron, floodlight mast, finish arch, start gate, grandstand section and its end wall,
-scoreboard, TV camera tower, judges' tower and the jump's start house. Deterministic; output CC BY-SA 4.0;
+scoreboard, TV camera tower, judges' tower, the jump's start house and the four-man bobsled (its push handles and
+brake lever apart, so the game can move them). Deterministic; output
+CC BY-SA 4.0;
 provenance: this script.
-Run: blender -b --factory-startup -P tools/blender/frostpeak_models.py -- godot/games/frostpeak/art/models
+Run: blender -b --factory-startup -P tools/blender/frostpeak_models.py -- godot/games/frostpeak/art/models [names]
+(names: the functions below to run, e.g. bobsled; all when none are given)
 1 unit = 1 m, Z up in Blender, fronts face -Y. The ice oval and the jump hill are built by the game from the
 events' own geometry, so what you see is what the physics uses.
 Materials the game recolours or replaces by name: "coat" (spectator, instance colour), "hat" and "scarf" (instance
@@ -638,8 +641,118 @@ def boulder():
     export(k.obj(), "boulder")
 
 
+def bobsled():
+    """The four-man bob, 3.8 m: a fibreglass cowling (a closed nose over the pilot's legs, an open tub behind for
+    the crew), four steel runners on their mounts, the folding push handles at the sides, the push bar and the
+    brake at the tail, rubber bumpers and the start number. The cowling is "suit" and its stripes "suit_accent",
+    so the game paints the sled in the crew's colours. Origin on the ice under the sled's middle, nose to -Y."""
+    shell = mat("suit", (0.8, 0.12, 0.12), 0.25, coat=1.0)
+    stripe = mat("suit_accent", (0.1, 0.2, 0.6), 0.25, coat=1.0)
+    white = mat("bob_white", (0.95, 0.95, 0.96), 0.3, coat=0.8)
+    carbon = mat("bob_carbon", (0.05, 0.05, 0.06), 0.35, coat=0.6)
+    runner = mat("runner", (0.85, 0.87, 0.9), 0.12, 1.0)
+    rubber = mat("bumper", (0.04, 0.04, 0.04), 0.8)
+    k = Kit()
+
+    def sell(w, top, bot, n=4.0, cnt=20, x0=0.0):
+        """A closed superellipse section: half-width w, from bot to top."""
+        zc = (top + bot) * 0.5
+        h = (top - bot) * 0.5
+        out = []
+        for i in range(cnt):
+            a = 2 * math.pi * i / cnt
+            c, sn = math.cos(a), math.sin(a)
+            out.append((x0 + w * math.copysign(abs(c) ** (2 / n), c), 0.0, zc + h * math.copysign(abs(sn) ** (2 / n), sn)))
+        return out
+
+    # the nose: from the rounded tip back to the bulkhead in front of the pilot
+    nose = []
+    for y, w, top, bot in ((-1.97, 0.06, 0.33, 0.2), (-1.93, 0.16, 0.4, 0.15), (-1.84, 0.24, 0.47, 0.13), (-1.68, 0.3, 0.53, 0.12),
+                           (-1.45, 0.33, 0.58, 0.12), (-1.2, 0.34, 0.61, 0.12), (-0.95, 0.34, 0.62, 0.12)):
+        nose.append([(x, y, z) for x, _, z in sell(w, top, bot)])
+    k.rings(shell, nose)
+    # the tub: a thick U, open on top, its rim dipping towards the tail
+
+    def ush(w, rim, bot, n=4.0, cnt=11, th=0.025):
+        outer = []
+        inner = []
+        for i in range(cnt):
+            a = math.pi + math.pi * i / (cnt - 1)
+            c, sn = math.cos(a), math.sin(a)
+            ex = math.copysign(abs(c) ** (2 / n), c)
+            ez = abs(sn) ** (2 / n)
+            outer.append((w * ex, rim - (rim - bot) * ez))
+            inner.append(((w - th) * ex, rim - (rim - bot - th) * ez))
+        return outer + list(reversed(inner))
+    tub = []
+    for y, w, rim in ((-0.97, 0.34, 0.6), (-0.6, 0.34, 0.56), (0.0, 0.335, 0.5), (0.8, 0.33, 0.46), (1.5, 0.31, 0.44),
+                      (1.8, 0.27, 0.43), (1.9, 0.22, 0.42)):
+        tub.append([(x, y, z) for x, z in ush(w, rim, 0.12)])
+    k.rings(shell, tub, smooth=True)
+    # the cockpit's coaming: a dark rim round the opening; the stripes along the sides; the bulkhead's top
+    for sgn in (-1, 1):
+        k.tube(carbon, (sgn * 0.33, -0.95, 0.605), (sgn * 0.32, 1.1, 0.48), 0.022, segs=8)
+        k.tube(carbon, (sgn * 0.32, 1.1, 0.48), (sgn * 0.23, 1.88, 0.43), 0.02, segs=8)
+        for y0, y1, z0, z1 in ((-1.8, -0.95, 0.33, 0.36), (-0.95, 1.6, 0.36, 0.31)):
+            k.bar(stripe, (sgn * (0.3 if y0 < -1.5 else 0.345), y0, z0), (sgn * 0.345, y1, z1), 0.012, 0.07)
+        # the start number on each side
+        k.box(white, (sgn * 0.343, -0.35, 0.33), (0.01, 0.34, 0.16))
+        for i in range(2):
+            k.box(carbon, (sgn * 0.349, -0.43 + i * 0.16, 0.33), (0.008, 0.06, 0.12))
+    k.box(white, (0, -1.35, 0.585), (0.3, 0.5, 0.02), rx=0.12)   # a white panel on the nose
+    k.box(stripe, (0, -1.72, 0.49), (0.28, 0.2, 0.02), rx=0.35)
+    # the runners: steel blades on mounts, their fronts curled up
+    for sgn in (-1, 1):
+        for y0, y1 in ((-1.45, -0.55), (0.55, 1.55)):
+            k.box(runner, (sgn * 0.33, (y0 + y1) * 0.5, 0.035), (0.018, y1 - y0, 0.05))
+            k.bar(runner, (sgn * 0.33, y0, 0.035), (sgn * 0.33, y0 - 0.12, 0.1), 0.018, 0.04)
+            k.box(carbon, (sgn * 0.33, (y0 + y1) * 0.5, 0.09), (0.05, (y1 - y0) * 0.7, 0.06))
+            for y in (y0 + 0.15, y1 - 0.15):
+                k.box(DARK_STEEL, (sgn * 0.3, y, 0.11), (0.08, 0.08, 0.05))
+        # the housings the push handles slide out of (the handles are a model of their own, "bob_handle")
+        for y in (-0.6, 0.6):
+            k.box(DARK_STEEL, (sgn * 0.335, y, 0.46 if y < 0 else 0.42), (0.03, 0.09, 0.07))
+        # the rear push bar's posts
+        k.tube(DARK_STEEL, (sgn * 0.18, 1.86, 0.3), (sgn * 0.22, 2.02, 0.47), 0.02, segs=8)
+    k.tube(DARK_STEEL, (-0.26, 2.02, 0.47), (0.26, 2.02, 0.47), 0.02, segs=8)
+    k.tube(rubber, (-0.2, 2.02, 0.47), (0.2, 2.02, 0.47), 0.026, segs=8)
+    k.box(DARK_STEEL, (0, 1.75, 0.1), (0.14, 0.22, 0.1))                      # the brake's housing (the lever is "bob_brake")
+    k.ball(rubber, (0, -1.97, 0.26), 0.07, (1.4, 0.6, 0.9))                   # the bumpers
+    k.box(rubber, (0, 1.93, 0.2), (0.4, 0.06, 0.12))
+    export(k.obj(), "bobsled")
+
+
+def bob_handle():
+    """A push handle that slides out of the bob's side: a steel bar out from the housing, a grip along the sled
+    (pointing back) with a rubber sleeve. Origin at the housing, the bar out along +X (the game mirrors it for the
+    other side and slides it in after the push)."""
+    rubber = mat("bumper", (0.04, 0.04, 0.04), 0.8)
+    k = Kit()
+    k.tube(STEEL, (0.0, 0.0, 0.0), (0.3, 0.0, 0.0), 0.016, segs=10)
+    k.tube(STEEL, (0.3, 0.02, 0.0), (0.3, -0.06, 0.0), 0.018, segs=10)
+    k.tube(rubber, (0.3, 0.0, 0.0), (0.3, 0.2, 0.0), 0.024, segs=10)
+    k.ball(STEEL, (0.3, 0.21, 0.0), 0.026)
+    export(k.obj(), "bob_handle")
+
+
+def bob_brake():
+    """The brake lever at the tail: a bar up from its pivot with a T grip; the brakeman pulls it back past the
+    finish. Pivot at the origin, the lever up +Z, leaning forward (-Y) at rest."""
+    rubber = mat("bumper", (0.04, 0.04, 0.04), 0.8)
+    k = Kit()
+    k.bar(DARK_STEEL, (0, 0, 0), (0, -0.1, 0.38), 0.03)
+    k.tube(rubber, (-0.09, -0.1, 0.38), (0.09, -0.1, 0.38), 0.022, segs=10)
+    k.box(STEEL, (0, 0.02, -0.06), (0.05, 0.08, 0.1))       # the claw's arm
+    export(k.obj(), "bob_brake")
+
+
 if __name__ == "__main__":  # frostpeak_valley.py imports the helpers above
     reset()
+    only = sys.argv[sys.argv.index("--") + 2:] if "--" in sys.argv else []
+    if only:
+        for name in only:
+            globals()[name]()
+        sys.exit(0)
     podium()
     flagpole()
     spectator()
@@ -655,3 +768,6 @@ if __name__ == "__main__":  # frostpeak_valley.py imports the helpers above
     judges_tower()
     start_house()
     boulder()
+    bobsled()
+    bob_handle()
+    bob_brake()

@@ -88,7 +88,9 @@ func height(x: float, z: float) -> float:
 		h = lerpf(h, surf, g.x * 0.9)
 	# the biathlon venue brings its own rolling ground (BiathlonCourse), in place of the valley's swells
 	var bm := BiathlonCourse.mask(x, z)
-	return maxf(h, 0.0) + relief(x, z) * (1.0 - smoothstep(0.0, 40.0, h)) * (1.0 - bm) + (BiathlonCourse.ground(x, z) if bm > 0.0 else 0.0)
+	h = maxf(h, 0.0) + relief(x, z) * (1.0 - smoothstep(0.0, 40.0, h)) * (1.0 - bm) + (BiathlonCourse.ground(x, z) if bm > 0.0 else 0.0)
+	# the bobsled run's spur and the bed cut for the run (FrostpeakBobVenue)
+	return FrostpeakBobVenue.adjust(x, z, h)
 
 
 ## The frozen river's centre line (z for an x), winding along the north of the valley.
@@ -139,6 +141,8 @@ func _build_mountains() -> void:
 			var x := C.x + cos(a) * radii[ri]
 			var z := C.z + sin(a) * radii[ri]
 			var h := height(x, z) if radii[ri] > INNER else minf(height(x, z), 0.0) - 2.0
+			if FrostpeakBobVenue.covers(Vector3(x, 0, z)):  # under the bobsled venue's own finer ground
+				h -= 2.0 * FrostpeakBobVenue.inside(Vector3(x, 0, z))
 			var g := glacier(x, z).x
 			st.set_color(Color(g, forest(x, z, h), 0.0))
 			st.add_vertex(Vector3(x, h, z))
@@ -172,7 +176,7 @@ func _build_mountains() -> void:
 		var rr := rng.randf_range(INNER + 10.0, INNER + 560.0)
 		var x := C.x + cos(a) * rr
 		var z := C.z + sin(a) * rr
-		if FrostpeakHill.covers(Vector3(x, 0, z)):
+		if FrostpeakHill.covers(Vector3(x, 0, z)) or FrostpeakBobVenue.covers(Vector3(x, 0, z), 6.0):
 			continue
 		var h := height(x, z)
 		if rng.randf() > forest(x, z, h) or h < 2.0:
@@ -198,6 +202,8 @@ func _build_floor() -> void:
 			var y := height(x, z) - 3.0 * smoothstep(985.0, 1010.0, r) - 0.1
 			if FrostpeakBiathlon.covers(Vector3(x, 0, z)):  # under the venue's own finer ground
 				y -= 1.5 * FrostpeakBiathlon.inside(Vector3(x, 0, z))
+			if FrostpeakBobVenue.covers(Vector3(x, 0, z)):
+				y -= 1.5 * FrostpeakBobVenue.inside(Vector3(x, 0, z))
 			if FrostpeakHill.covers(Vector3(x, 0, z)):
 				var l := FrostpeakHill.frame().affine_inverse() * Vector3(x, 0, z)
 				var inner := minf(minf(l.x - FrostpeakHill.X0, FrostpeakHill.X1 - l.x), FrostpeakHill.Z1 - absf(l.z))
@@ -225,7 +231,7 @@ func _build_floor() -> void:
 		if clump < 0.05 and rng.randf() > 0.12:  # woods in stands, a few lone trees between
 			continue
 		var p := Vector3(cos(a) * rr + C.x, 0, sin(a) * rr + C.z)
-		if FrostpeakHill.covers(p) or p.distance_to(FrostpeakView3D.PLAZA) < 60.0 or FrostpeakBiathlon.covers(p, 10.0):
+		if FrostpeakHill.covers(p) or p.distance_to(FrostpeakView3D.PLAZA) < 60.0 or FrostpeakBiathlon.covers(p, 10.0) or FrostpeakBobVenue.covers(p, 6.0):
 			continue
 		if absf(p.z) < 95.0 and p.x > -120.0 and p.x < 180.0:  # the oval, its stand and car park
 			continue

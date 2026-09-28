@@ -10,6 +10,7 @@ const HOWTO := {
 	"speed_skating": "ALTERNATE LEFT AND RIGHT  -  PUSH WHEN THE METER IS GREEN",
 	"ski_jump": "HOLD DOWN TO TUCK  -  SPACE AT THE LIP  -  UP / DOWN IN THE AIR  -  SPACE TO LAND",
 	"biathlon": "LEFT / RIGHT IN RHYTHM  -  DOWN TO TUCK  -  AT THE RANGE: ARROWS TO AIM, SPACE TO FIRE",
+	"bobsled": "LEFT / RIGHT IN RHYTHM TO PUSH  -  SPACE TO JUMP IN  -  LEFT / RIGHT TO STEER: KEEP OFF THE TOP OF THE BANKS",
 }
 
 @export var game: FrostpeakGame
@@ -23,6 +24,13 @@ var _banner := ""
 var _banner_t := 10.0
 var _banner_col := HudKit.BAD
 var _map: PackedVector2Array  ## the biathlon course, for the little map
+var _bob_map: PackedVector2Array  ## the bobsled run, for its map
+var _split_t := 10.0
+var _quote := ""  ## a crash's card, with a little bounce
+var _quote_t := 10.0
+## Said to a crew that has just flipped: our own cheerful lines, as a laid-back island crew might shout.
+const CRASH_LINES: Array[String] = ["YO MAN...  YOU STILL ALIVE IN THERE?", "EASY, BROTHER  -  THE ICE WON THAT ROUND",
+	"SLED UPSIDE DOWN, SMILE RIGHT WAY UP!", "NO WORRY, MAN  -  WE WALK DOWN IN STYLE", "HEY!  WHO PUT THE SKY DOWN THERE?"]
 
 
 func _ready() -> void:
@@ -57,6 +65,19 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_banner_t = 0.0
 		"penalty":
 			_popup("PENALTY LOOP", HudKit.BAD)
+		"load": _popup("JUMP IN!", HudKit.GOOD)
+		"late":
+			_banner = "LATE ON BOARD"
+			_banner_col = HudKit.BAD
+			_banner_t = 0.0
+		"wall": _popup("WALL!" if d["strength"] > 1.2 else "SCRAPE", HudKit.BAD)
+		"crash":
+			_banner = "CRASH!"
+			_banner_col = HudKit.BAD
+			_banner_t = 0.0
+			_quote = CRASH_LINES[int(float(d.get("at", 0.0)) * 7.0) % CRASH_LINES.size()]
+			_quote_t = -0.9  # after the banner
+		"split": _split_t = 0.0
 
 
 func _popup(text: String, col: Color) -> void:
@@ -69,6 +90,8 @@ func _process(delta: float) -> void:
 	_t += delta
 	_pop_t += delta
 	_banner_t += delta
+	_split_t += delta
+	_quote_t += delta
 	queue_redraw()
 
 
@@ -174,7 +197,7 @@ func _up_next(vp: Vector2, a: float) -> void:
 	var r := Rect2(70, vp.y - 250, 620, 96)
 	HudKit.panel(self, r, ICE, 14, a)
 	_flag(Rect2(r.position + Vector2(24, 26), Vector2(66, 44)), at["nation"])
-	HudKit.text(self, r.position + Vector2(112, 38), "AT THE START" if game.comp.event_name() == "speed_skating" else "AT THE GATE", 20,
+	HudKit.text(self, r.position + Vector2(112, 38), "AT THE START" if game.comp.event_name() in ["speed_skating", "bobsled"] else "AT THE GATE", 20,
 		Color(ICE, a), HudKit.label_font())
 	HudKit.text(self, r.position + Vector2(112, 76), "%s  -  %s" % [at["name"].to_upper(), Competition.NATIONS[at["nation"]]["code"]], 32,
 		Color(HudKit.INK, a), HudKit.font(true))
@@ -217,6 +240,8 @@ func _draw_attempt(vp: Vector2) -> void:
 			_countdown(vp, s.phase_left)
 	elif ev is Biathlon:
 		_draw_biathlon(vp, ev as Biathlon)
+	elif ev is Bobsled:
+		_draw_bob(vp, ev as Bobsled)
 	elif ev is SkiJump:
 		var j := ev as SkiJump
 		HudKit.panel(self, Rect2(vp.x - 324, 16, 300, 84), HudKit.GOLD)
@@ -301,7 +326,7 @@ func _draw_wipe(vp: Vector2, t: float) -> void:
 	var c := Vector2(x + w * 0.5 + slant * 0.5, vp.y * 0.5)
 	if c.x > -300.0 and c.x < vp.x + 300.0:
 		HudKit.text(self, c + Vector2(0, 30), "FROSTPEAK", 96, Color(1, 1, 1, 0.95), HudKit.font(true), HudKit.CENTER)
-		HudKit.text(self, c + Vector2(0, 86), "R E P L A Y", 30, HudKit.GOLD, HudKit.label_font(), HudKit.CENTER)
+		HudKit.text(self, c + Vector2(0, 86), view.wipe_text(), 30, HudKit.GOLD, HudKit.label_font(), HudKit.CENTER)
 
 
 ## Practice: the event and each player's best, top right under the read-outs.
@@ -393,6 +418,171 @@ func _draw_biathlon(vp: Vector2, b: Biathlon) -> void:
 					draw_arc(p, 30, 0, TAU, 32, HudKit.GOLD, 3.0, true)
 			if scoped and not b.shooting_done:
 				HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 36), [["ARROWS", "aim"], ["SPACE", "fire"]], 0.85)
+
+
+## The bobsled read-outs: the race clock and the speed, the splits as they come, a map of the run, the push meter
+## and the prompt to jump in at the start; on the run a section of the channel with the sled on it (where it rides
+## the banks, red near the top where it would flip) and the g-force.
+func _draw_bob(vp: Vector2, b: Bobsled) -> void:
+	HudKit.panel(self, Rect2(vp.x * 0.5 - 230, 16, 460, 84), ICE)
+	HudKit.stat(self, vp.x * 0.5 - 110, 20, "TIME", "%.2f" % b.clock if b.timing else "0.00", HudKit.INK, HudKit.CENTER)
+	var where := "START"
+	if b.stage == Bobsled.Stage.RIDE or b.stage == Bobsled.Stage.CRASH:
+		var c := BobTrack.curve_at(b.s)
+		where = "CURVE %d" % (c + 1) if c >= 0 else ("FINISH" if b.s > BobTrack.FINISH - 60.0 else "STRAIGHT")
+		if b.phase == WinterEvent.Phase.DONE:
+			where = "FINISH"
+		if b.crashed:
+			where = "CRASHED"
+	HudKit.stat(self, vp.x * 0.5 + 110, 20, "ON THE RUN", where, HudKit.BAD if b.crashed else HudKit.INK, HudKit.CENTER)
+	HudKit.panel(self, Rect2(vp.x - 324, 16, 300, 84), HudKit.GOLD)
+	var sp := view.bobview.shown_speed if view else b.speed
+	HudKit.stat(self, vp.x - 48, 20, "SPEED", "%d KM/H" % int(sp * 3.6), HudKit.GOLD, HudKit.RIGHT)
+	# the splits, under the athlete
+	var names := ["START", "INTERMEDIATE 1", "INTERMEDIATE 2"]
+	var y := 118.0
+	for i in b.splits.size():
+		var fresh := i == b.splits.size() - 1 and _split_t < 3.0
+		var r := Rect2(24, y, 420, 46)
+		HudKit.panel(self, r, HudKit.GOLD if fresh else ICE, 10, 0.9 if fresh else 0.7)
+		HudKit.text(self, r.position + Vector2(18, 31), names[i], 20, ICE if not fresh else HudKit.GOLD, HudKit.label_font())
+		HudKit.text(self, r.end - Vector2(18, 15), "%.2f" % b.splits[i], 26, HudKit.INK, HudKit.font(true), HudKit.RIGHT)
+		y += 54.0
+	_bob_map_draw(vp, b)
+	if b.phase == WinterEvent.Phase.READY:
+		_countdown(vp, b.phase_left)
+		return
+	match b.stage:
+		Bobsled.Stage.PUSH:
+			var bar := Rect2(vp.x * 0.5 - 300, vp.y - 170, 600, 22)
+			HudKit.panel(self, bar.grow(14), Color(0, 0, 0, 0), 14, 0.85)
+			draw_rect(bar, Color(1, 1, 1, 0.08))
+			var gz := Rect2(bar.position.x + bar.size.x * Bobsled.GREEN.x / 1.3, bar.position.y,
+				bar.size.x * (Bobsled.GREEN.y + 0.08 - Bobsled.GREEN.x) / 1.3, bar.size.y)
+			draw_rect(gz, Color(HudKit.GOOD, 0.35))
+			var in_green := b.meter >= Bobsled.GREEN.x and b.meter <= Bobsled.GREEN.y + 0.08
+			draw_rect(Rect2(bar.position, Vector2(bar.size.x * clampf(b.meter / 1.3, 0.0, 1.0), bar.size.y)), HudKit.GOOD if in_green else ICE)
+			var left := b.next_foot == "left"
+			var glow := 0.55 + 0.45 * sin(_t * 12.0) if in_green else 0.5
+			HudKit.keycap(self, Vector2(bar.position.x - 150, bar.end.y), "LEFT", "", glow if left else 0.25)
+			HudKit.keycap(self, Vector2(bar.end.x + 40, bar.end.y), "RIGHT", "", glow if not left else 0.25)
+			# how far down the ramp: jump in before its end
+			var ramp := Rect2(vp.x * 0.5 - 300, vp.y - 214, 600, 8)
+			draw_rect(ramp, Color(1, 1, 1, 0.12))
+			draw_rect(Rect2(ramp.position, Vector2(ramp.size.x * clampf(b.s / BobTrack.PUSH_END, 0.0, 1.0), ramp.size.y)), HudKit.GOLD)
+			if b.s >= Bobsled.LOAD_EARLIEST:
+				var urge := smoothstep(28.0, 44.0, b.s)
+				var a := 0.5 + 0.5 * urge * (0.5 + 0.5 * sin(_t * 10.0))
+				HudKit.keycap(self, Vector2(vp.x * 0.5 - 40, vp.y - 236), "SPACE", "jump in", a)
+		Bobsled.Stage.RIDE, Bobsled.Stage.CRASH, Bobsled.Stage.LOAD:
+			if b.phase != WinterEvent.Phase.DONE:
+				_bank_gauge(vp, b)
+	if b.crashed and _quote != "" and _quote_t > 0.0:
+		_crash_card(vp)
+
+
+## The crash's card: a sticker-like panel that pops in with a bounce and a tilt, and the line on it.
+func _crash_card(vp: Vector2) -> void:
+	var t := _quote_t
+	var k := clampf(t * 5.0, 0.0, 1.0) * (1.0 + 0.3 * exp(-t * 4.0) * sin(t * 20.0))
+	var a := clampf(minf(t * 4.0, (7.0 - t) * 2.0), 0.0, 1.0)
+	if a <= 0.0 or k <= 0.01:
+		return
+	var c := Vector2(vp.x * 0.5, vp.y * 0.3)
+	draw_set_transform(c, -0.05 + 0.03 * sin(t * 3.0), Vector2(k, k))
+	var w := HudKit.width(_quote, 40, HudKit.font(true)) + 90.0
+	var r := Rect2(-w * 0.5, -58, w, 116)
+	draw_rect(r.grow(8), Color(0.05, 0.05, 0.05, 0.85 * a))
+	for i in 3:  # three stripes along the top: green, gold, black
+		draw_rect(Rect2(r.position + Vector2(r.size.x * i / 3.0, 0), Vector2(r.size.x / 3.0 + 1.0, 10)),
+			Color([Color(0.1, 0.55, 0.25), HudKit.GOLD, Color(0.1, 0.1, 0.1)][i], a))
+	HudKit.text(self, Vector2(0, 22), _quote, 40, Color(HudKit.GOLD, a), HudKit.font(true), HudKit.CENTER)
+	HudKit.text(self, Vector2(0, 48), "- THE CREW, FROM UNDER THE SLED -", 16, Color(HudKit.INK, 0.8 * a), HudKit.label_font(), HudKit.CENTER)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+## The channel's section with the sled on it: the floor, the walls curving up to the top; the outside of a curve
+## shaded towards red where the sled would flip over.
+func _bank_gauge(vp: Vector2, b: Bobsled) -> void:
+	var c := Vector2(vp.x * 0.5, vp.y - 150)
+	var r := 72.0
+	var fl := 38.0
+	HudKit.panel(self, Rect2(c.x - 180, c.y - 92, 360, 132), ICE, 16, 0.8)
+	var pt := func(w: float) -> Vector2:
+		var side := signf(w) if w != 0.0 else 1.0
+		var a := absf(w)
+		if a <= BobTrack.FLOOR:
+			return c + Vector2(w / BobTrack.FLOOR * fl, 20.0)
+		var al := minf(a - BobTrack.FLOOR, PI * 0.5)
+		return c + Vector2(side * (fl + r * sin(al)), 20.0 - r * (1.0 - cos(al)))
+	var line := PackedVector2Array()
+	var n := 40
+	for i in n + 1:
+		var w := lerpf(-BobTrack.FLOOR - PI * 0.5, BobTrack.FLOOR + PI * 0.5, float(i) / n)
+		line.append(pt.call(w))
+	draw_polyline(line, Color(1, 1, 1, 0.55), 5.0, true)
+	# the danger at the top of the outside bank of the curve now (or coming)
+	var k := BobTrack.kappa(b.s + b.speed * 0.4)
+	if absf(k) > 0.002:
+		var out := -signf(k)
+		for part in [[Bobsled.DANGER, Bobsled.FLIP, HudKit.GOLD], [Bobsled.FLIP, PI * 0.5, HudKit.BAD]]:
+			var arc := PackedVector2Array()
+			for i in 9:
+				var al := lerpf(part[0], part[1], i / 8.0)
+				arc.append(pt.call(out * (BobTrack.FLOOR + al)))
+			draw_polyline(arc, part[2], 7.0, true)
+	var danger := b.alpha >= Bobsled.DANGER and not b.crashed
+	var dot: Vector2 = pt.call(b.w)
+	var col := HudKit.BAD if danger else HudKit.GOOD
+	draw_circle(dot, 11.0 + (3.0 * sin(_t * 14.0) if danger else 0.0), col, true, -1.0, true)
+	draw_arc(dot, 13.0, 0, TAU, 20, Color(0, 0, 0, 0.6), 2.0, true)
+	HudKit.text(self, c + Vector2(-164, -58), "%.1f G" % b.g_force, 24, HudKit.INK, HudKit.font(true))
+	if danger:
+		HudKit.text(self, c + Vector2(0, -58), "TOO HIGH  -  STEER DOWN", 20, HudKit.BAD, HudKit.label_font(), HudKit.CENTER)
+	if not game.demo and b.stage == Bobsled.Stage.RIDE:
+		HudKit.text(self, c + Vector2(164, -58), "LEFT / RIGHT", 16, HudKit.MUTED, HudKit.label_font(), HudKit.RIGHT)
+
+
+## The run from above, bottom right: its line, the curves' numbers, the timing eyes and the sled.
+func _bob_map_draw(vp: Vector2, b: Bobsled) -> void:
+	if _bob_map.is_empty():
+		var s := 0.0
+		while s <= BobTrack.length():
+			_bob_map.append(BobTrack.xz(s))
+			s += 5.0
+	var box := Rect2(vp.x - 214, vp.y - 400, 190, 350)
+	HudKit.panel(self, box, ICE, 12, 0.75)
+	var lo := Vector2(INF, INF)
+	var hi := -lo
+	for p in _bob_map:
+		lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
+		hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
+	var k := minf((box.size.x - 40) / (hi.x - lo.x), (box.size.y - 40) / (hi.y - lo.y))
+	var off := box.position + (box.size - (hi - lo) * k) * 0.5
+	var to := func(p: Vector2) -> Vector2: return off + (p - lo) * k
+	var line := PackedVector2Array()
+	for p in _bob_map:
+		line.append(to.call(p))
+	draw_polyline(line, Color(ICE, 0.35), 6.0, true)
+	var done := PackedVector2Array()
+	for i in _bob_map.size():
+		if i * 5.0 > b.s:
+			break
+		done.append(line[i])
+	if done.size() > 1:
+		draw_polyline(done, HudKit.GOLD, 4.0, true)
+	var cs := BobTrack.curves()
+	for i in cs.size():
+		var q: Vector2 = to.call(BobTrack.xz((cs[i][0] + cs[i][1]) * 0.5))
+		var out := -signf(cs[i][2])
+		var d := BobTrack.dir((cs[i][0] + cs[i][1]) * 0.5)
+		var n := Vector2(-d.y, d.x) * out * 14.0
+		HudKit.text(self, q + n + Vector2(0, 6), str(i + 1), 14, HudKit.MUTED, HudKit.label_font(), HudKit.CENTER)
+	for sp in [BobTrack.START_LINE, BobTrack.FINISH]:
+		draw_circle(to.call(BobTrack.xz(sp)), 5, HudKit.INK, true, -1.0, true)
+	var dot: Vector2 = to.call(BobTrack.xz(minf(b.s, BobTrack.length())))
+	draw_circle(dot, 7 + 2 * sin(_t * 8.0), HudKit.BAD if b.crashed else HudKit.GOOD, true, -1.0, true)
+	draw_arc(dot, 10, 0, TAU, 20, Color(0, 0, 0, 0.6), 2.0, true)
 
 
 ## A heart shape.

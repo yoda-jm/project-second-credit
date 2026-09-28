@@ -142,7 +142,7 @@ func near(p: Vector3) -> float:
 
 
 ## The width of the groomed course at s: wide through the stadium, a skating lane elsewhere.
-func width(s: float) -> float:
+static func width(s: float) -> float:
 	var lap := BiathlonCourse.lap()
 	var st := smoothstep(95.0, 80.0, s) + smoothstep(lap - 50.0, lap - 35.0, s)
 	return lerpf(6.0, 8.5, clampf(st, 0.0, 1.0))
@@ -213,15 +213,63 @@ func _track() -> void:
 
 # ------------------------------------------------------------------ the stadium
 
+const FENCE_OFF := 0.9  ## the stadium's fences stand this far out from the groomed edge
+const FENCE_SOUTH_Z := -184.0  ## the fence in front of the stand, behind the penalty loop (a straight line)
+
+
+## The stadium's padded fences as [a, b, towards the course (unit)] panels, about 4 m each (world x, z; y is 0):
+## one following the course's north edge round both of the stadium's curves, open where the range is (the skier
+## goes to the mat through there) and under the arch; one straight in front of the stand, behind the penalty loop.
+## None crosses the course or the penalty loop (a test checks).
+static func fence_panels() -> Array:
+	var out := []
+	var lap := BiathlonCourse.lap()
+	var edge := func(s: float) -> Vector3:
+		var d := BiathlonCourse.dir(s)
+		var side := Vector3(-d.y, 0.0, d.x)  # to the skier's right (south on the straight)
+		var c := BiathlonCourse.xz(s)
+		return Vector3(c.x, 0.0, c.y) - side * (width(s) * 0.5 + FENCE_OFF)
+	for run in [[lap - 48.0, lap - 2.2], [2.2, 92.0]]:
+		var s: float = run[0]
+		var a: Vector3 = edge.call(s)
+		while s < run[1]:
+			var s1 := s
+			var b: Vector3 = a
+			while s1 < run[1] and b.distance_to(a) < 4.0:
+				s1 += 0.25
+				b = edge.call(s1)
+			var mid := (a + b) * 0.5
+			if b.distance_to(a) > 1.5 and not (mid.x > -354.0 and mid.x < -321.0):  # the range's opening
+				var d := BiathlonCourse.dir((s + s1) * 0.5)
+				out.append([a, b, Vector3(-d.y, 0.0, d.x)])
+			s = s1
+			a = b
+	var x := -404.0
+	while x < -262.0:
+		out.append([Vector3(x, 0.0, FENCE_SOUTH_Z), Vector3(x + 4.0, 0.0, FENCE_SOUTH_Z), Vector3(0, 0, -1)])
+		x += 4.0
+	return out
+
+
+## The start and finish arch on the line, spanning the course: the model's beam runs along its x, so x goes across
+## the course and the skier passes through along the model's z.
+static func arch_xform() -> Transform3D:
+	var d := BiathlonCourse.dir(0.0)
+	var across := Vector3(-d.y, 0.0, d.x)
+	return Transform3D(Basis(across, Vector3.UP, across.cross(Vector3.UP)), BiathlonCourse.point(0.0))
+
+
+func arch_node() -> Node3D:
+	var arch := v._scene("finish_arch")
+	arch.transform = arch_xform()
+	return arch
+
 func _stadium() -> void:
 	var line := BiathlonCourse.point(0.0)
 	var pad := v._flat(Color(0.1, 0.24, 0.62), 0.55)
 	var banners := v._banner_set()
-	# the start and finish arch over the straight, the lines on the snow
-	var arch := v._scene("finish_arch")
-	arch.transform = Transform3D(Basis(Vector3.UP, PI * 0.5).rotated(Vector3.UP, 0.0), line)
-	arch.basis = Basis.looking_at(Vector3(1, 0, 0), Vector3.UP).rotated(Vector3.UP, PI * 0.5)
-	root.add_child(arch)
+	# the start and finish arch over the straight (spanning it: the skier goes through under the clock), the line
+	root.add_child(arch_node())
 	v._box(root, line + Vector3(0, 0.06, 0), Vector3(0.25, 0.02, 8.6), v._flat(Color(0.85, 0.08, 0.1), 0.4))
 	# the grandstand south of the straight, looking north across the stadium to the range
 	for k in 3:
@@ -230,20 +278,24 @@ func _stadium() -> void:
 		v._stand(Transform3D(Basis(Vector3.UP, PI), p), 70 + k, 0.55)
 	for x in [-372.0 - FrostpeakView3D.SEC * 0.5 - 0.2, -324.0 + FrostpeakView3D.SEC * 0.5 + 0.2]:
 		v._prop("grandstand_end", ground(x, -176.0) + Vector3(0, -0.2, 0), PI)
-	# padded fences along the straight (the penalty loop inside the south one) with banners to the camera
+	# padded fences with banners to the camera: along the course's edges (see fence_panels), never across it
 	var bi := 0
-	for side in [-1.0, 1.0]:
-		var z: float = -184.0 if side > 0.0 else -204.8
-		var x := -404.0
-		while x < -262.0:
-			if side < 0.0 and x > -352.0 and x < -322.0:  # the range's opening
-				x += 4.0
-				continue
-			var p := ground(x + 2.0, z) + Vector3(0, 0.55, 0)
-			v._box(root, p, Vector3(4.0, 1.1, 0.25), pad)
-			v._quad(p + Vector3(0, 0, -0.13 * side), Vector2(3.9, 0.9), banners[bi % banners.size()], Basis(Vector3.UP, PI if side > 0.0 else 0.0))
-			bi += 1
-			x += 4.0
+	for f in fence_panels():
+		var a: Vector3 = f[0]
+		var b: Vector3 = f[1]
+		var mid := (a + b) * 0.5
+		var along := Vector2(b.x - a.x, b.z - a.z)
+		var len := along.length()
+		var yaw := -atan2(along.y, along.x)
+		mid.y = height(mid.x, mid.z) + 0.55
+		var panel := v._box(root, mid, Vector3(len, 1.1, 0.25), pad)
+		panel.basis = Basis(Vector3.UP, yaw)
+		# the banner on the face towards the course (the track side is f[2])
+		var face := Basis(Vector3.UP, yaw) * Vector3(0, 0, 1)
+		var to_track: Vector3 = f[2]
+		var flip := face.dot(to_track) < 0.0
+		v._quad(mid + to_track * 0.13, Vector2(len - 0.1, 0.9), banners[bi % banners.size()], Basis(Vector3.UP, yaw + (PI if flip else 0.0)))
+		bi += 1
 	# fans along the fence in front of the stand, and along the finish straight's end
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 81
@@ -260,7 +312,7 @@ func _stadium() -> void:
 	v._prop("tv_tower", ground(-300.0, -168.0), PI)
 	for i in 5:  # the nations' flags at both ends of the stadium
 		v._pole_flag(ground(-418.0, -214.0 + i * 8.0), i, PI * 0.5)
-		v._pole_flag(ground(-266.0, -218.0 + i * 8.0), i + 1, -PI * 0.5)
+		v._pole_flag(ground(-280.0 + i * 6.0, -190.0), i + 1, PI)  # (south of the course's turn north)
 	for i in 4:
 		v._prop("tent", ground(-440.0, -150.0 - i * 16.0), PI * 0.5)
 	v._prop("snowcat", ground(-262.0, -165.0), 0.6)
