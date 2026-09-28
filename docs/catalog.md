@@ -1,6 +1,6 @@
 # Candidate catalog
 
-All 51 games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the inspiration only; every remake gets an original title.
+All 52 games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the inspiration only; every remake gets an original title.
 
 ## Roadmap
 
@@ -617,3 +617,15 @@ All 51 games considered for remakes, generated from `catalog/` by `catalog/tools
 **Remake ideas.** Proper vehicle physics per class, destructible scenery, split-screen and online races, a track editor and a cheeky presentation.
 
 **Modern takes.** None
+
+### Space Invaders
+
+*1978 · Taito · Arcade · Shoot 'em up · remake effort: weekend*
+
+**Loop.** A cannon slides along the bottom of the screen and shoots up at ranks of aliens that march side to side and step down at each edge, speeding up as they thin out; bunkers crumble and a mystery ship crosses the top.
+
+**Why remake it.** The simplest shooter there is, and one of the easiest to make spectacular: a marching 3D armada, bunkers that chip away voxel by voxel, a heartbeat that quickens with the march. Invaders Extreme and Infinity Gene show how far the formula stretches.
+
+**Remake ideas.** A 3D armada with a light show per wave, destructible bunkers, music that locks to the march, boss waves and formation variants, chain bonuses, co-op and versus (send cleared rows to your rival).
+
+**Modern takes.** Space Invaders Extreme (2008), Space Invaders Infinity Gene (2009), Space Invaders Forever (2020)

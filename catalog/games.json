@@ -730,5 +730,19 @@
   "pitch": "A daft, joyful racer that swaps vehicles and terrain every race. A remake could keep the humour and split-screen and add proper physics, destructible props and online races.",
   "complexity": 4,
   "modern": "None"
+ },
+ {
+  "id": "spaceinvaders",
+  "name": "Space Invaders",
+  "year": 1978,
+  "platform": "Arcade",
+  "dev": "Taito",
+  "genre": "Shoot 'em up",
+  "wiki": "Space Invaders",
+  "source": "you",
+  "loop": "A cannon slides along the bottom of the screen and shoots up at ranks of aliens that march side to side and step down at each edge, speeding up as they thin out; bunkers crumble and a mystery ship crosses the top.",
+  "pitch": "The simplest shooter there is, and one of the easiest to make spectacular: a marching 3D armada, bunkers that chip away voxel by voxel, a heartbeat that quickens with the march. Invaders Extreme and Infinity Gene show how far the formula stretches.",
+  "complexity": 1,
+  "modern": "Space Invaders Extreme (2008), Space Invaders Infinity Gene (2009), Space Invaders Forever (2020)"
  }
 ]

@@ -54,7 +54,7 @@ Each remake will get its own original name. The names above only refer to the in
 
 - [docs/vision.md](docs/vision.md): goals and principles
 - [docs/roadmap.md](docs/roadmap.md): build order and reasoning
-- [docs/catalog.md](docs/catalog.md): all the candidate games (51), with loop, pitch and remake ideas
+- [docs/catalog.md](docs/catalog.md): all the candidate games (52), with loop, pitch and remake ideas
 - [docs/games/](docs/games/): a brief for each game (gameplay, levels, challenge, map compatibility, existing free versions)
 - [docs/level-packs.md](docs/level-packs.md): level packs and map compatibility
 - [docs/multiplayer.md](docs/multiplayer.md): multiplayer ideas for every game (ghosts, local, network)
@@ -62,7 +62,7 @@ Each remake will get its own original name. The names above only refer to the in
 - [docs/setup.md](docs/setup.md): development setup (system packages, portable tools, MCP servers)
 - [docs/legal.md](docs/legal.md): licensing and what never goes in the repo
 - [research/](research/): raw research (stack report, survey of existing free versions)
-- [catalog/](catalog/): source for the candidate catalog page (51 games)
+- [catalog/](catalog/): source for the candidate catalog page (52 games)
 
 ## Licence
 

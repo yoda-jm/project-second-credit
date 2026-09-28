@@ -33,5 +33,12 @@
   "challenge": "Mastering very different handling from race to race, and bumpy physics that punishes bad landings.",
   "unique": "The sheer variety of vehicles in one light-hearted racer, plus two-player split-screen in 1996.",
   "remake_hooks": "Proper vehicle physics per class, destructible scenery, split-screen and online races, a track editor and a cheeky presentation."
+ },
+ "spaceinvaders": {
+  "gameplay": "Five rows of eleven aliens march sideways as one block, dropping a step whenever they touch an edge; the fewer are left, the faster they go, down to one frantic survivor. The player has one shot on screen at a time, hides behind four bunkers that both sides wear away, and can pick off the mystery UFO for bonus points.",
+  "levels": "One screen repeated in waves, each starting the armada a little lower (details to check against the original).",
+  "challenge": "Timing single shots against a quickening march, managing the bunkers, and not letting the invaders reach the ground.",
+  "unique": "The march that speeds up as you win, with its four-note bass heartbeat keeping pace: tension built from almost nothing.",
+  "remake_hooks": "A 3D armada with a light show per wave, destructible bunkers, music that locks to the march, boss waves and formation variants, chain bonuses, co-op and versus (send cleared rows to your rival)."
  }
 }
