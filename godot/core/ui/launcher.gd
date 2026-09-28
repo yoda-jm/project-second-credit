@@ -395,7 +395,7 @@ func _make_card(g: Dictionary, index: int) -> Control:
 	pic.custom_minimum_size = Vector2(336, 220)
 	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	if g["card"] != "":
+	if g.get("card", "") != "":
 		pic.texture = load(g["card"])
 	else:
 		var ph := GradientTexture2D.new()
