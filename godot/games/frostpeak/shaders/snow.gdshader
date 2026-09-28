@@ -51,18 +51,23 @@ void fragment() {
 		}
 	}
 	ALBEDO = col;
-	ROUGHNESS = 0.75;
-	SPECULAR = 0.35;
 	// bumps from the noise gradient
 	float e = 0.05;
 	float nx = noise((wpos + vec3(e, 0, 0)) * 1.3) - noise(wpos * 1.3);
 	float nz = noise((wpos + vec3(0, 0, e)) * 1.3) - noise(wpos * 1.3);
 	vec3 bn = normalize(wnorm - vec3(nx, 0.0, nz) * bump_scale * 8.0);
-	NORMAL = normalize((VIEW_MATRIX * vec4(bn, 0.0)).xyz);
-	// glints: tiny facets that catch the light from some angles only
+	// glints: tiny ice facets, each tilted its own way and mirror-smooth, so the sun catches a few of them at a time
+	// (they twinkle as the camera moves, and go out in the shade); a faint glitter stays in the shade too
 	vec3 cell = floor(wpos * 60.0);
 	float h = hash(cell);
+	float near = 1.0 - smoothstep(25.0, 90.0, length(VERTEX));  // far off they would only crawl
+	float facet = step(0.985, h) * (1.0 - painted) * near;
+	vec3 tilt = vec3(hash(cell + 17.0), hash(cell + 41.0), hash(cell + 73.0)) * 2.0 - 1.0;
+	bn = normalize(mix(bn, normalize(bn + tilt * 0.45), facet));
+	NORMAL = normalize((VIEW_MATRIX * vec4(bn, 0.0)).xyz);
+	ROUGHNESS = mix(0.75, 0.06, facet);
+	SPECULAR = mix(0.35, 1.0, facet * sparkle);
 	vec3 view_w = (INV_VIEW_MATRIX * vec4(VIEW, 0.0)).xyz;
-	float g = step(0.992, h) * step(0.7, fract(h * 97.0 + dot(view_w, vec3(3.1, 5.7, 2.3))));
-	EMISSION = vec3(1.0, 0.98, 0.92) * g * sparkle * 1.6 * (1.0 - painted);
+	float g = step(0.992, h) * step(0.8, fract(h * 97.0 + dot(view_w, vec3(3.1, 5.7, 2.3))));
+	EMISSION = vec3(0.85, 0.92, 1.0) * g * sparkle * 0.5 * (1.0 - painted) * near;
 }

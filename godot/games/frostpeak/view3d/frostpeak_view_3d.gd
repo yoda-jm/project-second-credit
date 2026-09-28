@@ -13,8 +13,10 @@ const STRAIGHT := 100.0
 const RADIUS := 30.0
 const LANES: Array[float] = [2.0, 6.0]  ## lane centres, out from the inner radius (player, rival)
 const PLAZA := Vector3(-500, 0, 0)
-const SUN_ELEVATION := 21.0  ## a low winter sun, from down the jump hill and a little to its right
-const SUN_AZIMUTH := 28.0
+const SUN_ELEVATION := 20.0  ## a low winter sun, beside the jump hill (on its left, looking down) and a little down it
+const SUN_AZIMUTH := -58.0
+const SHADOW_FAR := 700.0  ## how far the sun's shadows reach (4 cascades, the nearest a few centimetres a texel)
+const RIM_LAYER := 1 << 10  ## render layer 11: the athletes, lit by the rim light too
 const INTRO_FLIGHT := 10.5  ## seconds of flight to the jump hill before its title card
 const VALLEY_WAY := Vector3(-120, 170, 330)  ## the flight to the hill swings out over the valley here
 const BOARDS := 10.5  ## the padded boards, out from the inner radius
@@ -40,6 +42,7 @@ const HATS: Array[Color] = [Color(0.95, 0.95, 0.95), Color(0.85, 0.1, 0.12), Col
 
 var _camera: Camera3D
 var _sun: DirectionalLight3D
+var _rim: DirectionalLight3D
 var _snow_mat: ShaderMaterial
 var _ice_mat: ShaderMaterial
 var _skater: Node3D
@@ -144,6 +147,8 @@ func _texture(n: Node3D) -> void:
 func _athlete(kind: String) -> Node3D:
 	var n := _scene(kind)
 	add_child(n)
+	for mi in n.find_children("*", "VisualInstance3D", true, false):
+		(mi as VisualInstance3D).layers |= RIM_LAYER
 	var ap: AnimationPlayer = n.find_child("AnimationPlayer", true, false)
 	for a in ap.get_animation_list():
 		ap.get_animation(a).loop_mode = Animation.LOOP_LINEAR if a in ["idle", "skate", "glide", "ready", "tuck", "flight", "wave", "celebrate", "telemark"] else Animation.LOOP_NONE
@@ -220,7 +225,7 @@ func _first_mesh(model: String) -> Mesh:
 ## `colors` and `customs` fill the per-instance colour and custom data the crowd shader reads. Big sets are cut
 ## into 160 m cells, so each cell is culled on its own and, past `vis_end` metres, not drawn at all.
 func _multi(model: String, xforms: Array[Transform3D], overrides := {}, colors: Array[Color] = [], customs: Array[Color] = [],
-		vis_end := 0.0, shadows := true) -> void:
+		vis_end := 0.0, shadows := true, proxy: Mesh = null) -> void:
 	var mesh := _first_mesh(model)
 	if not overrides.is_empty():
 		mesh = mesh.duplicate() as Mesh
@@ -258,9 +263,21 @@ func _multi(model: String, xforms: Array[Transform3D], overrides := {}, colors: 
 		inst.visibility_range_end = vis_end
 		inst.visibility_range_end_margin = vis_end * 0.1
 		inst.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF if vis_end > 0.0 else GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
-		if not shadows:
+		if not shadows or proxy:
 			inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_into.add_child(inst)
+		if shadows and proxy:  # the shadow drawn from a few dozen triangles instead of a thousand
+			var sm := MultiMesh.new()
+			sm.transform_format = MultiMesh.TRANSFORM_3D
+			sm.mesh = proxy
+			sm.instance_count = ids.size()
+			for k in ids.size():
+				sm.set_instance_transform(k, xforms[ids[k]])
+			var si := MultiMeshInstance3D.new()
+			si.multimesh = sm
+			si.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+			si.visibility_range_end = vis_end
+			_into.add_child(si)
 
 
 ## Spectators: three poses mixed, each with its own coat, hat, scarf and skin tone.
@@ -286,7 +303,7 @@ func _crowd(xforms: Array[Transform3D], seed: int, hop := 1.0, shadows := true) 
 				h = fl[0]
 			h.a = rng.randf() * rng.randf()
 			cus.append(h)
-		_multi(model, xs, _crowd_overrides(hop), cols, cus, 750.0, shadows)
+		_multi(model, xs, _crowd_overrides(hop), cols, cus, 750.0, shadows, _shadow_proxy("person"))
 
 
 func _crowd_overrides(hop: float) -> Dictionary:
@@ -307,7 +324,7 @@ func _crowd_overrides(hop: float) -> Dictionary:
 
 
 ## Conifers, a mix of broad pines and slender spruces, with snow lying on the branches.
-func _forest(xforms: Array[Transform3D], seed: int) -> void:
+func _forest(xforms: Array[Transform3D], seed: int, shadows := false) -> void:
 	var tm := ShaderMaterial.new()
 	tm.shader = load(SH + "tree.gdshader")
 	var rng := RandomNumberGenerator.new()
@@ -316,9 +333,41 @@ func _forest(xforms: Array[Transform3D], seed: int) -> void:
 	var spruces: Array[Transform3D] = []
 	for x in xforms:
 		(pines if rng.randf() < 0.55 else spruces).append(x)
-	# the forest casts no sun shadows: from a low winter sun they smear across whole slopes
-	_multi("snowy_pine", pines, {"pine_needles": tm}, [], [], 1400.0, false)
-	_multi("snowy_spruce", spruces, {"pine_needles": tm}, [], [], 1400.0, false)
+	# only the woods lining the hill cast sun shadows (soft, from the low sun); the wide forests cast none
+	_multi("snowy_pine", pines, {"pine_needles": tm}, [], [], 1400.0, shadows, _shadow_proxy("pine"))
+	_multi("snowy_spruce", spruces, {"pine_needles": tm}, [], [], 1400.0, shadows, _shadow_proxy("spruce"))
+
+
+## Shadow stand-ins for the crowds and the woods: a person is a tapered column with a head, a pine or a spruce
+## three stacked cones of its outline. Drawn into the shadow map only, they cost a few dozen triangles apiece.
+func _shadow_proxy(kind: String) -> Mesh:
+	var key := "proxy_" + kind
+	if _crowd_mats.has(key):
+		return _crowd_mats[key]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# rings of [height, radius], joined into a closed column of 6 sides
+	var rings: Array = [[0.0, 0.16], [0.9, 0.18], [1.45, 0.22], [1.52, 0.1], [1.6, 0.12], [1.82, 0.1], [1.88, 0.0]]
+	if kind == "pine":
+		rings = [[0.0, 0.17], [0.5, 0.17], [0.5, 1.55], [2.2, 0.8], [2.2, 1.2], [3.6, 0.45], [3.6, 0.6], [5.45, 0.0]]
+	elif kind == "spruce":
+		rings = [[0.0, 0.12], [0.7, 0.12], [0.7, 1.1], [3.2, 0.65], [3.2, 0.8], [5.5, 0.32], [5.5, 0.45], [7.3, 0.0]]
+	var sides := 6
+	for r in rings.size() - 1:
+		for i in sides:
+			var a0 := TAU * i / sides
+			var a1 := TAU * (i + 1) / sides
+			var q: Array[Vector3] = [
+				Vector3(cos(a0) * rings[r][1], rings[r][0], sin(a0) * rings[r][1]),
+				Vector3(cos(a1) * rings[r][1], rings[r][0], sin(a1) * rings[r][1]),
+				Vector3(cos(a1) * rings[r + 1][1], rings[r + 1][0], sin(a1) * rings[r + 1][1]),
+				Vector3(cos(a0) * rings[r + 1][1], rings[r + 1][0], sin(a0) * rings[r + 1][1])]
+			for k in [0, 2, 1, 0, 3, 2]:
+				st.add_vertex(q[k])
+	st.generate_normals()
+	var mesh := st.commit()
+	_crowd_mats[key] = mesh
+	return mesh
 
 
 ## Far woods (mountain flanks, the back of the hill): the same conifers as three stacked cones, a few dozen
@@ -515,44 +564,63 @@ func _build_world() -> void:
 		env.ambient_light_color = Color(0.78, 0.8, 0.86)
 		env.ambient_light_sky_contribution = 0.55
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	# graded like a winter broadcast: crisp, a little contrast, cool shadows and warm highlights
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 0.8
+	env.tonemap_exposure = 0.82
 	env.tonemap_white = 6.0
 	env.glow_enabled = true
-	env.glow_intensity = 0.45
-	env.glow_bloom = 0.04
-	env.glow_hdr_threshold = 1.1
+	env.glow_intensity = 0.5
+	env.glow_bloom = 0.05
+	env.glow_hdr_threshold = 1.0
+	# contact shadows where things meet the snow, and light bounced off the sunlit snow into the shade
 	env.ssao_enabled = true
-	env.ssao_radius = 1.2
-	env.ssao_intensity = 1.6
+	env.ssao_radius = 1.4
+	env.ssao_intensity = 1.8
+	env.ssao_detail = 0.6
+	env.ssao_light_affect = 0.25  # a little of it in the sun too, so feet and fence posts sit on the snow
+	env.ssil_enabled = true
+	env.ssil_radius = 4.0
+	env.ssil_intensity = 0.8
 	env.ssr_enabled = true  # the ice reflects the stand, the floodlights and the skaters
 	env.ssr_max_steps = 48
-	Look.fog(env, Color(0.78, 0.85, 0.95), 0.00035)
-	env.fog_aerial_perspective = 0.55
+	Look.fog(env, Color(0.78, 0.85, 0.95), 0.00028)
+	env.fog_aerial_perspective = 0.5
 	env.fog_sky_affect = 0.4
 	env.adjustment_enabled = true
-	env.adjustment_saturation = 1.12
-	env.adjustment_contrast = 1.1
+	env.adjustment_saturation = 1.14
+	env.adjustment_contrast = 1.12
+	env.adjustment_color_correction = _grade()
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
-	# a low winter sun, from down the jump hill (the hill runs towards -x) and a little to one side, so the landing
-	# slope faces it and the long shadows fall up the hill behind the jumpers
+	# a low winter sun, from beside the jump hill and a little down it (the hill runs towards -x). From the chase and
+	# side cameras, which look across the landing slope from its right, the sun is ahead: every shadow that falls
+	# into their picture comes from something standing in it (the judges' tower, the masts, the jumper), and the
+	# shadows of whatever is behind them fall away, out of the picture.
 	var el := deg_to_rad(SUN_ELEVATION)
 	var az := deg_to_rad(SUN_AZIMUTH)
 	_to_sun = Vector3(-cos(el) * cos(az), sin(el), -cos(el) * sin(az)).normalized()
 	_sun = DirectionalLight3D.new()
 	_sun.basis = Basis.looking_at(-_to_sun, Vector3.UP)
-	_sun.light_color = Color(1.0, 0.87, 0.7)
-	_sun.light_energy = 1.65
-	_sun.light_angular_distance = 0.5  # soft edges
+	_sun.light_color = Color(1.0, 0.86, 0.68)
+	_sun.light_energy = 1.9
+	_sun.light_angular_distance = 0.9  # a soft penumbra that widens away from the caster: sharp at the feet
 	_sun.shadow_enabled = true
-	_sun.shadow_blur = 1.4
-	_sun.shadow_normal_bias = 1.6
+	_sun.shadow_bias = 0.03
+	_sun.shadow_normal_bias = 0.9
+	_sun.shadow_blur = 1.0
+	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	_sun.directional_shadow_blend_splits = true
-	_sun.directional_shadow_max_distance = 140.0  # the shadow map's detail where the camera looks, not across the valley
-	_sun.directional_shadow_fade_start = 0.75
+	_shadow_range(SHADOW_FAR)
 	add_child(_sun)
+	# a cool rim on the athletes from behind them, as a TV lighting rig would give (athletes only)
+	_rim = DirectionalLight3D.new()
+	_rim.light_color = Color(0.78, 0.88, 1.0)
+	_rim.light_energy = 1.6
+	_rim.light_specular = 0.6
+	_rim.light_cull_mask = RIM_LAYER
+	_rim.shadow_enabled = false
+	add_child(_rim)
 	_camera = Camera3D.new()
 	_camera.fov = 50
 	_camera.far = 5000.0
@@ -594,6 +662,41 @@ func _build_world() -> void:
 	_snowfall.draw_pass_1 = q
 	_snowfall.material_override = Fx.material("soft", Color(1, 1, 1, 0.85))
 	add_child(_snowfall)
+
+
+## The grade, applied after tone mapping: shadows lean blue, highlights warm, the snow stays white.
+func _grade() -> GradientTexture1D:
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.25, 0.6, 1.0])
+	g.colors = PackedColorArray([Color(0.0, 0.012, 0.04), Color(0.225, 0.245, 0.275), Color(0.605, 0.6, 0.59), Color(1.0, 0.99, 0.975)])
+	var t := GradientTexture1D.new()
+	t.gradient = g
+	t.width = 256
+	return t
+
+
+## How far the sun's shadows reach (the project's 4096 atlas: 2048 a cascade). The cascades split at 4 %, 12 % and
+## 32 % of it, so the nearest (under 30 m) holds the jumper and whatever stands by the camera at about a centimetre
+## a texel; they fade out over the last 15 %, so no edge shows where they end.
+func _shadow_range(far: float) -> void:
+	_sun.directional_shadow_max_distance = far
+	_sun.directional_shadow_split_1 = 0.04
+	_sun.directional_shadow_split_2 = 0.12
+	_sun.directional_shadow_split_3 = 0.32
+	_sun.directional_shadow_fade_start = 0.85
+
+
+## The rim light shines from behind the athlete towards the camera, from a little above and to the sun's side.
+func _update_rim() -> void:
+	var target := _jumper if _jumper.visible else _skater
+	var back := (target.global_position - _camera.global_position)
+	back.y = 0.0
+	if back.length() < 0.01:
+		return
+	back = back.normalized()
+	var side := Vector3(_to_sun.x, 0.0, _to_sun.z).normalized()
+	var to_light := (back * 1.0 + side * 0.45 + Vector3.UP * 0.55).normalized()
+	_rim.basis = Basis.looking_at(-to_light, Vector3.UP)
 
 
 # ------------------------------------------------------------------ the oval
@@ -982,6 +1085,7 @@ func _process(delta: float) -> void:
 	_snowfall.position = _camera.position + Vector3(0, 12, 0)
 	_update_boards()
 	_update_shafts()
+	_update_rim()
 
 
 func _move_camera(pos: Vector3, look: Vector3, delta: float, speed := 3.0) -> void:

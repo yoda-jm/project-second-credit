@@ -104,18 +104,19 @@ func build() -> void:
 	root.transform = xf
 	v.add_child(root)
 	v._into = root
-	var before := root.get_child_count()
 	_terrain()
 	_inrun()
 	_tower()
 	_table()
 	_slope()
 	_arena()
-	# the structures cast no sun shadows: from the chase camera they would lie on the slope under nothing
-	for c in root.get_children().slice(before):
-		for g in [c] + c.find_children("*", "GeometryInstance3D", true, false):
-			if g is GeometryInstance3D:
-				(g as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# everything solid casts the sun's shadow (the in-run, the towers, the masts, the fences, the crowds); nets and
+	# glass would cast solid ones, so they cast none
+	for g in root.find_children("*", "GeometryInstance3D", true, false):
+		var gi := g as GeometryInstance3D
+		var m := gi.material_override as BaseMaterial3D
+		if m and m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+			gi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_trees()
 	v._into = v
 
@@ -526,6 +527,8 @@ func _slope() -> void:
 		for s in [-1.0, 1.0]:
 			var p := ground(fx, s * (half_width(fx) + 15.0))
 			v._prop("floodlight", p, 0.0 if s < 0.0 else PI)
+			if fx > 100.0:
+				_flood(p, -s, ground(fx + 18.0, -s * 6.0))
 	# spectators along the lower landing slope, on the banks behind the fences
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 9
@@ -537,7 +540,7 @@ func _slope() -> void:
 		if s > 0.0 and absf(fx - SIDE_CAM) < 5.0:
 			continue
 		fans.append(Transform3D(Basis(Vector3.UP, (0.0 if s < 0.0 else PI) + rng.randf_range(-0.5, 0.5)), ground(fx, fz)))
-	v._crowd(fans, 17, 1.0, false)
+	v._crowd(fans, 17, 1.0)
 	for i in 12:
 		var fx := 104.0 + i * 8.0
 		for s in [-1.0, 1.0]:
@@ -646,7 +649,7 @@ func _arena() -> void:
 		var p := Vector3(OUTRUN_STOP + 22.0 + (1.0 - t * t) * 8.0 + depth, 0, t * 54.0)
 		p.y = terrain_y(p.x, p.z) + depth * 0.18
 		fans.append(Transform3D(Basis(Vector3.UP, -PI * 0.5 + rng.randf_range(-0.5, 0.5)), p))
-	v._crowd(fans, 31, 1.0, false)
+	v._crowd(fans, 31, 1.0)
 	# terraces for them: steps of packed snow rising away from the barrier
 	var terrace := ShaderMaterial.new()
 	terrace.shader = v._snow_mat.shader
@@ -671,7 +674,28 @@ func _arena() -> void:
 	v._prop("tv_tower", ground(OUTRUN_STOP + 16.0, 30.0), PI * 0.5)
 	# floodlights over the arena
 	for s in [-1.0, 1.0]:
-		v._prop("floodlight", ground(OUTRUN_STOP - 10.0, s * (half_width(OUTRUN_STOP) + 34.0)), 0.0 if s < 0.0 else PI)
+		var fp := ground(OUTRUN_STOP - 10.0, s * (half_width(OUTRUN_STOP) + 34.0))
+		v._prop("floodlight", fp, 0.0 if s < 0.0 else PI)
+		_flood(fp, -s, ground(OUTRUN_STOP - 20.0, -s * 8.0))
+
+
+## A floodlight's beam: a warm pool on the snow where its mast aims (no shadows: the sun draws those). `face` is the
+## side the lamps face (+1 towards +z).
+func _flood(mast: Vector3, face: float, aim: Vector3) -> void:
+	var sl := SpotLight3D.new()
+	sl.position = mast + Vector3(0, 19.9, face * 0.35)
+	root.add_child(sl)
+	sl.look_at(xf * aim, Vector3.UP)
+	sl.light_color = Color(1.0, 0.9, 0.74)
+	sl.light_energy = 22.0
+	sl.light_specular = 0.3
+	sl.spot_range = 150.0
+	sl.spot_angle = 30.0
+	sl.spot_angle_attenuation = 1.6
+	sl.shadow_enabled = false
+	sl.distance_fade_enabled = true  # far off the pools are lost in the daylight anyway
+	sl.distance_fade_begin = 500.0
+	sl.distance_fade_length = 100.0
 
 
 # ------------------------------------------------------------------ the woods
@@ -682,8 +706,9 @@ func _trees() -> void:
 	var trees: Array[Transform3D] = []
 	var rocks: Array[Transform3D] = []
 	var far: Array[Transform3D] = []
+	var near: Array[Transform3D] = []  ## the woods lining the hill: these cast shadows on the snow
 	var n := 0
-	while trees.size() + far.size() < 5000 and n < 24000:
+	while trees.size() + near.size() + far.size() < 5000 and n < 24000:
 		n += 1
 		var tx := rng.randf_range(X0 + 20.0, X1 - 20.0)
 		var tz := rng.randf_range(-Z1 + 10.0, Z1 - 10.0) * (0.35 if n % 2 == 0 else 1.0)  # thickest near the hill
@@ -700,10 +725,12 @@ func _trees() -> void:
 		if absf(tz) > hw + 110.0 or tx < -180.0 or tx > 400.0:
 			far.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.5, 3.0)), p - Vector3(0, 0.3, 0)))
 			continue
-		trees.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.5, 3.0)), p - Vector3(0, 0.3, 0)))
-		if trees.size() % 13 == 0:
+		var t := Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.5, 3.0)), p - Vector3(0, 0.3, 0))
+		(near if absf(tz) < hw + 70.0 and tx > -140.0 and tx < 330.0 else trees).append(t)
+		if (trees.size() + near.size()) % 13 == 0:
 			rocks.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(0.8, 2.2)), p + Vector3(3.0, -0.3, 0)))
 	v._into = root
-	v._forest(trees, 8)
+	v._forest(trees, 8, false)
+	v._forest(near, 9, true)
 	v._forest_far(far)
 	v._multi("boulder", rocks)
