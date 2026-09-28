@@ -56,6 +56,7 @@ Each remake will get its own original name. The names above only refer to the in
 - [docs/catalog.md](docs/catalog.md): all the candidate games (51), with loop, pitch and remake ideas
 - [docs/games/](docs/games/): a brief for each game (gameplay, levels, challenge, map compatibility, existing free versions)
 - [docs/level-packs.md](docs/level-packs.md): level packs and map compatibility
+- [docs/multiplayer.md](docs/multiplayer.md): multiplayer ideas for every game (ghosts, local, network)
 - [docs/stack.md](docs/stack.md): tools and pipeline (open-source, no paid services)
 - [docs/setup.md](docs/setup.md): development setup (system packages, portable tools, MCP servers)
 - [docs/legal.md](docs/legal.md): licensing and what never goes in the repo
