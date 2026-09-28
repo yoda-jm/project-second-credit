@@ -308,7 +308,21 @@ const GAMES: Array[Dictionary] = [
 			["res://games/popvoyage/art/models/balloon_2.glb", "model", 0.4],
 			["res://games/popvoyage/art/models/item_clock.glb", "model", 0.2]],
 	},
-]## The styles in collection order (for the launcher's filter).
+	{
+		"id": "jellyspike",
+		"style": "Sports",
+		"title": "Jelly Spike",
+		"tagline": "Beach volleyball for two wobbly jelly blobs: you against the CPU, or two on one keyboard.",
+		"inspired_by": "Blobby Volley (2000)",
+		"scene": "res://games/jellyspike/scenes/jellyspike_game.tscn",
+		"accent": Color(0.3, 0.75, 1.0),
+		"props": [["res://games/jellyspike/art/models/blob_blue.glb", "model", 0.35],
+			["res://games/jellyspike/art/models/blob_red.glb", "model", 0.35],
+			["res://games/jellyspike/art/models/beach_ball.glb", "model", 0.3]],
+	},
+]
+
+## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
 	var out: Array[String] = []
 	for g in GAMES:

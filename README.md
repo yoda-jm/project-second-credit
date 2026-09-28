@@ -14,8 +14,8 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: twenty-three games are playable, in 3D with sound
-> and music, from **Glimmerdeep** (game 1) to **Pop Voyage** (game 23), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> Status: twenty-four games are playable, in 3D with sound
+> and music, from **Glimmerdeep** (game 1) to **Jelly Spike** (game 24), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
 
@@ -49,6 +49,7 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 21 | Manic Miner (1983): **Deep Breath** | Single-screen caverns, air running out, fixed-arc jumps, conveyors, crumbling floors, a helmet lamp in the dark |
 | 22 | Q*bert (1982): **Tumbletop** | A pyramid of cubes to recolour under four rules, bouncing balls, a chasing serpent, cloud-discs, a sky per level |
 | 23 | Pang (1989): **Pop Voyage** | A harpoon wire against bouncing, splitting balloons, blocks and items, eight landmark dioramas from a lighthouse to the aurora |
+| 24 | Blobby Volley (2000): **Jelly Spike** | Jelly-blob beach volleyball, a CPU that reads the ball, two players on one keyboard, a beach from noon to a moonlit luau |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

@@ -186,6 +186,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   in `godot/games/popvoyage/shaders/`); stages written by hand in `stages/voyage.pop`; sound effects and music by
   `tools/audio/popvoyage_sfx.py` and `popvoyage_music.py`.
 
+## Game 24 (Jelly Spike, working title)
+
+- Inspired by *Blobby Volley* (2000). None of its code, graphics or sounds are in this repo: the jelly blobs, the
+  beach and the music are original.
+- The beach by `tools/blender/jellyspike_beach.py` (with shaders in `godot/games/jellyspike/shaders/`), menu props
+  by `tools/blender/jellyspike_props.py`; sound effects and music by `tools/audio/jellyspike_sfx.py` and
+  `jellyspike_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
