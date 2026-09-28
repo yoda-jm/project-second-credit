@@ -315,6 +315,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Beach volleyball for two wobbly jelly blobs: you against the CPU, or two on one keyboard.",
 		"inspired_by": "Blobby Volley (2000)",
 		"scene": "res://games/jellyspike/scenes/jellyspike_game.tscn",
+		"card": "res://core/ui/cards/jellyspike.png",
 		"accent": Color(0.3, 0.75, 1.0),
 		"props": [["res://games/jellyspike/art/models/blob_blue.glb", "model", 0.35],
 			["res://games/jellyspike/art/models/blob_red.glb", "model", 0.35],
