@@ -10,7 +10,7 @@ const ACCENT := Color(1.0, 0.7, 0.3)
 
 var _pops: Array[Dictionary] = []
 var _t := 0.0
-var _hint := 8.0
+var _hint := 1.0
 
 
 func _ready() -> void:
@@ -88,17 +88,22 @@ func _draw() -> void:
 			clampf((3.0 - e.phase_t) * 3.0, 0.0, 1.0))
 	elif e.phase == TumbleEngine.Phase.OVER or game.over:
 		HudKit.banner(self, vp, vp.y * 0.42, "GAME OVER", "PRESS ENTER" if not game.demo else "", HudKit.BAD, 1.0)
-	# the hop compass, for a while at the start
+	# how to hop: a card that stays up until the first hop, then fades
+	if not game.hopped:
+		_hint = 1.0
 	if _hint > 0.0 and not game.demo:
-		var c := Vector2(170, vp.y - 150)
 		var a := clampf(_hint, 0.0, 1.0)
+		var c := Vector2(vp.x * 0.5, vp.y - 180) if not game.hopped else Vector2(170, vp.y - 150)
+		if not game.hopped:
+			HudKit.panel(self, Rect2(c.x - 250, c.y - 110, 500, 250), HudKit.GOLD, 16, 0.85)
+			HudKit.text(self, c + Vector2(0, -78), "HOP DIAGONALLY", 26, HudKit.GOLD, HudKit.font(true), HudKit.CENTER)
 		for k in [["UP + LEFT", "Q", Vector2(-1, -1)], ["UP + RIGHT", "E", Vector2(1, -1)], ["DOWN + LEFT", "Z", Vector2(-1, 1)],
 				["DOWN + RIGHT", "C", Vector2(1, 1)]]:
 			var at: Vector2 = c + (k[2] as Vector2) * Vector2(92.0, 56.0)
 			draw_line(c, c + (k[2] as Vector2) * 30.0, Color(1, 1, 1, 0.5 * a), 3.0)
 			HudKit.text(self, at + Vector2(0, 2), k[0], 16, Color(HudKit.GOLD, a), HudKit.label_font(), HudKit.CENTER)
 			HudKit.text(self, at + Vector2(0, 22), "or " + k[1], 14, Color(HudKit.INK, a * 0.8), HudKit.label_font(), HudKit.CENTER)
-		HudKit.text(self, c + Vector2(0, 110), "two arrows together  -  or click a cube", 16, Color(HudKit.INK, a * 0.8),
+		HudKit.text(self, c + Vector2(0, 110), "press two arrows together  -  or click a cube", 16, Color(HudKit.INK, a * 0.8),
 			HudKit.label_font(), HudKit.CENTER)
 	if game.demo:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 30), "DEMO  -  PRESS ANY KEY TO PLAY", 20, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
