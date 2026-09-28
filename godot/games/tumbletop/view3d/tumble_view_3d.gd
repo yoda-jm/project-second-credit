@@ -440,9 +440,7 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_cubes[c]["pop"] = 1.0
 			var col := _top_color(d["state"])
 			var p := TumbleEngine.cube3(c) + TOP
-			_fx.burst(p + Vector3(0, 0.1, 0), col.lerp(Color.WHITE, 0.3), 18 if d["done"] else 10, 2.6, 0.6, 0.09, 1.0, -4.0, 1.0, "glow")
-			if d["done"]:
-				_fx.flash(p + Vector3(0, -2.0, 0), col, 1.2)
+			_fx.burst(p + Vector3(0, 0.1, 0), col, 9 if d["done"] else 5, 2.2, 0.5, 0.05, 1.0, -4.0, 1.0, "glow")
 		"undo":
 			var c: Vector2i = d["cell"]
 			_set_top(c, e.tiles[TumbleEngine.index(c)])

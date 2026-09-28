@@ -22,7 +22,7 @@ void fragment() {
 	ALBEDO = c;
 	float pulse = 0.85 + 0.15 * sin(TIME * 2.0 + time_offset);
 	EMISSION = color.rgb * glow * pulse * (1.0 - rim * 0.5) * 0.6 + mix(color.rgb, vec3(1.0), 0.4) * (sweep * 0.7 + flash * 0.15);
-	ROUGHNESS = 0.18;
+	ROUGHNESS = 0.42;  // satin: a low sun must not mirror off the tops into the camera
 	METALLIC = 0.1;
-	SPECULAR = 0.7;
+	SPECULAR = 0.35;
 }
