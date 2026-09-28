@@ -38,8 +38,9 @@ Second Credit stands on the work of many people. Everything below is free and op
 
 - Inspired by *Winter Games* (Epyx, 1985). None of its code, graphics, sounds or anthems are in this repo; the
   events are rewritten from how they play, the nations are invented, the fanfare and the march are our own.
-- Athletes and venue props are built by `tools/blender/frostpeak_athletes.py` and `frostpeak_models.py`; the ice
-  oval, the jump hill and the mountains are built in the game from the events' own geometry.
+- Athletes and venue props are built by `tools/blender/frostpeak_athletes.py`, `frostpeak_models.py` and
+  `frostpeak_valley.py` (chalets, hotel, church, gondola, snow-cat, tent); the ice oval, the large hill (one shared
+  FIS-style profile for the rules and the picture), the valley and the mountains are built in the game.
 
 ## Game 6 (Muddy Boots, working title)
 

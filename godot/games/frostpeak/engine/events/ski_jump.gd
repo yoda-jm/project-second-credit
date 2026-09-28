@@ -1,16 +1,20 @@
 class_name SkiJump
 extends WinterEvent
-## K90 ski jump. On the in-run hold DOWN to tuck (faster). At the lip press ACTION: the closer to the edge, the better
-## the take-off. In the air the body angle drifts: hold it in the ideal band with UP and DOWN; the better the angle,
-## the more lift. Press ACTION just before touchdown for a telemark landing (worth style points); a wild body
-## angle at touchdown, or landing far beyond the hill, is a fall.
-## Distance points (60 at K, 2 per metre) plus style points (five judges, the best and the worst dropped).
+## Large-hill ski jump (K 120, HS 134; the hill is SkiHill). On the in-run hold DOWN to tuck (less drag, faster).
+## At the lip press ACTION: the closer to the edge, the stronger the jump. In the air the body angle drifts: hold it
+## in the ideal band with UP and DOWN; the better the angle, the more lift and the less drag. Press ACTION just
+## before touchdown for a telemark landing (worth style points); a wild body angle at touchdown, or landing far
+## beyond the hill size, is a fall. Distance points (60 at K, 1.8 per metre, as on large hills) plus style points
+## (five judges, the best and the worst dropped).
 
-const K := 90.0
-const INRUN := 92.0  ## metres of in-run
+const K := SkiHill.K
+const HS := SkiHill.HS
+const INRUN := SkiHill.INRUN  ## metres of in-run, from the gate to the lip
 const LIP_WINDOW := 0.35  ## seconds either side of the lip where a take-off counts
 const IDEAL := 0.0  ## body angle offset from the ideal, radians
-const HILL_SLOPE := 0.62  ## the landing hill drops this many metres per metre beyond the knoll
+const METRE_POINTS := 1.8
+const LIFT := 0.005  ## lift and drag per metre (times speed squared), for an ideal body angle
+const DRAG := 0.0035
 
 enum Stage { INRUN, FLIGHT, LANDED }
 
@@ -32,19 +36,24 @@ var _land_press := -1.0
 
 
 func hill_y(x: float) -> float:
-	return profile(x)
+	return SkiHill.ground_y(x)
 
 
-## Height of the landing hill below the lip (negative), a smooth knoll then a steady slope.
-static func profile(x: float) -> float:
-	return -(3.0 + x * HILL_SLOPE - 18.0 * exp(-x / 25.0) + 18.0) * 0.5
+## The distance flown so far: along the hill, under the jumper (the TV read-out).
+func current_distance() -> float:
+	if stage == Stage.LANDED:
+		return distance
+	if stage == Stage.FLIGHT:
+		return SkiHill.distance_at(fly.x)
+	return 0.0
 
 
 func run(_l: bool, _r: bool, a: bool) -> void:
 	match stage:
 		Stage.INRUN:
 			tuck = move_toward(tuck, 1.0 if hold_down else 0.0, TICK * 3.0)
-			var acc := 9.81 * 0.42 - (0.0042 - 0.0016 * tuck) * speed * speed
+			var slope := SkiHill.inrun_angle(along)
+			var acc := 9.81 * (sin(slope) - 0.03 * cos(slope)) - (0.003 - 0.0016 * tuck) * speed * speed
 			speed += acc * TICK
 			along += speed * TICK
 			if a and _lip_time < 0.0:
@@ -55,7 +64,10 @@ func run(_l: bool, _r: bool, a: bool) -> void:
 				if _lip_time < 0.0:
 					takeoff = 0.15  # no jump: slides off the lip
 				stage = Stage.FLIGHT
-				vel = Vector2(speed * 0.96, 1.2 + 2.6 * takeoff)
+				# along the table (11 degrees down), plus the jump's push square to it
+				var push := 1.0 + 1.8 * takeoff
+				var ta := SkiHill.ALPHA
+				vel = Vector2(speed * cos(ta) + push * sin(ta), -speed * sin(ta) + push * cos(ta))
 				angle = rng.randf_range(-0.1, 0.1) + (1.0 - takeoff) * 0.25
 				event.emit("takeoff", {"quality": takeoff, "speed_kmh": speed * 3.6})
 		Stage.FLIGHT:
@@ -65,10 +77,14 @@ func run(_l: bool, _r: bool, a: bool) -> void:
 				angle -= 1.1 * TICK
 			if hold_down:
 				angle += 1.1 * TICK
-			var lift := 0.17 * clampf(1.0 - absf(angle - IDEAL) / 0.5, 0.0, 1.0) * (0.6 + 0.4 * takeoff)
-			var drag := 0.0009 + 0.002 * absf(angle)
-			vel.y -= (9.81 - lift * vel.x) * TICK
-			vel.x -= drag * vel.x * vel.x * TICK
+			# lift square to the flight path, drag along it; a poor body angle loses lift and adds drag
+			var err := (angle - IDEAL) / 0.6
+			var lift := LIFT * maxf(0.0, 1.0 - err * err) * (0.85 + 0.15 * takeoff)
+			var drag := DRAG + 0.006 * (angle - IDEAL) * (angle - IDEAL)
+			var v := vel.length()
+			var along_v := vel / maxf(v, 0.01)
+			var up := Vector2(-along_v.y, along_v.x)
+			vel += (up * lift - along_v * drag) * v * v * TICK + Vector2(0.0, -9.81) * TICK
 			fly += vel * TICK
 			if a and _land_press < 0.0:
 				_land_press = time
@@ -80,10 +96,10 @@ func run(_l: bool, _r: bool, a: bool) -> void:
 
 func _land() -> void:
 	stage = Stage.LANDED
-	distance = snappedf(fly.x, 0.5)
+	distance = snappedf(SkiHill.distance_at(fly.x), 0.5)
 	var before := time - _land_press if _land_press >= 0.0 else 99.0
 	telemark = before > 0.05 and before < 0.6
-	fell = absf(angle) > 0.75 or distance > K + 25.0
+	fell = absf(angle) > 0.75 or distance > HS + 8.0
 	# five judges: 20 points each for a clean telemark, less for a poor flight or landing
 	var base := 18.5 if telemark else 16.0
 	if fell:
@@ -95,7 +111,7 @@ func _land() -> void:
 	var sorted := judges.duplicate()
 	sorted.sort()
 	style = sorted[1] + sorted[2] + sorted[3]
-	var points := 60.0 + 2.0 * (distance - K) + style
+	var points := maxf(0.0, 60.0 + METRE_POINTS * (distance - K)) + style
 	event.emit("landed", {"distance": distance, "telemark": telemark, "fell": fell, "judges": judges})
 	finish(snappedf(points, 0.1), "%.1f m  -  %.1f points" % [distance, points])
 
@@ -112,6 +128,8 @@ func autoplay() -> void:
 		Stage.FLIGHT:
 			hold_up = angle > 0.08
 			hold_down = angle < -0.08
-			var t_to_ground := (fly.y - hill_y(fly.x)) / maxf(0.1, -vel.y)
+			# how fast the jumper closes on the slope, which falls away beneath them
+			var ground_dy := (hill_y(fly.x + 0.5) - hill_y(fly.x)) / 0.5 * vel.x
+			var t_to_ground := (fly.y - hill_y(fly.x)) / maxf(0.1, ground_dy - vel.y)
 			if t_to_ground < lerpf(0.5, 0.25, skill) and _land_press < 0.0:
 				press("action")

@@ -99,9 +99,12 @@ func _draw_setup(vp: Vector2) -> void:
 
 func _draw_intro(vp: Vector2) -> void:
 	var ev := game.comp.event_name()
-	var a := clampf(minf(game.stage_t * 3.0, (3.5 - game.stage_t) * 3.0), 0.0, 1.0)
-	HudKit.banner(self, vp, vp.y * 0.42, Competition.EVENT_TITLES[ev], "EVENT %d OF %d" % [game.comp.current + 1, game.comp.programme.size()], ICE, a)
-	HudKit.text(self, Vector2(vp.x * 0.5, vp.y * 0.42 + 130), HOWTO[ev], 24, Color(HudKit.INK, a), HudKit.label_font(), HudKit.CENTER)
+	var dur := game.stage_seconds(S.INTRO)
+	var t := game.stage_t - maxf(0.0, dur - 4.0)  # the card shows for the last seconds (after a flight in)
+	var a := clampf(minf(t * 3.0, (dur - game.stage_t) * 3.0), 0.0, 1.0)
+	var y := vp.y * (0.7 if ev == "ski_jump" else 0.42)  # low on the screen over the hill's reveal
+	HudKit.banner(self, vp, y, Competition.EVENT_TITLES[ev], "EVENT %d OF %d" % [game.comp.current + 1, game.comp.programme.size()], ICE, a)
+	HudKit.text(self, Vector2(vp.x * 0.5, y + 130), HOWTO[ev], 24, Color(HudKit.INK, a), HudKit.label_font(), HudKit.CENTER)
 
 
 func _athlete_panel(vp: Vector2) -> void:
@@ -142,7 +145,7 @@ func _draw_attempt(vp: Vector2) -> void:
 		HudKit.panel(self, Rect2(vp.x - 324, 16, 300, 84), HudKit.GOLD)
 		HudKit.stat(self, vp.x - 48, 20, "SPEED", "%d KM/H" % int(j.speed * 3.6), HudKit.GOLD, HudKit.RIGHT)
 		HudKit.panel(self, Rect2(vp.x * 0.5 - 170, 16, 340, 84), ICE)
-		var dist := j.distance if j.stage == SkiJump.Stage.LANDED else maxf(0.0, j.fly.x)
+		var dist := j.current_distance()
 		HudKit.stat(self, vp.x * 0.5, 20, "DISTANCE", "%.1f M" % dist, HudKit.INK, HudKit.CENTER)
 		match j.stage:
 			SkiJump.Stage.INRUN:

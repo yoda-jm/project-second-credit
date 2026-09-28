@@ -1,9 +1,10 @@
 class_name FrostpeakView3D
 extends Node3D
-## Frostpeak Games in 3D: three venues in one snowy valley ringed by mountains. The speed-skating oval sits at the
-## origin, the K90 jump hill at JUMP, the medal plaza with the podium and the cauldron at PLAZA. The venues are
-## built from the events' own geometry (lane lengths, in-run slope, landing curve) so the picture matches the rules.
-## Banners and painted lettering are drawn once into textures at start (invented names only, no sponsors).
+## Frostpeak Games in 3D: three venues in one alpine valley (FrostpeakValley). The speed-skating oval sits at the
+## origin, the large jump hill (FrostpeakHill) at the valley's head backing onto the mountains, the medal plaza with
+## the podium and the cauldron at PLAZA. The venues are built from the events' own geometry (lane lengths, the
+## hill's profile) so the picture matches the rules. Between venues the camera flies (FrostpeakFlight) high over
+## the valley. Banners and painted lettering are drawn once into textures at start (invented names only).
 
 const M := "res://games/frostpeak/art/models/"
 const SH := "res://games/frostpeak/shaders/"
@@ -11,9 +12,11 @@ const S := preload("res://games/frostpeak/scenes/frostpeak_game.gd").Stage
 const STRAIGHT := 100.0
 const RADIUS := 30.0
 const LANES: Array[float] = [2.0, 6.0]  ## lane centres, out from the inner radius (player, rival)
-const JUMP := Vector3(700, 56.0, 0)  ## the lip; the outrun, 56 m below, meets the valley floor
 const PLAZA := Vector3(-500, 0, 0)
-const INRUN_ANGLE := deg_to_rad(35.0)
+const SUN_ELEVATION := 21.0  ## a low winter sun, from down the jump hill and a little to its right
+const SUN_AZIMUTH := 28.0
+const INTRO_FLIGHT := 10.5  ## seconds of flight to the jump hill before its title card
+const VALLEY_WAY := Vector3(-120, 170, 330)  ## the flight to the hill swings out over the valley here
 const BOARDS := 10.5  ## the padded boards, out from the inner radius
 const STAND_Z := RADIUS + 13.0  ## the grandstand's front wall, along the front straight
 const STAGE_Y := 0.46  ## the medal stage lifts the podium blocks
@@ -51,12 +54,22 @@ var _t := 0.0
 var _stage_t := 0.0
 var _landed_x := 0.0
 var _slide := 0.0
+var _slide_v := -1.0
 var _jump_stage := -1  ## the camera cuts (rather than glides) when the jumper changes stage
 var _paint: Array = []  ## [SubViewport, Callable(texture)]: text drawn once, then baked into mipmapped textures
 var _boards: Array[Label3D] = []  ## scoreboard lines, rewritten live
 var _crowd_mats := {}
 var _flag_shader: Shader
 var _rng := RandomNumberGenerator.new()
+var _into: Node3D = self  ## where props, instanced sets and flags are added (the hill builds in its own frame)
+var valley: FrostpeakValley
+var hill: FrostpeakHill
+var _flight: FrostpeakFlight
+var _flight_key := ""  ## which move the current flight is (so a stage starts it once)
+var _shafts: ShaderMaterial
+var _to_sun := Vector3.UP
+var _jump_cam := ""  ## the jump's current camera: "gate", "inrun", "chase", "side", "outrun"
+var _reveal: Array[Vector3] = []  ## the hill's reveal: where the flight lands, what it looks at, where it pushes in to
 
 
 func _ready() -> void:
@@ -67,17 +80,14 @@ func _ready() -> void:
 	_ice_mat = ShaderMaterial.new()
 	_ice_mat.shader = load(SH + "ice.gdshader")
 	_build_world()
-	_build_mountains()
+	valley = FrostpeakValley.new(self)
+	valley.build()
 	_build_oval()
-	var before := get_child_count()
-	_build_hill()
-	# the hill's structures (the in-run, towers, lights, boards) cast no sun shadows: seen from the chase camera they
-	# are off screen, and their shadows would lie on the landing slope under nothing. The athletes keep theirs.
-	for i in range(before, get_child_count()):
-		var c := get_child(i)
-		for g in [c] + c.find_children("*", "GeometryInstance3D", true, false):
-			if g is GeometryInstance3D:
-				(g as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	hill = FrostpeakHill.new(self, valley)
+	hill.build()
+	valley.build_roads(ground_y)
+	# the reveal: high over the arena, the whole hill ahead, from the crowd to the start tower
+	_reveal = [hill.world(Vector3(345, 16, -26)), hill.world(Vector3(-5, -8, 0)), hill.world(Vector3(300, 6, -18))]
 	_build_plaza()
 	_skater = _athlete("skater")
 	_rival = _athlete("skater")
@@ -98,20 +108,31 @@ func _prop(name: String, pos: Vector3, yaw := 0.0, scale := 1.0) -> Node3D:
 	n.position = pos
 	n.rotation.y = yaw
 	n.scale = Vector3.ONE * scale
-	add_child(n)
+	_into.add_child(n)
 	_texture(n)
 	return n
 
 
 ## Gives the props' plain Blender colours real surfaces from the shared CC0 sets: concrete, timber, steel sheet.
+func _swaps() -> Dictionary:
+	if not _crowd_mats.has("swaps"):
+		_crowd_mats["swaps"] = {
+			"stand_concrete": Pbr.material("metal", Color(0.92, 0.92, 0.93), 0.35, 0.0, 1.2),
+			"timber": Pbr.local("planks", Color(0.7, 0.5, 0.35), 0.8),
+			"roof": Pbr.material("metal", Color(0.85, 0.87, 0.9), 0.5, 0.7, 0.6),
+			"cladding": Pbr.material("metal", Color(0.42, 0.48, 0.58), 0.7, 0.6, 0.8),
+			"plinth": Pbr.material("stone_bricks", Color(0.85, 0.86, 0.9), 0.8),
+		}
+	return _crowd_mats["swaps"]
+
+
+## The same swaps, for a model drawn many times in a MultiMesh.
+func _prop_overrides(_model: String) -> Dictionary:
+	return _swaps()
+
+
 func _texture(n: Node3D) -> void:
-	var swap := {
-		"stand_concrete": Pbr.material("metal", Color(0.92, 0.92, 0.93), 0.35, 0.0, 1.2),
-		"timber": Pbr.local("planks", Color(0.7, 0.5, 0.35), 0.8),
-		"roof": Pbr.material("metal", Color(0.85, 0.87, 0.9), 0.5, 0.7, 0.6),
-		"cladding": Pbr.material("metal", Color(0.42, 0.48, 0.58), 0.7, 0.6, 0.8),
-		"plinth": Pbr.material("stone_bricks", Color(0.85, 0.86, 0.9), 0.8),
-	}
+	var swap := _swaps()
 	for mi in n.find_children("*", "MeshInstance3D", true, false):
 		var m := mi as MeshInstance3D
 		for i in m.mesh.get_surface_count():
@@ -195,7 +216,11 @@ func _first_mesh(model: String) -> Mesh:
 
 ## Many copies of one model in a MultiMesh. `overrides` swaps materials by name (on a copy of the mesh);
 ## `colors` and `customs` fill the per-instance colour and custom data the crowd shader reads.
-func _multi(model: String, xforms: Array[Transform3D], overrides := {}, colors: Array[Color] = [], customs: Array[Color] = []) -> MultiMeshInstance3D:
+## Many copies of one model in MultiMeshes. `overrides` swaps materials by name (on a copy of the mesh);
+## `colors` and `customs` fill the per-instance colour and custom data the crowd shader reads. Big sets are cut
+## into 160 m cells, so each cell is culled on its own and, past `vis_end` metres, not drawn at all.
+func _multi(model: String, xforms: Array[Transform3D], overrides := {}, colors: Array[Color] = [], customs: Array[Color] = [],
+		vis_end := 0.0, shadows := true) -> void:
 	var mesh := _first_mesh(model)
 	if not overrides.is_empty():
 		mesh = mesh.duplicate() as Mesh
@@ -206,26 +231,40 @@ func _multi(model: String, xforms: Array[Transform3D], overrides := {}, colors: 
 				mesh.surface_set_material(i, overrides[key])
 			elif overrides.has("*"):
 				mesh.surface_set_material(i, overrides["*"])
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = not colors.is_empty()
-	mm.use_custom_data = not customs.is_empty()
-	mm.mesh = mesh
-	mm.instance_count = xforms.size()
+	var cells := {}
 	for i in xforms.size():
-		mm.set_instance_transform(i, xforms[i])
-		if mm.use_colors:
-			mm.set_instance_color(i, colors[i % colors.size()])
-		if mm.use_custom_data:
-			mm.set_instance_custom_data(i, customs[i % customs.size()])
-	var inst := MultiMeshInstance3D.new()
-	inst.multimesh = mm
-	add_child(inst)
-	return inst
+		var o := xforms[i].origin
+		var key := Vector2i(floori(o.x / 160.0), floori(o.z / 160.0)) if xforms.size() > 300 else Vector2i.ZERO
+		if not cells.has(key):
+			cells[key] = []
+		cells[key].append(i)
+	for key in cells:
+		var ids: Array = cells[key]
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = not colors.is_empty()
+		mm.use_custom_data = not customs.is_empty()
+		mm.mesh = mesh
+		mm.instance_count = ids.size()
+		for k in ids.size():
+			var i: int = ids[k]
+			mm.set_instance_transform(k, xforms[i])
+			if mm.use_colors:
+				mm.set_instance_color(k, colors[i % colors.size()])
+			if mm.use_custom_data:
+				mm.set_instance_custom_data(k, customs[i % customs.size()])
+		var inst := MultiMeshInstance3D.new()
+		inst.multimesh = mm
+		inst.visibility_range_end = vis_end
+		inst.visibility_range_end_margin = vis_end * 0.1
+		inst.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF if vis_end > 0.0 else GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
+		if not shadows:
+			inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_into.add_child(inst)
 
 
 ## Spectators: three poses mixed, each with its own coat, hat, scarf and skin tone.
-func _crowd(xforms: Array[Transform3D], seed: int, hop := 1.0) -> void:
+func _crowd(xforms: Array[Transform3D], seed: int, hop := 1.0, shadows := true) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	var groups := {"spectator": [], "spectator_clap": [], "spectator_flag": []}
@@ -247,7 +286,7 @@ func _crowd(xforms: Array[Transform3D], seed: int, hop := 1.0) -> void:
 				h = fl[0]
 			h.a = rng.randf() * rng.randf()
 			cus.append(h)
-		_multi(model, xs, _crowd_overrides(hop), cols, cus)
+		_multi(model, xs, _crowd_overrides(hop), cols, cus, 750.0, shadows)
 
 
 func _crowd_overrides(hop: float) -> Dictionary:
@@ -278,8 +317,43 @@ func _forest(xforms: Array[Transform3D], seed: int) -> void:
 	for x in xforms:
 		(pines if rng.randf() < 0.55 else spruces).append(x)
 	# the forest casts no sun shadows: from a low winter sun they smear across whole slopes
-	for inst in [_multi("snowy_pine", pines, {"pine_needles": tm}), _multi("snowy_spruce", spruces, {"pine_needles": tm})]:
-		inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_multi("snowy_pine", pines, {"pine_needles": tm}, [], [], 1400.0, false)
+	_multi("snowy_spruce", spruces, {"pine_needles": tm}, [], [], 1400.0, false)
+
+
+## Far woods (mountain flanks, the back of the hill): the same conifers as three stacked cones, a few dozen
+## triangles each, so thousands cost little.
+func _forest_far(xforms: Array[Transform3D]) -> void:
+	if not _crowd_mats.has("far_tree"):
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var tiers := [[0.9, 3.4, 1.9], [2.6, 4.9, 1.45], [4.2, 6.6, 0.95]]  # base height, tip height, radius
+		for t in tiers:
+			for i in 7:
+				var a0: float = TAU * i / 7.0
+				var a1: float = TAU * (i + 1) / 7.0
+				var p0 := Vector3(cos(a0) * t[2], t[0], sin(a0) * t[2])
+				var p1 := Vector3(cos(a1) * t[2], t[0], sin(a1) * t[2])
+				var tip := Vector3(0, t[1], 0)
+				var n := (p1 - p0).cross(tip - p0).normalized()
+				for v in [p0, tip, p1]:
+					st.set_normal(-n if n.y < 0.0 else n)
+					st.add_vertex(v)
+		var tm := ShaderMaterial.new()
+		tm.shader = load(SH + "tree.gdshader")
+		var mesh := st.commit()
+		mesh.surface_set_material(0, tm)
+		_crowd_mats["far_tree"] = mesh
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = _crowd_mats["far_tree"]
+	mm.instance_count = xforms.size()
+	for i in xforms.size():
+		mm.set_instance_transform(i, xforms[i])
+	var inst := MultiMeshInstance3D.new()
+	inst.multimesh = mm
+	inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_into.add_child(inst)
 
 
 func _flag(pos: Vector3, cols: Array, size := Vector2(2.0, 1.3), yaw := 0.0) -> MeshInstance3D:
@@ -299,7 +373,7 @@ func _flag(pos: Vector3, cols: Array, size := Vector2(2.0, 1.3), yaw := 0.0) -> 
 	flag.material_override = fm
 	flag.position = pos
 	flag.rotation.y = yaw
-	add_child(flag)
+	_into.add_child(flag)
 	return flag
 
 
@@ -366,6 +440,8 @@ func _banner_mat(text: String, fg: Color, bg: Color, band := Color(0, 0, 0, 0)) 
 
 
 func _banner_set() -> Array[StandardMaterial3D]:
+	if _crowd_mats.has("banners"):
+		return _crowd_mats["banners"]
 	var out: Array[StandardMaterial3D] = []
 	var gold := Color(1.0, 0.82, 0.25)
 	out.append(_banner_mat("FROSTPEAK", Color.WHITE, Color(0.1, 0.25, 0.65), gold))
@@ -376,6 +452,9 @@ func _banner_set() -> Array[StandardMaterial3D]:
 		var fg: Color = fl[1] if _color_dist(fl[1], bg) > 0.4 else (Color.WHITE if bg.get_luminance() < 0.6 else Color(0.08, 0.08, 0.12))
 		out.append(_banner_mat(str(n["name"]).to_upper(), fg, bg, fl[2] if _color_dist(fl[2], bg) > 0.3 else Color(0, 0, 0, 0)))
 	out.append(_banner_mat("VALLEY OF ICE", Color(0.1, 0.25, 0.6), Color(0.95, 0.96, 0.98), Color(0.1, 0.25, 0.6)))
+	out.append(_banner_mat("SNOWLINE", Color(0.95, 0.3, 0.1), Color(0.98, 0.97, 0.94)))
+	out.append(_banner_mat("PEAK RADIO", Color.WHITE, Color(0.75, 0.1, 0.15), Color.WHITE))
+	_crowd_mats["banners"] = out
 	return out
 
 
@@ -387,7 +466,7 @@ func _quad(pos: Vector3, size: Vector2, mat: Material, basis: Basis) -> MeshInst
 	mi.material_override = mat
 	mi.transform = Transform3D(basis, pos)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
+	_into.add_child(mi)
 	return mi
 
 
@@ -423,26 +502,21 @@ func _scoreboard(pos: Vector3, yaw: float, title: String) -> void:
 # ------------------------------------------------------------------ world
 
 func _build_world() -> void:
-	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.16, 0.36, 0.78)
-	sky_mat.sky_horizon_color = Color(0.7, 0.8, 0.93)
-	sky_mat.sky_curve = 0.12
-	sky_mat.ground_horizon_color = Color(0.78, 0.84, 0.94)
-	sky_mat.ground_bottom_color = Color(0.6, 0.66, 0.78)
-	sky_mat.sun_angle_max = 12.0
-	sky_mat.sun_curve = 0.08
+	var sky_mat := ShaderMaterial.new()
+	sky_mat.shader = load(SH + "sky.gdshader")
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
+	sky.radiance_size = Sky.RADIANCE_SIZE_128
 	var env := Environment.new()
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
-	Look.sky_ambient(env, Color(0.7, 0.75, 0.86), 0.6)
+	Look.sky_ambient(env, Color(0.7, 0.75, 0.86), 0.5)
 	if not Look.compat():  # part sky, part a neutral fill: blue shadows on the snow, but not ink-blue
 		env.ambient_light_color = Color(0.78, 0.8, 0.86)
 		env.ambient_light_sky_contribution = 0.55
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 0.88
+	env.tonemap_exposure = 0.8
 	env.tonemap_white = 6.0
 	env.glow_enabled = true
 	env.glow_intensity = 0.45
@@ -462,10 +536,15 @@ func _build_world() -> void:
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
+	# a low winter sun, from down the jump hill (the hill runs towards -x) and a little to one side, so the landing
+	# slope faces it and the long shadows fall up the hill behind the jumpers
+	var el := deg_to_rad(SUN_ELEVATION)
+	var az := deg_to_rad(SUN_AZIMUTH)
+	_to_sun = Vector3(-cos(el) * cos(az), sin(el), -cos(el) * sin(az)).normalized()
 	_sun = DirectionalLight3D.new()
-	_sun.rotation_degrees = Vector3(-66, -30, 0)  # a high sun: shadows fall close under what casts them (a low one threw them far across the slope)
-	_sun.light_color = Color(1.0, 0.94, 0.84)
-	_sun.light_energy = 1.45
+	_sun.basis = Basis.looking_at(-_to_sun, Vector3.UP)
+	_sun.light_color = Color(1.0, 0.87, 0.7)
+	_sun.light_energy = 1.65
 	_sun.light_angular_distance = 0.5  # soft edges
 	_sun.shadow_enabled = true
 	_sun.shadow_blur = 1.4
@@ -476,9 +555,22 @@ func _build_world() -> void:
 	add_child(_sun)
 	_camera = Camera3D.new()
 	_camera.fov = 50
-	_camera.far = 4000.0
+	_camera.far = 5000.0
 	_camera.current = true
 	add_child(_camera)
+	# light shafts from the low sun: a full-screen pass on the camera (Forward+ only: it reads the depth buffer)
+	if not Look.compat():
+		var q := QuadMesh.new()
+		q.size = Vector2(1, 1)
+		var mi := MeshInstance3D.new()
+		mi.mesh = q
+		_shafts = ShaderMaterial.new()
+		_shafts.shader = load(SH + "sun_shafts.gdshader")
+		mi.material_override = _shafts
+		mi.extra_cull_margin = 16384.0
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.position = Vector3(0, 0, -1)
+		_camera.add_child(mi)
 	# gentle snowfall around the camera
 	_snowfall = GPUParticles3D.new()
 	_snowfall.amount = 900
@@ -502,93 +594,6 @@ func _build_world() -> void:
 	_snowfall.draw_pass_1 = q
 	_snowfall.material_override = Fx.material("soft", Color(1, 1, 1, 0.85))
 	add_child(_snowfall)
-
-
-## A ring of craggy peaks around the valley: ridged noise for sharp crests, rock on the steep faces, snow on the
-## rest; foothills with forests in front, and the snowy valley floor.
-func _build_mountains() -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var ridge := FastNoiseLite.new()
-	ridge.seed = 5
-	ridge.frequency = 0.0014
-	ridge.fractal_type = FastNoiseLite.FRACTAL_RIDGED
-	ridge.fractal_octaves = 4
-	ridge.fractal_lacunarity = 2.1
-	ridge.fractal_gain = 0.45
-	var base := FastNoiseLite.new()
-	base.seed = 11
-	base.frequency = 0.0009
-	var centre := Vector3(100, 0, 0)
-	var radii: Array[float] = []
-	var r := 1000.0
-	while r <= 2600.0:
-		radii.append(r)
-		r += 40.0 if r < 1500.0 else 70.0
-	var steps := 360
-	var pts := []
-	for ri in radii.size():
-		var row := []
-		for k in steps + 1:
-			var a := TAU * k / steps
-			var p := centre + Vector3(cos(a) * radii[ri], 0, sin(a) * radii[ri])
-			var rr := radii[ri]
-			# the envelope: rising from the valley edge, crests around 1500-2000 m out, a last high ridge behind
-			var env := smoothstep(1000.0, 1500.0, rr) * (0.75 + 0.25 * smoothstep(2000.0, 2500.0, rr))
-			var rn := ridge.get_noise_2d(p.x, p.z) * 0.5 + 0.5
-			var bn := base.get_noise_2d(p.x, p.z) * 0.5 + 0.5
-			p.y = env * (pow(rn, 1.4) * 420.0 + bn * 300.0) - 30.0 + smoothstep(1000.0, 1150.0, rr) * 20.0
-			row.append(p)
-		pts.append(row)
-	for ri in radii.size() - 1:
-		for k in steps:
-			var a: Vector3 = pts[ri][k]
-			var b: Vector3 = pts[ri][k + 1]
-			var c: Vector3 = pts[ri + 1][k + 1]
-			var d: Vector3 = pts[ri + 1][k]
-			for v in [a, c, b, a, d, c]:
-				st.add_vertex(v)
-	st.generate_normals()
-	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
-	var m := ShaderMaterial.new()
-	m.shader = load(SH + "mountain.gdshader")
-	m.set_shader_parameter("rock_tex", load("res://core/art/textures/rock/albedo.jpg"))
-	m.set_shader_parameter("rock_nrm", load("res://core/art/textures/rock/normal.jpg"))
-	mi.material_override = m
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-	# the valley floor
-	var floor := MeshInstance3D.new()
-	var pl := PlaneMesh.new()
-	pl.size = Vector2(2300, 2300)
-	pl.subdivide_width = 60
-	pl.subdivide_depth = 60
-	floor.mesh = pl
-	floor.position = Vector3(100, -0.1, 0)
-	floor.material_override = _snow_mat
-	add_child(floor)
-	# forests: thick on the valley edges, scattered in the middle, kept off the venues
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 12
-	var trees: Array[Transform3D] = []
-	var rocks: Array[Transform3D] = []
-	for i in 1100:
-		var a := rng.randf() * TAU
-		var rr := sqrt(rng.randf_range(0.03, 1.0)) * 960.0
-		var p := Vector3(cos(a) * rr + 100.0, 0, sin(a) * rr)
-		if p.distance_to(JUMP + Vector3(40, 0, 0)) < 170.0 or p.distance_to(PLAZA) < 60.0:
-			continue
-		if absf(p.z) < 95.0 and p.x > -120.0 and p.x < 180.0:  # the oval, its stand and car park
-			continue
-		# clumps: trees gather where a slow noise is high
-		if sin(p.x * 0.013) * cos(p.z * 0.011) < -0.35 and rr < 800.0:
-			continue
-		trees.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.5, 3.2)), p))
-		if rng.randf() < 0.08:
-			rocks.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(1, rng.randf_range(0.6, 1.2), 1) * rng.randf_range(1.0, 3.0)), p + Vector3(rng.randf_range(-8, 8), -0.2, rng.randf_range(-8, 8))))
-	_forest(trees, 3)
-	_multi("boulder", rocks)
 
 
 # ------------------------------------------------------------------ the oval
@@ -759,6 +764,28 @@ func _build_oval() -> void:
 	_scoreboard(Vector3(STRAIGHT * 0.5 + 30.0, 0, RADIUS + 22.0), PI + 0.5, "500 M")
 
 
+## One grandstand section at `xf` (its front wall at the origin, facing +Z), full of fans, lettering on the fascia.
+func _stand(xf: Transform3D, seed: int) -> void:
+	var st := _prop("grandstand", xf.origin, 0.0)
+	st.basis = xf.basis
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var seats: Array[Transform3D] = []
+	var yaw := xf.basis.get_euler().y
+	for r in ROWS:
+		for sidx in SEATS:
+			if rng.randf() < 0.1:
+				continue
+			var xb := -SEC * 0.5 + 1.2 + (sidx + 0.5) * (SEC - 2.4) / SEATS + rng.randf_range(-0.05, 0.05)
+			var p := xf * Vector3(xb, Z0 + r * RISE, -(Y0 + r * TREAD + 0.14))
+			seats.append(Transform3D(Basis(Vector3.UP, yaw + rng.randf_range(-0.25, 0.25)).scaled(Vector3.ONE * rng.randf_range(0.92, 1.06)), p))
+	_crowd(seats, seed, 1.0, false)
+	if not _crowd_mats.has("fascia"):
+		_crowd_mats["fascia"] = _banner_mat("FROSTPEAK  GAMES", Color.WHITE, Color(0.1, 0.22, 0.55), Color(1.0, 0.82, 0.25))
+	var fascia: Material = _crowd_mats["fascia"]
+	_quad(xf * Vector3(0, 12.0, 2.44), Vector2(SEC - 1.0, 1.1), fascia, xf.basis)
+
+
 ## The grandstand: five roofed sections along the front straight, closed by end walls, full of fans; a row of
 ## nation flags on the roof edge and lettering on the fascia.
 func _build_grandstand() -> void:
@@ -788,226 +815,6 @@ func _build_grandstand() -> void:
 		var pole := _prop("flagpole", base)
 		pole.scale = Vector3(1, 0.55, 1)
 		_flag(base + Vector3(0.8, 3.7, 0), Competition.NATIONS[i % Competition.NATIONS.size()]["flag"], Vector2(1.5, 1.0))
-
-
-# ------------------------------------------------------------------ the jump hill
-
-func inrun_point(along: float) -> Vector3:
-	var back := SkiJump.INRUN - along
-	return JUMP + Vector3(-back * cos(INRUN_ANGLE), back * sin(INRUN_ANGLE), 0)
-
-
-func hill_point(x: float) -> Vector3:
-	return JUMP + Vector3(x, _hill_y(x), 0)
-
-
-func _hill_y(x: float) -> float:
-	if x < 0.0:
-		# under the in-run the hillside falls away, so the track stands on a real tower
-		return -x * tan(INRUN_ANGLE) - 2.5 - (-x) * 0.32
-	if x <= 125.0:
-		return SkiJump.profile(x)
-	var y125 := SkiJump.profile(125.0)
-	var k := clampf((x - 125.0) / 45.0, 0.0, 1.0)
-	return y125 - SkiJump.HILL_SLOPE * 0.5 * 45.0 * (k - k * k * 0.5)  # eases into the flat outrun
-
-
-## The terrain's height at (px, pz) relative to the lip, banks included.
-func _terrain_y(px: float, pz: float) -> float:
-	var y: float = _hill_y(clampf(px, -100.0, 170.0))
-	var bank := maxf(0.0, absf(pz) - 17.0)
-	y += minf(bank * 0.28 + bank * bank * 0.006, 24.0)  # gentle banks, not walls
-	# far from the hill the mountainside settles down to the valley floor, with no edge to see
-	var out := maxf(smoothstep(96.0, 160.0, absf(pz)), smoothstep(-110.0, -180.0, px))
-	return lerpf(y, -JUMP.y, out)
-
-
-func _ground(px: float, pz: float) -> Vector3:
-	return JUMP + Vector3(px, _terrain_y(px, pz), pz)
-
-
-func _build_hill() -> void:
-	# the terrain: the landing hill and the outrun down the middle, forested banks rising on both sides
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var xs := []
-	var x := -180.0
-	while x <= 300.0:
-		xs.append(x)
-		x += 2.5 if x > -100.0 and x < 240.0 else 5.0
-	var zs := []
-	for k in 81:
-		zs.append(-160.0 + k * 4.0)
-	for i in xs.size() - 1:
-		for k in zs.size() - 1:
-			var p := []
-			for c in [[i, k], [i + 1, k], [i + 1, k + 1], [i, k + 1]]:
-				p.append(_ground(xs[c[0]], zs[c[1]]))
-			for v in [p[0], p[2], p[1], p[0], p[3], p[2]]:
-				st.add_vertex(v)
-	st.generate_normals()
-	var terrain := MeshInstance3D.new()
-	terrain.mesh = st.commit()
-	var m := ShaderMaterial.new()
-	m.shader = _snow_mat.shader
-	m.set_shader_parameter("shade", Color(0.8, 0.85, 0.95))
-	m.set_shader_parameter("mark_tex", _markings())
-	m.set_shader_parameter("mark_rect", Vector4(JUMP.x + 40.0, JUMP.z - 15.0, 100.0, 30.0))
-	terrain.material_override = m
-	add_child(terrain)
-	var steel := Pbr.material("metal", Color(0.55, 0.58, 0.62), 1.0, 0.8, 0.5)
-	var red := _flat(Color(0.8, 0.12, 0.12), 0.45)
-	# the in-run: a U-shaped channel with ski grooves and lamps, on steel pillars with cross braces
-	var len := SkiJump.INRUN + 3.0
-	var mid := inrun_point(SkiJump.INRUN * 0.5 - 1.0)
-	var along_basis := Basis(Vector3.BACK, -INRUN_ANGLE)
-	var track := _box(self, mid + Vector3(0, 0.2, 0), Vector3(len, 0.4, 2.0), _flat(Color(0.9, 0.93, 0.98), 0.12))
-	track.basis = along_basis
-	for zz in [-0.35, 0.35]:
-		var groove := _box(self, mid + Vector3(0, 0.41, zz), Vector3(len, 0.02, 0.14), _flat(Color(0.55, 0.62, 0.72), 0.05))
-		groove.basis = along_basis
-	for zz in [-1.05, 1.05]:  # low rails with a white cap
-		var wall := _box(self, mid + Vector3(0, 0.45, zz), Vector3(len, 0.5, 0.1), red)
-		wall.basis = along_basis
-		var cap := _box(self, mid + Vector3(0, 0.72, zz), Vector3(len, 0.05, 0.14), _flat(Color(0.95, 0.95, 0.95), 0.4))
-		cap.basis = along_basis
-	var beam := _box(self, mid + Vector3(0, -0.45, 0), Vector3(len, 0.9, 2.6), steel)
-	beam.basis = along_basis
-	for zz in [-1.6, 1.6]:  # service walkways with railings either side of the track
-		var walk := _box(self, mid + Vector3(0, -0.05, zz), Vector3(len, 0.08, 0.9), Pbr.material("metal", Color(0.4, 0.42, 0.46), 2.0, 0.8, 0.6))
-		walk.basis = along_basis
-		var rail := _box(self, mid + Vector3(0, 0.95, zz * 1.28), Vector3(len, 0.05, 0.05), steel)
-		rail.basis = along_basis
-	var lamp := _flat(Color(1.0, 0.95, 0.8), 0.3, 4.0)
-	var a := 0.0
-	while a <= SkiJump.INRUN:
-		var p := inrun_point(a)
-		var ground := JUMP.y + _hill_y(p.x - JUMP.x)
-		var top := p.y - 0.9
-		if top - ground > 0.5:
-			for zz in [-1.1, 1.1]:
-				_box(self, Vector3(p.x, (top + ground) * 0.5, p.z + zz), Vector3(0.35, top - ground, 0.35), steel)
-			var brace := _box(self, Vector3(p.x, (top + ground) * 0.5, p.z), Vector3(0.12, (top - ground) * 1.02, 0.12), steel)
-			brace.rotation.x = atan2(3.0, top - ground)
-			if top - ground > 6.0:
-				_box(self, Vector3(p.x, ground + (top - ground) * 0.5, p.z), Vector3(0.2, 0.2, 3.2), steel)
-		for zz in [-1.15, 1.15]:
-			_box(self, p + Vector3(0, 0.85, zz), Vector3(0.07, 0.07, 0.07), lamp)
-		for zz in [-2.05, 2.05]:
-			_box(self, p + Vector3(0, 0.5, zz), Vector3(0.05, 1.0, 0.05), steel)
-		a += 7.0
-	# the start house on its own trestle at the top, the take-off table at the lip
-	var top_p := inrun_point(-2.0)
-	var hp := top_p + Vector3(-8.0, -1.2, 0)
-	_prop("start_house", hp, PI * 0.5)
-	var hg := JUMP.y + _hill_y(hp.x - JUMP.x)
-	for dx in [-2.6, 2.6]:
-		for dz in [-2.6, 2.6]:
-			_box(self, Vector3(hp.x + dx, (hp.y + hg) * 0.5, hp.z + dz), Vector3(0.4, hp.y - hg, 0.4), steel)
-	_box(self, hp + Vector3(0, -0.15, 0), Vector3(6.4, 0.3, 6.4), steel)
-	var gate := _scene("start_gate")
-	gate.position = inrun_point(0.0) + Vector3(0, 0.45, 0)
-	gate.rotation.y = PI * 0.5
-	add_child(gate)
-	var table := _box(self, JUMP + Vector3(-3.0, -0.25, 0), Vector3(6.0, 0.7, 3.2), Pbr.material("planks", Color(0.75, 0.55, 0.38), 1.5))
-	table.basis = Basis(Vector3.BACK, -0.18)
-	# the judges' tower beside the knoll, glazed side to the landing
-	_prop("judges_tower", _ground(55.0, -36.0) + Vector3(0, -0.5, 0), 0.3)
-	_prop("tv_tower", _ground(25.0, -24.0), -0.6)
-	_prop("tv_tower", _ground(150.0, 26.0), PI + 0.9)
-	# padded fences along the landing hill, dressed with banners (inside faces)
-	var banners := _banner_set()
-	var fx := 8.0
-	var bi := 0
-	var pad := _flat(Color(0.1, 0.24, 0.62), 0.55)
-	while fx < 175.0:
-		for zz in [-16.5, 16.5]:
-			var p0 := hill_point(fx)
-			var p1 := hill_point(fx + 6.0)
-			var mp := (p0 + p1) * 0.5 + Vector3(0, 0.55, zz)
-			var tilt := Basis(Vector3.BACK, atan2(p1.y - p0.y, 6.0))
-			var seg := _box(self, mp, Vector3(6.05, 1.1, 0.25), pad)
-			seg.basis = tilt
-			var face: float = -0.13 if zz > 0.0 else 0.13
-			_quad(mp + Vector3(0, 0, face), Vector2(5.9, 0.9), banners[bi % banners.size()], tilt * (Basis(Vector3.UP, PI) if zz > 0.0 else Basis.IDENTITY))
-			bi += 1
-		fx += 6.0
-	# distance boards on posts beside the fence, the K point in red
-	for d in range(60, 131, 10):
-		var bp := hill_point(d) + Vector3(0, 0, -18.2)
-		bp.y = JUMP.y + _terrain_y(d, -18.2)
-		_box(self, bp + Vector3(0, 1.4, 0), Vector3(0.1, 2.8, 0.1), steel)
-		var board := _box(self, bp + Vector3(0, 2.6, 0), Vector3(2.2, 1.1, 0.1), _flat(Color(0.95, 0.95, 0.97) if d != 90 else Color(0.85, 0.1, 0.12), 0.5))
-		var lb := Label3D.new()
-		lb.text = str(d)
-		lb.font = HudKit.font(true)
-		lb.font_size = 120
-		lb.pixel_size = 0.008
-		lb.shaded = true
-		lb.modulate = Color(0.1, 0.2, 0.6) if d != 90 else Color.WHITE
-		lb.outline_size = 0
-		lb.position = Vector3(0, 0, 0.06)
-		board.add_child(lb)
-	# the outrun: a curved barrier with banners, flags, the scoreboard and the crowd on terraces
-	for i in 13:
-		var ang := -1.0 + i * (2.0 / 12.0)
-		var bp := hill_point(200.0) + Vector3(cos(ang) * 6.0 - 6.0, 0.6, sin(ang) * 18.0)
-		var b := _box(self, bp, Vector3(0.4, 1.2, 3.2), pad)
-		b.rotation.y = -ang
-		var q := _quad(bp + Vector3(-0.21, 0, 0).rotated(Vector3.UP, -ang), Vector2(3.1, 1.0), banners[(i + 3) % banners.size()], Basis(Vector3.UP, -PI * 0.5 - ang))
-		q.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	for i in 8:
-		var fzz := -26.0 + i * 7.4
-		_pole_flag(_ground(213.0, fzz), i)
-	_scoreboard(_ground(236.0, -34.0), -PI * 0.5 + 0.45, "K 90")
-	var fans: Array[Transform3D] = []
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 9
-	for i in 900:
-		var fxx := rng.randf_range(206.0, 228.0)
-		var fz := rng.randf_range(-32.0, 32.0)
-		fans.append(Transform3D(Basis(Vector3.UP, -PI * 0.5 + rng.randf_range(-0.4, 0.4)), _ground(fxx, fz)))
-	for i in 260:  # more fans along the fences of the lower hill
-		var fxx := rng.randf_range(110.0, 195.0)
-		var side := -1.0 if i % 2 == 0 else 1.0
-		var fz := side * rng.randf_range(18.5, 24.0)
-		fans.append(Transform3D(Basis(Vector3.UP, (0.0 if side < 0.0 else PI) + rng.randf_range(-0.4, 0.4)), _ground(fxx, fz)))
-	_crowd(fans, 17)
-	# the forest on the banks, with a few rocks
-	var trees: Array[Transform3D] = []
-	var rocks: Array[Transform3D] = []
-	for i in 520:
-		var tx := rng.randf_range(-120.0, 250.0)
-		var side := -1.0 if i % 2 == 0 else 1.0
-		var tz := side * rng.randf_range(26.0, 110.0)
-		if tx > 195.0 and absf(tz) < 45.0:
-			continue
-		if absf(tx - 55.0) < 10.0 and absf(tz + 36.0) < 8.0:
-			continue
-		trees.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(1.4, 3.0)), _ground(tx, tz)))
-		if i % 11 == 0:
-			rocks.append(Transform3D(Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3.ONE * rng.randf_range(0.8, 2.2)), _ground(tx + 3.0, tz) - Vector3(0, 0.3, 0)))
-	_forest(trees, 8)
-	_multi("boulder", rocks)
-	for zz in [-30.0, 30.0]:
-		_prop("floodlight", _ground(70.0, zz), 0.0 if zz < 0.0 else PI)
-
-
-## The hill's painted lines: blue every 10 m, red at the K point, green at the hill size (world XZ over 100 x 30 m
-## from x = 40), each broken into dashes like spray paint on snow.
-func _markings() -> ImageTexture:
-	var img := Image.create(400, 60, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	for d in range(40, 141, 10):
-		var px := int((d - 40) * 4.0)
-		var col := Color(0.85, 0.1, 0.1, 0.95) if d == 90 else Color(0.15, 0.3, 0.85, 0.8)
-		for w in 2:
-			for y in 60:
-				img.set_pixel(clampi(px + w, 0, 399), y, col)
-	for y in 60:  # the hill size, a green line at 100 m
-		img.set_pixel(240 + 1, y, Color(0.1, 0.6, 0.25, 0.9))
-	var t := ImageTexture.create_from_image(img)
-	return t
 
 
 # ------------------------------------------------------------------ the plaza
@@ -1126,40 +933,55 @@ func _on_stage(stage: int) -> void:
 func _on_attempt(ev: WinterEvent) -> void:
 	var nation: int = game.comp.athletes[game.humans()[game.athlete]]["nation"]
 	_jump_stage = -1
+	_jump_cam = ""
 	if ev is SpeedSkating:
 		_dress(_skater, nation)
 		_dress(_rival, (nation + 3) % Competition.NATIONS.size())
 	else:
 		_dress(_jumper, nation)
 		_slide = 0.0
+		_slide_v = -1.0
 
 
 func _process(delta: float) -> void:
 	_t += delta
 	_stage_t += delta
+	valley.process(delta)
 	if game.comp == null:
 		_plaza_camera(delta, true)
+		_update_shafts()
 		return
+	var fov := 50.0
 	match game.stage:
 		S.ATTEMPT, S.RESULT:
 			if game.ev is SpeedSkating:
 				_update_skating(game.ev as SpeedSkating, delta)
 			elif game.ev is SkiJump:
-				_update_jump(game.ev as SkiJump, delta)
+				fov = _update_jump(game.ev as SkiJump, delta)
 		S.INTRO:
-			_flyby(delta)
+			if game.comp.event_name() == "ski_jump":
+				_intro_hill(delta)
+				fov = lerpf(50.0, 58.0, smoothstep(INTRO_FLIGHT - 3.0, INTRO_FLIGHT, _stage_t))
+			else:
+				_flyby(delta)
 		S.STANDINGS:
-			_flyby(delta)
+			if _flight_key != "plaza":
+				_fly_to_plaza()
+			_fly(delta)
 		S.PODIUM:
 			for i in 3:
 				var f := _flags[i]
 				var top := 6.8 - i * 0.0 - (0.0 if i == 1 else 0.5)
 				f.position.y = move_toward(f.position.y, top, delta * 1.6)
-			_move_camera(PLAZA + Vector3(0, 3.0, -11.0 + sin(_t * 0.2) * 0.5), PLAZA + Vector3(0, 2.2, 1.5), delta, 2.0)
+			if not _fly(delta):
+				_move_camera(PLAZA + Vector3(0, 3.0, -11.0 + sin(_t * 0.2) * 0.5), PLAZA + Vector3(0, 2.2, 1.5), delta, 2.0)
 		S.FINAL, S.SETUP:
+			_flight_key = ""
 			_plaza_camera(delta, false)
+	_camera.fov = fov
 	_snowfall.position = _camera.position + Vector3(0, 12, 0)
 	_update_boards()
+	_update_shafts()
 
 
 func _move_camera(pos: Vector3, look: Vector3, delta: float, speed := 3.0) -> void:
@@ -1187,16 +1009,108 @@ func _plaza_camera(delta: float, snap: bool) -> void:
 		_move_camera(pos, look, delta, 1.5)
 
 
-## Event intro and standings: a slow sweep over the venue.
+## The speed-skating intro: a slow sweep over the oval.
 func _flyby(delta: float) -> void:
-	var ev := game.comp.event_name()
-	var k := _stage_t
-	if ev == "speed_skating":
-		var a := 0.6 + k * 0.12
-		_move_camera(Vector3(cos(a) * 110.0, 32.0, sin(a) * 90.0), Vector3(0, 0, 0), delta, 1.2)
-	else:
-		_move_camera(JUMP + Vector3(150.0 - k * 12.0, 12.0 + k * 2.0, 55.0), JUMP + Vector3(30.0, -15.0, 0), delta, 1.2)
+	var a := 0.6 + _stage_t * 0.12
+	_move_camera(Vector3(cos(a) * 110.0, 32.0, sin(a) * 90.0), Vector3(0, 0, 0), delta, 1.2)
 
+
+## The ground's height at a world point: the jump hill's terrain on its patch, the valley's elsewhere.
+func ground_y(p: Vector3) -> float:
+	if FrostpeakHill.covers(p):
+		var l := hill.local(p)
+		if l.x > FrostpeakHill.X0 and l.x < FrostpeakHill.X1 and absf(l.z) < FrostpeakHill.Z1:
+			return hill.terrain_y(l.x, l.z) + hill.xf.origin.y
+	return valley.height(p.x, p.z)
+
+
+# ------------------------------------------------------------------ flights
+
+## The lowest the camera may fly over a point: well over the trees, the rooftops and the pylons, the hill's
+## terrain and its in-run tower.
+func _clearance(p: Vector3) -> float:
+	var need := valley.height(p.x, p.z) + 45.0
+	if FrostpeakHill.covers(p):
+		var l := hill.local(p)
+		need = maxf(need, hill.terrain_y(l.x, l.z) + hill.xf.origin.y + 40.0)
+		if l.x > -125.0 and l.x < 12.0 and absf(l.z) < 30.0:  # the in-run and the start tower
+			need = maxf(need, hill.xf.origin.y + maxf(0.0, -l.x) * 0.56 + 30.0)
+	return need
+
+
+func _start_flight(key: String, pts: Array[Vector3], looks: Array[Vector3], seconds: float) -> void:
+	_flight_key = key
+	_flight = FrostpeakFlight.new(pts, looks, seconds, _clearance)
+
+
+## Flies the current flight; false when there is none (or it has landed).
+func _fly(delta: float) -> bool:
+	if _flight == null or _flight.done():
+		return false
+	var pl := _flight.step(delta)
+	_snap_camera(pl[0], pl[1])
+	return true
+
+
+## From wherever the camera is (the plaza, the oval) up over the valley, across the village with the gondola and
+## the peaks beyond, round in a wide arc and down into the arena, where the jump hill rises ahead.
+func _fly_to_hill() -> void:
+	var from := _cam_pos
+	var ahead := (VALLEY_WAY - from)
+	ahead.y = 0.0
+	ahead = ahead.normalized()
+	var pts: Array[Vector3] = [from, from + Vector3(0, 80, 0) + ahead * 25.0, VALLEY_WAY,
+		FrostpeakValley.VILLAGE + Vector3(110, 150, 10), hill.world(Vector3(520, 60, -230)),
+		hill.world(Vector3(260, 70, -260)), _reveal[0]]
+	var horn := Vector3(FrostpeakValley.PEAKS[0][0], 1100.0, FrostpeakValley.PEAKS[0][1])
+	var looks: Array[Vector3] = [_cam_look, VALLEY_WAY + ahead * 400.0 - Vector3(0, 80, 0), FrostpeakValley.VILLAGE + Vector3(80, 0, 40),
+		(FrostpeakValley.STATION + FrostpeakValley.SUMMIT) * 0.5 + Vector3(0, 250, 0), horn, hill.world(Vector3(20, -5, 0)), _reveal[1]]
+	_start_flight("hill", pts, looks, INTRO_FLIGHT)
+
+
+## The ski jump's intro: the flight in, then the reveal: a slow push up the arena towards the hill.
+func _intro_hill(delta: float) -> void:
+	if _flight_key != "hill":
+		_fly_to_hill()
+	if _fly(delta):
+		return
+	var k := clampf((_stage_t - INTRO_FLIGHT) / 4.0, 0.0, 1.0)
+	var e := k * k * (3.0 - 2.0 * k)
+	_snap_camera(_reveal[0].lerp(_reveal[2], e * 0.6 + k * 0.1), _reveal[1])
+
+
+## After an event, over the valley to the medal plaza (the standings board shows on the way).
+func _fly_to_plaza() -> void:
+	var from := _cam_pos
+	var end := PLAZA + Vector3(0, 3.0, -11.0)
+	var dir := Vector3(end.x - from.x, 0, end.z - from.z).normalized()
+	var far := from.distance_to(end)
+	var mid := (from + end) * 0.5
+	mid.y = maxf(from.y, end.y) + clampf(far * 0.1, 50.0, 150.0)
+	var approach := PLAZA - dir * 260.0 + Vector3(0, 70, 0)
+	var pts: Array[Vector3] = [from, from + Vector3(0, 35.0 + far * 0.03, 0) + dir * 30.0, mid, approach,
+		PLAZA + Vector3(0, 22, -75), end]
+	# looking ahead, level, into the low sun over the western ridges, then down to the plaza
+	var looks: Array[Vector3] = [_cam_look, mid + dir * 900.0 + Vector3(0, 30, 0), PLAZA + Vector3(0, 60, 0),
+		PLAZA + Vector3(0, 10, 0), PLAZA + Vector3(0, 3, 0), PLAZA + Vector3(0, 2.2, 1.5)]
+	_start_flight("plaza", pts, looks, game.stage_seconds(S.STANDINGS))
+
+
+func _update_shafts() -> void:
+	if _shafts == null:
+		return
+	var fwd := -_camera.global_basis.z
+	var k := smoothstep(0.35, 0.9, fwd.dot(_to_sun))
+	var sp := _camera.global_position + _to_sun * 3000.0
+	if k <= 0.0 or _camera.is_position_behind(sp):
+		_shafts.set_shader_parameter("strength", 0.0)
+		return
+	var vp := get_viewport().get_visible_rect().size
+	_shafts.set_shader_parameter("sun_uv", _camera.unproject_position(sp) / vp)
+	_shafts.set_shader_parameter("strength", k * 1.6)
+
+
+# ------------------------------------------------------------------ the events
 
 func _update_skating(s: SpeedSkating, delta: float) -> void:
 	_skater.visible = true
@@ -1221,43 +1135,98 @@ func _update_skating(s: SpeedSkating, delta: float) -> void:
 	_move_camera(cam, me.origin + Vector3(0, 1.0, 0) - me.basis.z * 4.0, delta, 4.0)
 
 
-func _update_jump(j: SkiJump, delta: float) -> void:
+## The jump, shot like television: at the gate a wide shot down the whole hill, then the camera riding the
+## in-run behind the jumper, the chase camera locked beside them in the air, a cut to the side camera on its
+## tower by the landing slope, which pans with them through the landing, and the arena camera for the finish.
+## Returns the lens (field of view) for the shot.
+func _update_jump(j: SkiJump, delta: float) -> float:
 	_jumper.visible = true
 	_jump_stage = j.stage
-	var pos := Vector3.ZERO
+	var lp := Vector3.ZERO  # the jumper, in the hill's frame
+	var lb := Basis.IDENTITY
+	var fov := 50.0
+	var hb := hill.xf.basis
 	match j.stage:
 		SkiJump.Stage.INRUN:
-			pos = inrun_point(j.along) + Vector3(0, 0.5, 0)
-			_jumper.basis = Basis(Vector3.UP, PI * 0.5).rotated(Vector3.BACK, -INRUN_ANGLE)
+			lp = hill.inrun_at(j.along, 0.0, 0.08)
+			lb = Basis(Vector3.BACK, -SkiHill.inrun_angle(j.along)) * Basis(Vector3.UP, PI * 0.5)
 			_anim(_jumper, "tuck" if j.tuck > 0.5 else "idle")
-			# behind and above, riding down the track with the jumper
-			var cam := inrun_point(maxf(-2.0, j.along - 7.0)) + Vector3(0, 1.9, 4.2)
-			var ahead := inrun_point(minf(SkiJump.INRUN, j.along + 8.0))
-			if j.phase == WinterEvent.Phase.READY and j.phase_left > 2.7:
-				_snap_camera(cam, ahead)
-			_move_camera(cam, ahead, delta, 6.0)
+			if j.phase == WinterEvent.Phase.READY and j.phase_left > 1.3:
+				# the establishing shot: from the start platform down the whole hill to the valley
+				var k := 1.0 - (j.phase_left - 1.3) / 1.7
+				var cam := lp + Vector3(-14.0 + k * 3.0, 14.0 - k * 2.0, -1.5 - k * 1.0)
+				var look := lp.lerp(Vector3(150.0, -80.0, 0.0), 0.36 - k * 0.08)
+				_snap_camera(hill.world(cam), hill.world(look))
+				_jump_cam = "gate"
+				fov = 58.0
+			else:
+				# behind and above, riding down the track with the jumper
+				var cam := hill.inrun_at(maxf(SkiHill.TOP, j.along - 7.5), 0.7, 3.3)
+				var ahead := hill.inrun_at(minf(SkiJump.INRUN + 12.0, j.along + 9.0), 0.0, 0.0)
+				if _jump_cam != "inrun":
+					_snap_camera(hill.world(cam), hill.world(ahead))
+					_jump_cam = "inrun"
+				_move_camera(hill.world(cam), hill.world(ahead), delta, 6.0)
 		SkiJump.Stage.FLIGHT:
-			pos = JUMP + Vector3(j.fly.x, j.fly.y + 0.3, 0)
-			pos.y = maxf(pos.y, JUMP.y + _hill_y(j.fly.x) + 0.45)  # the coarse hill mesh must never swallow the skis
-			_jumper.basis = Basis(Vector3.UP, PI * 0.5).rotated(Vector3.BACK, -0.15 - j.angle * 0.8)
+			lp = Vector3(j.fly.x, j.fly.y + 0.3, 0)
+			lp.y = maxf(lp.y, SkiHill.ground_y(j.fly.x) + 0.45)  # the hill mesh must never swallow the skis
+			lb = Basis(Vector3.BACK, -0.15 - j.angle * 0.8) * Basis(Vector3.UP, PI * 0.5)
 			_anim(_jumper, "flight")
-			# the TV chase camera: locked to the jumper (a smoothed camera would trail far behind at this speed),
-			# beside and a little above, easing out as the flight goes on so the landing hill comes into view
-			var out := clampf(j.fly.x / 90.0, 0.0, 1.0)
-			var cam := pos + Vector3(-2.5 - out * 1.5, 1.4 + out * 1.6, 6.5 + out * 3.0)
-			cam.y = maxf(cam.y, JUMP.y + _hill_y(cam.x - JUMP.x) + 2.5)  # never under the slope behind the jumper
-			_snap_camera(cam, pos + Vector3(2.5 + out * 2.0, -0.4 - out * 0.8, 0))  # aimed at the jumper, a little ahead
 			_landed_x = j.fly.x
+			if j.fly.x < 62.0:
+				# the chase camera: locked to the jumper, beside and a little above, easing out as the flight goes on
+				var out := clampf(j.fly.x / 62.0, 0.0, 1.0)
+				var cam := lp + Vector3(-2.5 - out * 1.5, 1.4 + out * 1.8, 6.5 + out * 2.5)
+				cam.y = maxf(cam.y, SkiHill.ground_y(cam.x) + 2.5)
+				_snap_camera(hill.world(cam), hill.world(lp + Vector3(2.5 + out * 2.0, -0.4 - out * 0.8, 0)))
+				_jump_cam = "chase"
+			else:
+				fov = _side_cam(lp)
 		SkiJump.Stage.LANDED:
-			_slide += delta * maxf(0.0, 22.0 - _slide * 0.2)
-			var x := minf(_landed_x + _slide, 200.0)
-			pos = hill_point(x) + Vector3(0, 0.1, 0)
-			_jumper.basis = Basis(Vector3.UP, PI * 0.5)
-			_anim(_jumper, "fall" if j.fell else ("telemark" if _slide < 20.0 else "celebrate"))
-			# still locked to the jumper while they slide fast, then easing back for the celebration
-			var back := clampf(_slide / 60.0, 0.0, 1.0)
-			_snap_camera(pos + Vector3(-4.0 - back * 3.0, 2.2 + back * 1.5, 8.0 + back * 5.0), pos + Vector3(3.0 - back * 2.0, 0.6, 0))
-	_jumper.position = pos
+			if _slide_v < 0.0:
+				_slide_v = 26.0
+			var x0 := _landed_x + _slide
+			_slide_v = maxf(0.0, _slide_v - delta * (1.0 if x0 < 175.0 else 7.5))
+			_slide += _slide_v * delta
+			var x := minf(_landed_x + _slide, FrostpeakHill.OUTRUN_STOP)
+			var slope := atan2(SkiHill.ground_y(x) - SkiHill.ground_y(x + 1.0), 1.0)
+			lp = Vector3(x, SkiHill.ground_y(x) + 0.05, 0)
+			var stopped := _slide_v < 0.5
+			var turn := PI * 0.5 if not stopped else PI * 0.5 + 0.9
+			lb = Basis(Vector3.BACK, -slope) * Basis(Vector3.UP, turn)
+			_anim(_jumper, "fall" if j.fell else ("telemark" if _slide < 25.0 else ("celebrate" if stopped else "idle")))
+			if x < FrostpeakHill.SIDE_CAM + 50.0 and _jump_cam != "outrun":
+				fov = _side_cam(lp)
+			else:
+				# the arena camera, low by the barrier, looking up at the jumper coming to a halt
+				var cam := Vector3(FrostpeakHill.OUTRUN_STOP - 22.0, SkiHill.outrun_y() + 3.2, 20.0)
+				var look := lp + Vector3(0, 1.0, 0)
+				if _jump_cam != "outrun":
+					_snap_camera(hill.world(cam), hill.world(look))
+					_jump_cam = "outrun"
+				fov = clampf(rad_to_deg(2.0 * atan(6.0 / maxf(1.0, cam.distance_to(lp)))), 18.0, 50.0)
+				_move_camera(hill.world(cam), _above(hill.world(cam), hill.world(look), fov), delta, 5.0)
+	_jumper.transform = Transform3D(hb * lb, hill.world(lp))
+	return fov
+
+
+## The side camera on its tower beside the landing slope: pans with the jumper, zooming to keep them framed.
+func _side_cam(lp: Vector3) -> float:
+	var cam := hill.side_cam()
+	var target := hill.world(lp + Vector3(1.5, 0.4, 0))
+	if _jump_cam != "side":
+		_jump_cam = "side"
+	var fov := clampf(rad_to_deg(2.0 * atan(7.5 / maxf(1.0, cam.distance_to(target)))), 14.0, 50.0)
+	_snap_camera(cam, _above(cam, target, fov))
+	return fov
+
+
+## Once the result card is up (across the middle of the screen), the camera frames the jumper low in the picture.
+func _above(cam: Vector3, target: Vector3, fov: float) -> Vector3:
+	if game.stage != S.RESULT:
+		return target
+	var d := cam.distance_to(target)
+	return target + Vector3.UP * d * tan(deg_to_rad(fov * 0.3))
 
 
 ## The scoreboards follow the event: the running time and the rival's distance on the oval, the distance on the hill.
@@ -1279,7 +1248,7 @@ func _update_boards() -> void:
 	elif game.ev is SkiJump:
 		var j := game.ev as SkiJump
 		a = "%s  %s" % [code, ("%.1f M" % j.distance) if j.stage == SkiJump.Stage.LANDED else "- - -"]
-		b = "HS 100"
+		b = "HS 134"
 	for i in _boards.size():
 		var lb := _boards[i]
 		var txt := a if i % 2 == 0 else b

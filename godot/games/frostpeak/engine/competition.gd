@@ -4,7 +4,7 @@ extends RefCounted
 ## medals. Each event is played by every athlete in turn; CPU athletes get results drawn from their skill.
 
 const EVENTS := ["speed_skating", "ski_jump"]
-const EVENT_TITLES := {"speed_skating": "SPEED SKATING 500 M", "ski_jump": "SKI JUMP K90"}
+const EVENT_TITLES := {"speed_skating": "SPEED SKATING 500 M", "ski_jump": "SKI JUMP  LARGE HILL"}
 const LOWER_IS_BETTER := {"speed_skating": true, "ski_jump": false}
 ## Our own nations: names and flag colours (three stripes).
 const NATIONS := [
@@ -65,7 +65,7 @@ func play_cpus() -> void:
 		var form: float = clampf(a["skill"] + rng.randf_range(-0.12, 0.12), 0.0, 1.0)
 		match ev:
 			"speed_skating": record(i, snappedf(lerpf(45.0, 38.4, form), 0.01))
-			"ski_jump": record(i, snappedf(lerpf(78.0, 118.0, form) + rng.randf_range(-3.0, 3.0), 0.1))
+			"ski_jump": record(i, snappedf(lerpf(80.0, 140.0, form) + rng.randf_range(-4.0, 4.0), 0.1))
 
 
 ## Athlete indices for an event, best first.

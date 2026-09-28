@@ -8,6 +8,10 @@ uniform float bump_scale = 0.35;
 uniform float sparkle = 1.0;
 uniform sampler2D mark_tex : source_color, hint_default_white;  // optional markings (lines), world XZ
 uniform vec4 mark_rect = vec4(0.0, 0.0, 0.0, 0.0);              // x0, z0, width, depth of the markings
+uniform bool mark_local = false;                                  // markings in a local frame: its origin and axes
+uniform vec3 mark_o = vec3(0.0);
+uniform vec3 mark_x = vec3(1.0, 0.0, 0.0);
+uniform vec3 mark_z = vec3(0.0, 0.0, 1.0);
 
 varying vec3 wpos;
 varying vec3 wnorm;
@@ -36,7 +40,8 @@ void fragment() {
 	vec3 col = mix(shade, tint, 0.75 + 0.25 * n);
 	float painted = 0.0;
 	if (mark_rect.z != 0.0) {
-		vec2 uv = (wpos.xz - mark_rect.xy) / mark_rect.zw;
+		vec3 mp = mark_local ? vec3(dot(wpos - mark_o, mark_x), 0.0, dot(wpos - mark_o, mark_z)) : wpos;
+		vec2 uv = (mp.xz - mark_rect.xy) / mark_rect.zw;
 		if (uv.x >= 0.0 && uv.x <= 1.0 && uv.y >= 0.0 && uv.y <= 1.0) {
 			vec4 m = texture(mark_tex, uv);
 			// paint soaked into the snow: grainy edges, lighter where the snow sparkles through

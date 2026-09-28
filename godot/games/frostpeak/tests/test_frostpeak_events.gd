@@ -83,6 +83,48 @@ func test_no_telemark_costs_style() -> void:
 	assert_float(j.style).is_less(52.0)  # telemark landings score about 55
 
 
+func test_hill_has_a_large_hill_profile() -> void:
+	# the K point sits about 0.55-0.62 as far down as it is out (FIS large hills), on a 35.5 degree slope
+	var k := SkiHill.land_point(SkiHill.K)
+	assert_float(-k.y / k.x).is_between(0.55, 0.62)
+	assert_float(rad_to_deg(SkiHill.land_angle(SkiHill.K))).is_equal_approx(35.5, 0.1)
+	assert_float(rad_to_deg(SkiHill.land_angle(SkiHill.HS))).is_equal_approx(32.1, 0.1)
+	# the in-run: 35 degrees at the gate, 11 on the table, the gate some 40-50 m above the lip
+	assert_float(rad_to_deg(SkiHill.inrun_angle(0.0))).is_equal_approx(35.0, 0.01)
+	assert_float(rad_to_deg(SkiHill.inrun_angle(SkiHill.INRUN - 1.0))).is_equal_approx(11.0, 0.01)
+	assert_float(SkiHill.inrun_point(0.0).y).is_between(40.0, 50.0)
+	assert_vector(SkiHill.inrun_point(SkiHill.INRUN)).is_equal_approx(Vector2.ZERO, Vector2(0.01, 0.01))
+	# the outrun is level, 80-90 m below the lip
+	assert_float(SkiHill.land_angle(220.0)).is_equal(0.0)
+	assert_float(SkiHill.outrun_y()).is_between(-90.0, -80.0)
+
+
+func test_distance_is_measured_along_the_hill() -> void:
+	for s in [10.0, 60.0, SkiHill.K, SkiHill.HS]:
+		var p := SkiHill.land_point(s)
+		assert_float(SkiHill.distance_at(p.x)).is_equal_approx(s, 0.05)
+		assert_float(SkiHill.ground_y(p.x)).is_equal_approx(p.y, 0.05)
+	# the profile only falls, then levels out
+	var last := 0.0
+	for x in range(1, 170):
+		var y := SkiHill.ground_y(x)
+		assert_float(y).is_less_equal(last)
+		last = y
+
+
+func test_poor_flight_falls_short_of_a_good_one() -> void:
+	var good := SkiJump.new(4)
+	good.auto = true
+	good.skill = 0.95
+	_play(good)
+	var poor := SkiJump.new(4)
+	poor.auto = true
+	poor.skill = 0.3
+	_play(poor)
+	assert_float(poor.distance).is_less(good.distance - 5.0)
+	assert_float(good.distance).is_less(SkiHill.HS + 8.0)
+
+
 func test_competition_ranks_and_awards_medals() -> void:
 	var c := Competition.new([{"name": "You", "nation": 0}], 3, 7)
 	assert_int(c.athletes.size()).is_equal(4)

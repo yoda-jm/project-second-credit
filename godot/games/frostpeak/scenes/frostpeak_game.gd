@@ -43,6 +43,20 @@ func _set_stage(s: Stage) -> void:
 	stage_changed.emit(s)
 
 
+## How long a stage lasts. The ski jump takes longer: the camera flies across the valley to the hill before its
+## title card, the jumper slides out and waves in the arena, and the flight back to the plaza is longer.
+func stage_seconds(s: Stage) -> float:
+	var jump := comp != null and comp.event_name() == "ski_jump"
+	match s:
+		Stage.INTRO:
+			return 14.5 if jump else 3.5
+		Stage.RESULT:
+			return 5.5 if jump else 3.2
+		Stage.STANDINGS:
+			return 6.0 if jump else 4.5
+	return STAGE_SECONDS.get(s, 3.0)
+
+
 func humans() -> Array[int]:
 	var out: Array[int] = []
 	for i in comp.athletes.size():
@@ -82,7 +96,7 @@ func _process(delta: float) -> void:
 			_set_stage(Stage.RESULT)
 		return
 	stage_t += delta
-	if stage_t < STAGE_SECONDS.get(stage, 3.0):
+	if stage_t < stage_seconds(stage):
 		return
 	match stage:
 		Stage.INTRO:
