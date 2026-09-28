@@ -6,7 +6,9 @@ extends RefCounted
 ## on the blob's own speed, so a blob jumping into it spikes it. A side may touch the ball three times; the ball on the
 ## floor of your half, or a fourth touch, gives the point to the other side. Rally points to 15, won by two; the side
 ## that won the rally serves: the ball hangs over the server's head until the server touches it.
-## Events: "serve" {side}, "touch" {side, n, speed}, "jump" {side}, "land" {side}, "net", "wall", "floor" {x},
+## A power spike: each side's meter fills with its touches; when full, the power key arms the blob and its next touch
+## sends the ball off much faster, on fire (a point ending first loses it).
+## Events: "power_ready" {side}, "armed" {side}, "power" {side}, "serve" {side}, "touch" {side, n, speed}, "jump" {side}, "land" {side}, "net", "wall", "floor" {x},
 ## "point" {side, why}, "match" {winner}.
 
 signal event(kind: String, data: Dictionary)
@@ -27,6 +29,9 @@ const BOUNCE := 10.0          ## the least speed the ball leaves a blob with
 const MAX_BALL := 14.0
 const TOUCHES := 3
 const TARGET := 15
+const POWER_PER_TOUCH := 0.2
+const POWER_BOOST := 1.45
+const POWER_MAX := 20.0
 
 var phase := Phase.SERVE
 var phase_t := 0.8
@@ -39,6 +44,9 @@ var blobs: Array[Dictionary] = []   ## {pos (centre), vel, ground, cool}
 var ball := {}                      ## {pos, vel, hanging}
 var move := [0.0, 0.0]              ## input per side: -1, 0, 1
 var jump := [false, false]          ## held per side
+var power_pressed := [false, false]  ## input per side: the power key this tick
+var power := [0.0, 0.0]             ## the meters, 0..1
+var armed := [false, false]
 var winner := -1
 var rng := RandomNumberGenerator.new()
 
@@ -65,12 +73,13 @@ func _serve() -> void:
 	phase_t = 0.8
 	touches = [0, 0]
 	last_side = -1
+	armed = [false, false]
 	for s in 2:
 		var b := blobs[s]
 		b["pos"] = Vector2(_home(s), BLOB_R)
 		b["vel"] = Vector2.ZERO
 		b["ground"] = true
-	ball = {"pos": Vector2(_home(server), 3.3), "vel": Vector2.ZERO, "hanging": true}
+	ball = {"pos": Vector2(_home(server), 3.3), "vel": Vector2.ZERO, "hanging": true, "fire": false}
 	event.emit("serve", {"side": server})
 
 
@@ -101,6 +110,10 @@ func tick() -> void:
 
 func _move_blobs() -> void:
 	for s in 2:
+		if power_pressed[s] and power[s] >= 1.0 and not armed[s]:
+			armed[s] = true
+			event.emit("armed", {"side": s})
+		power_pressed[s] = false
 		var b := blobs[s]
 		var v: Vector2 = b["vel"]
 		var p: Vector2 = b["pos"]
@@ -163,6 +176,7 @@ func _move_ball() -> void:
 	# the floor
 	if p.y < BALL_R:
 		p.y = BALL_R
+		ball["fire"] = false
 		if phase == Phase.RALLY:
 			event.emit("floor", {"x": p.x})
 			_point(1 if p.x < NET_X else 0, "floor")
@@ -194,9 +208,20 @@ func _touch() -> bool:
 		out = out + bv * 0.6
 		if out.dot(n) < BOUNCE:
 			out += n * (BOUNCE - out.dot(n))
-		if out.length() > MAX_BALL:
+		var fire := false
+		if armed[s] and b["cool"] <= 0.0 and phase == Phase.RALLY:
+			# the power spike: much faster, a little downward if hit from above the ball's middle
+			armed[s] = false
+			power[s] = 0.0
+			out = out * POWER_BOOST + Vector2(0, -2.0 if n.y < 0.9 else 0.0)
+			if out.length() > POWER_MAX:
+				out = out.normalized() * POWER_MAX
+			fire = true
+			event.emit("power", {"side": s})
+		elif out.length() > MAX_BALL:
 			out = out.normalized() * MAX_BALL
 		ball["vel"] = out
+		ball["fire"] = fire
 		ball["hanging"] = false
 		hit = true
 		if b["cool"] <= 0.0 and phase != Phase.POINT:
@@ -205,6 +230,10 @@ func _touch() -> bool:
 				touches[1 - s] = 0
 			last_side = s
 			touches[s] += 1
+			if power[s] < 1.0 and not fire:  # the spike itself earns no power
+				power[s] = minf(1.0, power[s] + POWER_PER_TOUCH)
+				if power[s] >= 1.0:
+					event.emit("power_ready", {"side": s})
 			event.emit("touch", {"side": s, "n": touches[s], "speed": out.length()})
 			if touches[s] > TOUCHES and phase == Phase.RALLY:
 				_point(1 - s, "touches")

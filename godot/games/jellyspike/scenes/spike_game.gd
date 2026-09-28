@@ -1,7 +1,8 @@
 class_name SpikeGame
 extends Node
 ## Runs Jelly Spike: a match to 15 (won by two), 60 Hz ticks. One player plays the left blob against the CPU: arrows
-## or A / D walk, up, W or space jumps (hold for a full jump), or the first gamepad. F2 (or the second pad's A) brings in a
+## or A / D walk, up, W or space jumps (hold for a full jump), down, S or shift fires the power spike when its meter
+## is full, or the first gamepad (A jumps, X powers). F2 (or the second pad's A) brings in a
 ## second player on the right: then the left blob is A / D / W and the right one the arrows. The demo lets two CPU blobs
 ## play. "--versus" (user argument) starts with two players.
 
@@ -72,10 +73,13 @@ func _steer() -> void:
 		engine.move[1] = rx if rx != 0.0 else pad_x.call(1)
 		engine.jump[0] = key.call([KEY_W, KEY_SPACE]) or Input.is_joy_button_pressed(0, JOY_BUTTON_A)
 		engine.jump[1] = key.call([KEY_UP, KEY_ENTER, KEY_KP_0]) or Input.is_joy_button_pressed(1, JOY_BUTTON_A)
+		engine.power_pressed[0] = key.call([KEY_S]) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)
+		engine.power_pressed[1] = key.call([KEY_DOWN, KEY_KP_1]) or Input.is_joy_button_pressed(1, JOY_BUTTON_X)
 	else:
 		var x: float = (1.0 if key.call([KEY_D, KEY_RIGHT]) else 0.0) - (1.0 if key.call([KEY_A, KEY_LEFT]) else 0.0)
 		engine.move[0] = x if x != 0.0 else pad_x.call(0)
 		engine.jump[0] = key.call([KEY_W, KEY_UP, KEY_SPACE]) or Input.is_joy_button_pressed(0, JOY_BUTTON_A)
+		engine.power_pressed[0] = key.call([KEY_S, KEY_DOWN, KEY_SHIFT]) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)
 		_bots[1].drive(engine)
 
 

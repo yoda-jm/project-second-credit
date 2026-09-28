@@ -54,8 +54,22 @@ func _draw() -> void:
 		if e.server == s and e.phase != SpikeEngine.Phase.OVER:
 			HudKit.gem(self, Vector2(cx + (-70 if s == 0 else 70), r.position.y + 64), 8.0, HudKit.GOLD)
 	HudKit.text(self, Vector2(vp.x * 0.5, r.position.y + 72), "-", 36, HudKit.INK, HudKit.font(true), HudKit.CENTER)
+	# the power meters, under the scoreboard: full, they pulse and say which key fires the spike
+	for s in 2:
+		var mw := w * 0.5 - 40.0
+		var mx := r.position.x + (20.0 if s == 0 else w * 0.5 + 20.0)
+		var mr := Rect2(mx, r.end.y + 8, mw, 10)
+		var f: float = e.power[s]
+		draw_rect(mr.grow(2), Color(0, 0, 0, 0.5))
+		var col: Color = COLORS[s]
+		if f >= 1.0:
+			col = col.lerp(Color(1.0, 0.85, 0.4), 0.5 + 0.5 * sin(_t * 10.0))
+		draw_rect(Rect2(mr.position, Vector2(mr.size.x * f, mr.size.y)), col)
+		if f >= 1.0:
+			var label := "ARMED!" if e.armed[s] else ("POWER  -  " + _power_key(s) if not game.demo else "POWER")
+			HudKit.text(self, Vector2(mr.get_center().x, mr.end.y + 22), label, 16, col, HudKit.label_font(), HudKit.CENTER)
 	if game.wins[0] + game.wins[1] > 0:
-		HudKit.text(self, Vector2(vp.x * 0.5, r.end.y + 26), "MATCHES  %d - %d" % game.wins, 18, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
+		HudKit.text(self, Vector2(vp.x * 0.5, r.end.y + 56), "MATCHES  %d - %d" % game.wins, 18, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
 	# touches used, under each blob
 	var cam := get_viewport().get_camera_3d()
 	if cam and e.phase == SpikeEngine.Phase.RALLY:
@@ -76,8 +90,14 @@ func _draw() -> void:
 		if not game.demo:
 			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.38 + 120), [["ENTER", "rematch"], ["F2", "two players" if not game.versus else "one player"], ["ESC", "menu"]])
 	elif _hint > 0.0 and not game.demo:
-		var h := [["ARROWS", "move"], ["UP / SPACE", "jump (hold: higher)"], ["F2", "second player"]] if not game.versus \
-			else [["A D  +  W", "left blob"], ["ARROWS  +  UP", "right blob"], ["F2", "one player"]]
+		var h := [["ARROWS", "move"], ["UP / SPACE", "jump (hold: higher)"], ["DOWN", "power spike"], ["F2", "second player"]] if not game.versus \
+			else [["A D  W  S", "left blob"], ["ARROWS  +  UP DOWN", "right blob"], ["F2", "one player"]]
 		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), h)
 	if game.demo:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 30), "DEMO  -  PRESS ANY KEY TO PLAY", 20, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
+
+
+func _power_key(side: int) -> String:
+	if game.versus:
+		return "S" if side == 0 else "DOWN"
+	return "DOWN" if side == 0 else ""

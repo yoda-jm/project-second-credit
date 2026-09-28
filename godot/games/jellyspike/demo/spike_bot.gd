@@ -60,6 +60,9 @@ func drive(e: SpikeEngine) -> void:
 			want_jump = over and (near_net or e.touches[side] >= 2 or rng.randf() < 0.02 + skill * 0.03)
 		elif mine:
 			target = bp.x - to_net * 0.4
+	# the power spike: arm it when the meter is full and the ball is on its way here
+	if e.power[side] >= 1.0 and not e.armed[side] and e.phase == S.Phase.RALLY and mine and rng.randf() < 0.05 + skill * 0.05:
+		e.power_pressed[side] = true
 	var h := S.half(side)
 	target = clampf(target, h.x, h.y)
 	# not too close to the net: a ball played from under it goes into the net and comes straight back

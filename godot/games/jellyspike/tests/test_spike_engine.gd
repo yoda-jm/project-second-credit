@@ -82,3 +82,22 @@ func test_cpu_players_rally_and_finish_a_match() -> void:
 	assert_int(e.phase).is_equal(S.Phase.OVER)
 	# rallies: well over one touch per point on average
 	assert_float(float(touches.size()) / points.size()).is_greater(2.5)
+
+
+func test_power_spike_needs_a_full_meter_and_fires_harder() -> void:
+	var e := SpikeEngine.new(0)
+	e.phase = S.Phase.RALLY
+	e.power_pressed[0] = true
+	e._move_blobs()
+	assert_bool(e.armed[0]).is_false()   # the meter is empty
+	e.power[0] = 1.0
+	e.power_pressed[0] = true
+	e._move_blobs()
+	assert_bool(e.armed[0]).is_true()
+	e.blobs[0]["vel"] = Vector2(5.6, 8.0)
+	e.ball = {"pos": e.blobs[0]["pos"] + Vector2(0.4, 0.85), "vel": Vector2(-6, -8), "hanging": false, "fire": false}
+	e._touch()
+	assert_float(e.ball["vel"].length()).is_greater(S.MAX_BALL)
+	assert_bool(e.ball["fire"]).is_true()
+	assert_bool(e.armed[0]).is_false()
+	assert_float(e.power[0]).is_equal(0.0)

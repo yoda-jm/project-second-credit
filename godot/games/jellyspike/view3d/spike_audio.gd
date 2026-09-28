@@ -75,6 +75,11 @@ func _on_event(kind: String, d: Dictionary) -> void:
 				play("touch_hard", -2.0, randf_range(0.95, 1.05))
 			else:
 				play("touch_soft", -5.0, randf_range(0.9, 1.1) + (d["n"] - 1) * 0.06)
+		"power":
+			play("touch_hard", 0.0, 0.7)
+			play("ball_wall", -2.0, 0.6)
+		"armed": play("menu_tick", -4.0, 1.6)
+		"power_ready": play("menu_tick", -8.0, 1.2)
 		"jump": play("jelly_jump", -10.0, randf_range(0.9, 1.1))
 		"land": play("jelly_land", -12.0, randf_range(0.9, 1.1))
 		"floor": play("ball_sand", -2.0)

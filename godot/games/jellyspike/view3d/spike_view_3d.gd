@@ -33,6 +33,10 @@ var _punch := 0.0
 var _cam_pos := Vector3.ZERO
 var _cam_look := Vector3.ZERO
 var _was_ground := [true, true]
+var _bubbles: Array = []         ## per blob: [[node, x, z, speed, phase]]
+var _ball_light: OmniLight3D
+var _bubble_mat: StandardMaterial3D
+var _trail_t := 0.0
 
 
 func _ready() -> void:
@@ -108,6 +112,7 @@ func _on_match(e: SpikeEngine) -> void:
 	_blobs.clear()
 	_jelly.clear()
 	_eyes.clear()
+	_bubbles.clear()
 	for s in 2:
 		var root := Node3D.new()
 		var body := Node3D.new()
@@ -134,6 +139,24 @@ func _on_match(e: SpikeEngine) -> void:
 			pupil.position = Vector3(0, 0, 0.1)
 			eye.add_child(pupil)
 			pupils.append(pupil)
+		# bubbles rising through the jelly, catching the light
+		if _bubble_mat == null:
+			_bubble_mat = StandardMaterial3D.new()
+			_bubble_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			_bubble_mat.albedo_color = Color(1, 1, 1, 0.25)
+			_bubble_mat.roughness = 0.02
+			_bubble_mat.metallic_specular = 1.0
+			_bubble_mat.rim_enabled = true
+			_bubble_mat.rim = 1.0
+			_bubble_mat.emission_enabled = true
+			_bubble_mat.emission = Color(1, 1, 1)
+			_bubble_mat.emission_energy_multiplier = 0.25
+		var bl := []
+		for bi in 7:
+			var bub := _sphere(0.03 + 0.012 * (bi % 3), _bubble_mat, 10)
+			body.add_child(bub)
+			bl.append([bub, randf_range(-0.3, 0.3), randf_range(-0.2, 0.25), randf_range(0.25, 0.5), randf()])
+		_bubbles.append(bl)
 		var glow := OmniLight3D.new()  # the jelly lights the sand a little in its own colour
 		glow.light_color = COLORS[s]
 		glow.light_energy = 0.5
@@ -151,6 +174,11 @@ func _on_match(e: SpikeEngine) -> void:
 	bm.shader = preload("res://games/jellyspike/shaders/beach_ball.gdshader")
 	_ball_mesh = _sphere(S.BALL_R, bm, 32)
 	_ball.add_child(_ball_mesh)
+	_ball_light = OmniLight3D.new()  # a power ball burns
+	_ball_light.light_color = Color(1.0, 0.55, 0.2)
+	_ball_light.light_energy = 0.0
+	_ball_light.omni_range = 4.0
+	_ball.add_child(_ball_light)
 	_stage.add_child(_ball)
 	_ball_shadow = MeshInstance3D.new()
 	var disc := CylinderMesh.new()
@@ -208,6 +236,17 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			if sp > 13.0:
 				_punch = 0.4
 				_shake = 0.3
+		"power":
+			var s: int = d["side"]
+			var bp: Vector2 = e.ball["pos"]
+			_fx.burst(Vector3(bp.x, bp.y, 0.2), Color(1.0, 0.6, 0.2), 50, 7.0, 0.6, 0.1, 1.0, -3.0, 1.0, "glow")
+			_fx.flash(Vector3(bp.x, bp.y, 1.0), Color(1.0, 0.6, 0.3), 3.0)
+			_punch = 0.5
+			_shake = 0.6
+			_wob[s] = 1.0
+		"armed":
+			var bp: Vector2 = e.blobs[d["side"]]["pos"]
+			_fx.burst(Vector3(bp.x, bp.y + 0.4, 0.2), Color(1.0, 0.85, 0.4), 24, 3.0, 0.5, 0.07, 1.0, 2.0, 1.0, "glow")
 		"jump":
 			_squash[d["side"]] = -0.35
 		"land":
@@ -258,11 +297,24 @@ func _process(delta: float) -> void:
 		body.rotation.z = lerp_angle(body.rotation.z, -float(e.move[s]) * 0.12, 1.0 - exp(-delta * 8.0))
 		_wob[s] = maxf(0.0, _wob[s] - delta * 1.5)
 		_jelly[s].set_shader_parameter("wobble", _wob[s])
+		_jelly[s].set_shader_parameter("charge", 1.0 if e.armed[s] else (0.25 if e.power[s] >= 1.0 else 0.0))
+		for bb in _bubbles[s]:
+			# rise from the bottom of the jelly to the top, wobbling, then start again
+			var k: float = fmod(_time * bb[3] + bb[4], 1.0)
+			(bb[0] as Node3D).position = Vector3(bb[1] + sin(_time * 3.0 + bb[4] * 9.0) * 0.04, S.BLOB_R * (-0.7 + 1.4 * k), bb[2])
+			(bb[0] as Node3D).scale = Vector3.ONE * (0.6 + 0.6 * k) * smoothstep(1.0, 0.85, k)
 		# the eyes follow the ball
 		var look := Vector2(bp.x - p.x, bp.y - p.y - 0.3).normalized() * 0.05
 		for pupil in _eyes[s]:
 			(pupil as Node3D).position = Vector3(look.x, look.y, 0.1)
 	_ball.position = Vector3(bp.x, bp.y, 0)
+	var fire: bool = e.ball.get("fire", false)
+	_ball_light.light_energy = lerpf(_ball_light.light_energy, 3.0 if fire else 0.0, 1.0 - exp(-delta * 12.0))
+	if fire:
+		_trail_t -= delta
+		if _trail_t <= 0.0:
+			_trail_t = 0.025
+			_fx.burst(Vector3(bp.x, bp.y, 0.0), Color(1.0, 0.5 + randf() * 0.3, 0.15), 3, 0.6, 0.35, 0.09, 1.0, 1.0, 1.0, "glow")
 	var v: Vector2 = e.ball["vel"]
 	_ball_mesh.rotate_z(-v.x / S.BALL_R * delta * 0.5)
 	_ball_mesh.rotate_x(v.y * delta * 0.2)

@@ -8,6 +8,7 @@ uniform vec4 color : source_color = vec4(0.3, 0.8, 1.0, 1.0);
 uniform float wobble = 0.0;
 uniform float phase = 0.0;
 uniform float alpha = 0.9;
+uniform float charge = 0.0;   // armed for a power spike: a hot pulsing glow
 
 void vertex() {
 	float w = sin(VERTEX.y * 9.0 + TIME * 14.0 + phase) * 0.5 + sin(VERTEX.x * 7.0 - TIME * 11.0) * 0.5;
@@ -20,7 +21,8 @@ void fragment() {
 	vec3 deep = color.rgb * color.rgb * 0.6;  // deeper and more saturated in the middle
 	ALBEDO = mix(deep, color.rgb, 0.4 + 0.6 * facing);
 	ALPHA = mix(alpha, 1.0, rim * 0.8);
-	EMISSION = color.rgb * (0.08 + rim * 0.7);
+	float pulse = 0.6 + 0.4 * sin(TIME * 12.0);
+	EMISSION = color.rgb * (0.08 + rim * 0.7) + mix(color.rgb, vec3(1.0, 0.8, 0.4), 0.2) * charge * pulse * (0.3 + rim * 1.2);  // its own colour, hotter at the rim
 	ROUGHNESS = 0.08;
 	SPECULAR = 0.9;
 	CLEARCOAT = 1.0;
