@@ -18,6 +18,8 @@ var high := 0
 var _acc := 0.0
 var _bot: InkBot
 var _seed := 1
+var pen := false            ## the pen is down: the next step off the edge starts a line
+var _was_drawing := false
 
 
 func start(seed := -1) -> void:
@@ -66,9 +68,15 @@ func _steer() -> void:
 	elif Input.is_action_pressed("ui_left") or Input.is_physical_key_pressed(KEY_A) or ax < -0.5: d = Vector2i(-1, 0)
 	elif Input.is_action_pressed("ui_right") or Input.is_physical_key_pressed(KEY_D) or ax > 0.5: d = Vector2i(1, 0)
 	engine.want = d
-	# stepping off the edge draws; holding shift (or X) draws slowly, for double points
-	engine.draw_slow = Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)
-	engine.draw_fast = not engine.draw_slow
+	# the pen goes down with a press of space (or the pad's A) and lifts by itself when the line is closed: along the
+	# edge the marker only moves, so a slip never starts a line; holding shift (or X) draws slowly, for double points
+	if _was_drawing and not engine.drawing():
+		pen = false
+	_was_drawing = engine.drawing()
+	var slow := Input.is_physical_key_pressed(KEY_SHIFT) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)
+	var down := pen or engine.drawing()
+	engine.draw_slow = down and slow
+	engine.draw_fast = down and not slow
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -83,3 +91,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if over and event.is_action_pressed("ui_accept"):
 		start()
+		return
+	var press: bool = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE) \
+		or (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A)
+	if press and not engine.drawing():
+		pen = not pen  # a second press lifts the pen again before leaving the edge

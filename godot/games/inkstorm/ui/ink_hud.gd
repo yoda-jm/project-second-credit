@@ -78,7 +78,12 @@ func _draw() -> void:
 			HudKit.hints(self, Vector2(vp.x * 0.5, vp.y * 0.5 + 130), [["ENTER", "play again"], ["ESC", "menu"]])
 	elif not game.demo and e.stage == 0 and e.claimed < 0.06:
 		# until the first claims, how to play
-		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["ARROWS", "move, step off the edge to draw"], ["SHIFT", "draw slowly: x2"]])
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["ARROWS", "move"], ["SPACE", "pen down, then step off the edge"], ["SHIFT", "draw slowly: x2"]])
+	if not game.demo and game.pen and not e.drawing():
+		var msg := "PEN DOWN  -  STEP OFF THE EDGE TO DRAW"
+		var wd := HudKit.width(msg, 22, HudKit.label_font()) + 60.0
+		HudKit.panel(self, Rect2(vp.x * 0.5 - wd * 0.5, vp.y - 110, wd, 44), HudKit.GOLD, 22, 0.9)
+		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 80), msg, 22, HudKit.GOLD, HudKit.label_font(), HudKit.CENTER)
 	if game.demo:
 		var msg := "DEMO  -  PRESS ANY KEY TO PLAY"
 		var wd := HudKit.width(msg, 22, HudKit.label_font()) + 60.0
