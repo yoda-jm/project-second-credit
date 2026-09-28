@@ -18,6 +18,9 @@ var _fps_label: Label
 var _fonts: Array[Font] = []  ## kept alive for the whole session (see _warm_fonts)
 
 
+var _capture := false
+
+
 func _ready() -> void:
 	for bus in BUSES:
 		if AudioServer.get_bus_index(bus) < 0:
@@ -71,7 +74,29 @@ func apply() -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
 		var forced_off := OS.get_cmdline_args().has("--disable-vsync")  # captures: never wait for the display
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync and not forced_off else DisplayServer.VSYNC_DISABLED)
+		_capture = forced_off
+		_cap_fps()
 	changed.emit()
+
+
+## Never more frames than the screen shows (even with vsync off), so a light scene doesn't spin the GPU flat out and
+## slow the whole machine down. Captures are not capped.
+func _cap_fps() -> void:
+	if _capture:
+		Engine.max_fps = 0
+		return
+	var hz := DisplayServer.screen_get_refresh_rate()
+	Engine.max_fps = int(clampf(hz if hz > 0.0 else 60.0, 30.0, 240.0))
+
+
+## In the background the game idles: a few frames a second, so the rest of the machine stays responsive.
+func _notification(what: int) -> void:
+	if _capture or DisplayServer.get_name() == "headless":
+		return
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		Engine.max_fps = 10
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		_cap_fps()
 
 
 func save_settings() -> void:
