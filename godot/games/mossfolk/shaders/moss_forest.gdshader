@@ -29,7 +29,7 @@ void fragment() {
 	float solid = step(wp.y, g);
 	vec3 glow = vec3(0.0);
 	float ci = floor(wp.x / cell_w);
-	for (int k = -1; k <= 1; k++) {
+	for (int k = -3; k <= 3; k++) {   // a big cap (and its lean) can reach two or three cells away: check them all, or it is cut off
 		float i = ci + float(k);
 		if (hash(i) < 0.25) continue;
 		float H = g + mix(height.x, height.y, hash(i + 0.31));

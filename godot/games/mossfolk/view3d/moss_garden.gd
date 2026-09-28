@@ -64,7 +64,8 @@ func build_backdrop(lv_w: int, lv_h: int, theme: int, seed: int) -> void:
 	for li in layers.size():
 		var d: float = layers[li][0]
 		var k: float = vis.call(d)
-		var span := Vector2((w + 70.0) * k, 30.0 * k)
+		# wide enough that no camera pan ever shows the layer's end (it would cut a mushroom in two)
+		var span := Vector2((w + 70.0) * k + 240.0, 30.0 * k)
 		var q := _quad(span, "moss_forest")
 		q.position = Vector3(cx, cy - d * 0.22 - span.y * 0.12, -d)
 		var m: ShaderMaterial = q.material_override
