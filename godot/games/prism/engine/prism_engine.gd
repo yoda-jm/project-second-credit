@@ -88,6 +88,9 @@ func launch() -> void:
 		if b["held"] > -90.0:
 			var off: float = b["held"]
 			var ang := clampf(off / (paddle_w * 0.5), -1.0, 1.0) * 0.9
+			if absf(off) < 0.15:
+				# a ball served from the middle never goes straight up: a random slant, left or right
+				ang = rng.randf_range(0.25, 0.6) * (1.0 if rng.randf() < 0.5 else -1.0)
 			b["vel"] = Vector2(sin(ang), -cos(ang)) * b["speed"]
 			b["held"] = -99.0
 			any = true
