@@ -136,9 +136,12 @@ decisions below are settled unless the owner reopens them.
    large hill (K 120, HS 134; `engine/events/ski_hill.gd` shared by rules and view), with an alpine valley
    (`view3d/valley.gd`, `tools/blender/frostpeak_valley.py`) and camera flights that never pass through anything
    (`view3d/camera_flight.gd`); its frame rate is still to be checked on the GPU (about 12M triangles, culled in cells).
-24. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+24. Game 21, **Deep Breath** (Manic Miner-like, `godot/games/deepbreath/`): single-screen caverns (32 x 16) in
+   `levels/caverns.deep` (made by a scratchpad script), air, keys, the lift, conveyors, crumbling floors, guardians on
+   patrol; each cavern carries a route the demo plays and a test checks. `--level=N`.
+25. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-25. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+26. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

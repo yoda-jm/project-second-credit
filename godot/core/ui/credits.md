@@ -163,6 +163,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   (in the scratchpad history) into `godot/games/henhouse/levels/farm.hen`; sound effects and music by
   `tools/audio/henhouse_sfx.py` and `henhouse_music.py`.
 
+## Game 21 (Deep Breath, working title)
+
+- Inspired by *Manic Miner* (Bug-Byte / Software Projects, 1983). None of its code, graphics, sounds or caverns are
+  in this repo: the miner, the guardians, our caverns and the music are original.
+- Models by `tools/blender/deepbreath_models.py`; caverns drawn by a script (in the scratchpad history) into
+  `godot/games/deepbreath/levels/caverns.deep`; sound effects and music by `tools/audio/deepbreath_sfx.py` and
+  `deepbreath_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

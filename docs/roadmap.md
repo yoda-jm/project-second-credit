@@ -48,6 +48,7 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 18 | Bubble Bobble (1986) | *Fizzlings* | Bubble physics and chains, two-player co-op, caustics |
 | 19 | Rick Dangerous (1989) | *Relic Run* | Flip-screen platforming with traps, pistol and dynamite, demo routes |
 | 20 | Chuckie Egg (1983) | *Henhouse Heist* | Ladders, lifts, wandering hens and the goose, a graph-planning autopilot |
+| 21 | Manic Miner (1983) | *Deep Breath* | Air supply, fixed-arc jumps, conveyors, crumbling floors, patrolling guardians, lamplit caverns |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own

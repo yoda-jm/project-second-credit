@@ -14,8 +14,8 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: twenty games are playable, in 3D with sound
-> and music, from **Glimmerdeep** (game 1) to **Henhouse Heist** (game 20), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> Status: twenty-one games are playable, in 3D with sound
+> and music, from **Glimmerdeep** (game 1) to **Deep Breath** (game 21), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
 
@@ -46,6 +46,7 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 18 | Bubble Bobble (1986): **Fizzlings** | Bubble physics and chains, two-player co-op, caustics |
 | 19 | Rick Dangerous (1989): **Relic Run** | Flip-screen platforming with traps, pistol and dynamite, demo routes |
 | 20 | Chuckie Egg (1983): **Henhouse Heist** | Ladders, lifts, wandering hens and the goose, a graph-planning autopilot |
+| 21 | Manic Miner (1983): **Deep Breath** | Single-screen caverns, air running out, fixed-arc jumps, conveyors, crumbling floors, a helmet lamp in the dark |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

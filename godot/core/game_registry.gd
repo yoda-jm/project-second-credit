@@ -269,8 +269,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/henhouse/art/models/egg.glb", "model", 0.3],
 			["res://games/henhouse/art/models/goose.glb", "model", 0.3]],
 	},
+	{
+		"id": "deepbreath",
+		"style": "Platform",
+		"title": "Deep Breath",
+		"tagline": "Every key in the cavern before the air runs out.",
+		"inspired_by": "Manic Miner (1983)",
+		"scene": "res://games/deepbreath/scenes/deepbreath_game.tscn",
+		"accent": Color(0.5, 0.85, 1.0),
+		"props": [["res://games/deepbreath/art/models/miner.glb", "model", 0.4],
+			["res://games/deepbreath/art/models/key.glb", "model", 0.3],
+			["res://games/deepbreath/art/models/guardian_minecart.glb", "model", 0.3]],
+	},
 ]
-
 
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
