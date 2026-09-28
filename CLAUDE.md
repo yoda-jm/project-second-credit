@@ -132,8 +132,10 @@ decisions below are settled unless the owner reopens them.
    zoom; Hopline got a following camera, afternoon/sunset/night stages (`--stage=N`) and a canal shader with wakes;
    Fizzlings gold-glowing full bubbles, caustics and camera punches; Inkstorm draws by stepping off the edge (shift for
    slow); Ingot Run catches ladders easily; Blastyard fast-forwards once the players are out; Whisker Alley opens the
-   least-played room and its bird flies freely. Henhouse Heist still wants the same visual pass; the ski jump is being
-   rebuilt to a real hill profile with a fly-over.
+   least-played room and its bird flies freely. Henhouse Heist still wants the same visual pass. Frostpeak's ski jump is a real
+   large hill (K 120, HS 134; `engine/events/ski_hill.gd` shared by rules and view), with an alpine valley
+   (`view3d/valley.gd`, `tools/blender/frostpeak_valley.py`) and camera flights that never pass through anything
+   (`view3d/camera_flight.gd`); its frame rate is still to be checked on the GPU (about 12M triangles, culled in cells).
 24. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
