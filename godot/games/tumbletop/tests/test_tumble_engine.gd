@@ -98,13 +98,13 @@ func test_autopilot_clears_rounds() -> void:
 	for lv in [0, 1, 2, 3]:
 		var e := TumbleEngine.new(lv, 1, 9)
 		var bot := TumbleBot.new()
-		var deaths := 0
-		e.event.connect(func(k, d): if k == "die": deaths += 1)
+		var deaths := []
+		e.event.connect(func(k, d): if k == "die": deaths.append(d))
 		for i in int(240.0 / T.TICK):
 			bot.drive(e)
 			e.tick()
 			if e.phase == T.Phase.CLEARED or e.phase == T.Phase.OVER:
 				break
-		prints("autopilot level", lv + 1, "phase", e.phase, "left", e.remaining(), "deaths", deaths, "time", snappedf(e.time, 0.1))
+		prints("autopilot level", lv + 1, "phase", e.phase, "left", e.remaining(), "deaths", deaths.size(), "time", snappedf(e.time, 0.1))
 		assert_int(e.phase).is_equal(T.Phase.CLEARED)
-		assert_int(deaths).is_less_equal(3)
+		assert_int(deaths.size()).is_less_equal(3)
