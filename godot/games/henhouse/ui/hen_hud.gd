@@ -10,6 +10,7 @@ const ACCENT := Color(1.0, 0.78, 0.35)
 var _pops: Array[Dictionary] = []
 var _t := 0.0
 var _bonus := 0
+var _goose_t := 0.0
 
 
 func _ready() -> void:
@@ -23,10 +24,12 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"egg": _pops.append({"text": "100", "pos": HenView3D.world(Vector2(d["cell"]) + Vector2(0.5, 0.0), 0.4), "t": 0.0})
 		"grain": _pops.append({"text": "50  CLOCK STOPS", "pos": HenView3D.world(Vector2(d["cell"]) + Vector2(0.5, 0.0), 0.4), "t": 0.0})
 		"cleared": _bonus = d["bonus"]
+		"goose_free": _goose_t = 2.2
 
 
 func _process(delta: float) -> void:
 	_t += delta
+	_goose_t = maxf(0.0, _goose_t - delta)
 	for p in _pops:
 		p["t"] += delta
 	_pops = _pops.filter(func(p): return p["t"] < 1.3)
@@ -40,9 +43,10 @@ func _draw() -> void:
 	var vp := size
 	HudKit.panel(self, Rect2(24, 16, 300, 84), ACCENT)
 	HudKit.stat(self, 48, 20, "SCORE", "%07d" % e.score, HudKit.GOLD, HudKit.LEFT)
-	HudKit.panel(self, Rect2(vp.x - 324, 16, 300, 84), ACCENT)
-	HudKit.stat(self, vp.x - 48, 20, "LEVEL %d  -  %s" % [game.index + 1, e.level.name.to_upper()], "BEST %07d" % maxi(game.high, e.score),
-		HudKit.INK, HudKit.RIGHT, 24)
+	var lvl := "LEVEL %d  -  %s" % [game.index + 1, e.level.name.to_upper()]
+	var pw := maxf(300.0, HudKit.width(lvl, 15, HudKit.label_font()) + 56.0)
+	HudKit.panel(self, Rect2(vp.x - 24 - pw, 16, pw, 84), ACCENT)
+	HudKit.stat(self, vp.x - 48, 20, lvl, "BEST %07d" % maxi(game.high, e.score), HudKit.INK, HudKit.RIGHT, 24)
 	for i in mini(e.lives, 8):
 		HudKit.gem(self, Vector2(48 + i * 26, 124), 9.0, ACCENT)
 	HudKit.text(self, Vector2(vp.x - 48, 136), "EGGS %d" % e.eggs.size(), 20, HudKit.INK, HudKit.label_font(), HudKit.RIGHT)
@@ -61,6 +65,11 @@ func _draw() -> void:
 			HudKit.text(self, sp, p["text"], 22, Color(HudKit.GOLD, 1.0 - p["t"] / 1.3), HudKit.font(true), HudKit.CENTER)
 	if e.phase == HenEngine.Phase.READY and e.time < 1.6:
 		HudKit.banner(self, vp, vp.y * 0.42, "LEVEL %d" % (game.index + 1), e.level.name.to_upper(), ACCENT, 1.0)
+	elif _goose_t > 0.0:
+		# the goose bursts out: a quick card that pops and fades
+		var a := minf(1.0, _goose_t / 0.5) * minf(1.0, (2.2 - _goose_t) / 0.15)
+		var pop := 1.0 + 0.25 * maxf(0.0, 1.0 - (2.2 - _goose_t) / 0.25)
+		HudKit.banner(self, vp, vp.y * 0.55, "THE GOOSE IS LOOSE", "", HudKit.BAD, a, pop)
 	elif e.phase == HenEngine.Phase.CLEARED:
 		HudKit.banner(self, vp, vp.y * 0.42, "LEVEL CLEAR", "TIME BONUS %d" % _bonus, HudKit.GOOD, 1.0)
 	if game.over or e.phase == HenEngine.Phase.OVER:
