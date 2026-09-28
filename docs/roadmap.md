@@ -49,6 +49,7 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 19 | Rick Dangerous (1989) | *Relic Run* | Flip-screen platforming with traps, pistol and dynamite, demo routes |
 | 20 | Chuckie Egg (1983) | *Henhouse Heist* | Ladders, lifts, wandering hens and the goose, a graph-planning autopilot |
 | 21 | Manic Miner (1983) | *Deep Breath* | Air supply, fixed-arc jumps, conveyors, crumbling floors, patrolling guardians, lamplit caverns |
+| 22 | Q*bert (1982) | *Tumbletop* | Diagonal hops on a cube pyramid, painting rules (two-step, undo), a chasing serpent lured off discs |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own

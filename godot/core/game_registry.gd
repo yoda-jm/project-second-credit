@@ -282,8 +282,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/deepbreath/art/models/key.glb", "model", 0.3],
 			["res://games/deepbreath/art/models/guardian_minecart.glb", "model", 0.3]],
 	},
+	{
+		"id": "tumbletop",
+		"style": "Arcade",
+		"title": "Tumbletop",
+		"tagline": "Hop every cube to its new colour, and keep one hop ahead of the serpent.",
+		"inspired_by": "Q*bert (1982)",
+		"scene": "res://games/tumbletop/scenes/tumbletop_game.tscn",
+		"accent": Color(1.0, 0.7, 0.3),
+		"props": [["res://games/tumbletop/art/models/pip.glb", "model", 0.5],
+			["res://games/tumbletop/art/models/serpent.glb", "model", 0.4],
+			["res://games/tumbletop/art/models/disc.glb", "model", 0.3]],
+	},
 ]
-
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
 	var out: Array[String] = []

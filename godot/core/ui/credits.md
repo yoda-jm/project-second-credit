@@ -171,6 +171,13 @@ Second Credit stands on the work of many people. Everything below is free and op
   `godot/games/deepbreath/levels/caverns.deep`; sound effects and music by `tools/audio/deepbreath_sfx.py` and
   `deepbreath_music.py`.
 
+## Game 22 (Tumbletop, working title)
+
+- Inspired by *Q\*bert* (Gottlieb, 1982). None of its code, graphics, sounds or characters are in this repo: Pip, the
+  serpent, the imps, the cloud-discs and the toybox score are original.
+- Models by `tools/blender/tumbletop_models.py`; sound effects and music by `tools/audio/tumbletop_sfx.py` and
+  `tumbletop_music.py`; cube, plate and cloud-sea shaders written for the game.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

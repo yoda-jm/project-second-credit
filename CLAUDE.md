@@ -141,9 +141,12 @@ decisions below are settled unless the owner reopens them.
 24. Game 21, **Deep Breath** (Manic Miner-like, `godot/games/deepbreath/`): single-screen caverns (32 x 16) in
    `levels/caverns.deep` (made by a scratchpad script), air, keys, the lift, conveyors, crumbling floors, guardians on
    patrol; each cavern carries a route the demo plays and a test checks. `--level=N`.
-25. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+25. Game 22, **Tumbletop** (Q*bert-like, `godot/games/tumbletop/`): a 28-cube pyramid, four painting rules cycling
+   by level (one step, two steps, and both with undo), red/green/purple balls, the serpent lured off cloud-discs,
+   imps undoing colours; the autopilot plans safe paths (Dijkstra) and a test checks it clears each rule. `--level=N`.
+26. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-26. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+27. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
