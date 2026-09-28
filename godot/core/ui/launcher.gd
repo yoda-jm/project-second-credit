@@ -10,6 +10,7 @@ var _selected := 0
 var _menu_index := 0
 var _buttons: Array[Button] = []
 var _cards: Array[Control] = []
+var _chip_hint: Label
 var _card_box: HBoxContainer
 var _ui: Control
 var _settings: Control
@@ -303,7 +304,8 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		menu.add_child(b)
 		_buttons.append(b)
 
-	var hint := _label("arrows or gamepad to choose    enter to confirm    esc to go back", 22, Color(0.6, 0.65, 0.75))
+	var hint := _label("arrows or gamepad to choose    tab or q / e to filter by style    enter to confirm    esc to go back", 22,
+		Color(0.6, 0.65, 0.75))
 	hint.position = Vector2(116, 1010)
 	_ui.add_child(hint)
 
@@ -323,6 +325,10 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		chip_row.add_child(chip)
 		_chips.append(chip)
 	_style_chips()
+	var filter_hint := _label("TAB  or  Q / E", 18, Color(0.6, 0.65, 0.75))  # how to change the filter, after the chips
+	filter_hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	chip_row.add_child(filter_hint)
+	_chip_hint = filter_hint
 
 	# the cards slide inside a clipped window between the two arrows
 	var window := Control.new()
@@ -715,6 +721,8 @@ func _show_cards(show: bool) -> void:
 		a.visible = show
 	for c in _chips:
 		c.visible = show
+	if _chip_hint:
+		_chip_hint.visible = show
 	_card_box.mouse_filter = Control.MOUSE_FILTER_PASS if show else Control.MOUSE_FILTER_IGNORE
 	for c in _cards:
 		c.mouse_filter = Control.MOUSE_FILTER_STOP if show else Control.MOUSE_FILTER_IGNORE
