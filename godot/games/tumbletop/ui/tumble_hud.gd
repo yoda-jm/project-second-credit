@@ -90,11 +90,15 @@ func _draw() -> void:
 		HudKit.banner(self, vp, vp.y * 0.42, "GAME OVER", "PRESS ENTER" if not game.demo else "", HudKit.BAD, 1.0)
 	# the hop compass, for a while at the start
 	if _hint > 0.0 and not game.demo:
-		var c := Vector2(110, vp.y - 110)
+		var c := Vector2(170, vp.y - 150)
 		var a := clampf(_hint, 0.0, 1.0)
-		for k in [["Q", Vector2(-1, -1)], ["E", Vector2(1, -1)], ["Z", Vector2(-1, 1)], ["C", Vector2(1, 1)]]:
-			var at: Vector2 = c + (k[1] as Vector2) * 44.0
-			draw_line(c, at * 0.8 + c * 0.2, Color(1, 1, 1, 0.5 * a), 3.0)
-			HudKit.text(self, at + Vector2(0, 8), k[0], 24, Color(HudKit.GOLD, a), HudKit.font(true), HudKit.CENTER)
+		for k in [["UP + LEFT", "Q", Vector2(-1, -1)], ["UP + RIGHT", "E", Vector2(1, -1)], ["DOWN + LEFT", "Z", Vector2(-1, 1)],
+				["DOWN + RIGHT", "C", Vector2(1, 1)]]:
+			var at: Vector2 = c + (k[2] as Vector2) * Vector2(92.0, 56.0)
+			draw_line(c, c + (k[2] as Vector2) * 30.0, Color(1, 1, 1, 0.5 * a), 3.0)
+			HudKit.text(self, at + Vector2(0, 2), k[0], 16, Color(HudKit.GOLD, a), HudKit.label_font(), HudKit.CENTER)
+			HudKit.text(self, at + Vector2(0, 22), "or " + k[1], 14, Color(HudKit.INK, a * 0.8), HudKit.label_font(), HudKit.CENTER)
+		HudKit.text(self, c + Vector2(0, 110), "two arrows together  -  or click a cube", 16, Color(HudKit.INK, a * 0.8),
+			HudKit.label_font(), HudKit.CENTER)
 	if game.demo:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 30), "DEMO  -  PRESS ANY KEY TO PLAY", 20, HudKit.INK, HudKit.label_font(), HudKit.CENTER)

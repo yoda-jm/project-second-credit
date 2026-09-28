@@ -1,9 +1,10 @@
 class_name TumbleGame
 extends Node
 ## Runs Tumbletop: four rounds a level, the levels cycling through the four painting rules, faster each time.
-## Three lives. Hops: Q / E / Z / C (up-left, up-right, down-left, down-right), or the arrows turned a quarter
-## (up = up-right, right = down-right, down = down-left, left = up-left), or the numpad's 7 9 1 3, or the pad's stick
-## diagonals. Holding a key keeps hopping. "--level=N" (user argument) starts at a level.
+## Three lives. Hops, whichever feels natural: two arrows together for a diagonal, like an 8-way stick (up + left =
+## up-left, down + right = down-right...); a single arrow held a moment means its quarter turn (up = up-right,
+## right = down-right, down = down-left, left = up-left); Q / E / Z / C; the numpad's 7 9 1 3; the pad's stick
+## diagonals; or click the cube to hop to. Holding keeps hopping. "--level=N" (user argument) starts at a level.
 
 signal level_started(engine: TumbleEngine)
 signal game_over()
@@ -19,6 +20,9 @@ var over := false
 var high := 0
 var _acc := 0.0
 var _bot: TumbleBot
+var _single_t := 0.0     ## how long a lone arrow has been held (a second one may be on its way)
+var _click := ""
+const GRACE := 0.12
 
 
 func start(at := 0) -> void:
@@ -58,6 +62,10 @@ func _process(delta: float) -> void:
 			_bot.drive(engine)
 		else:
 			engine.want = _held()
+			if engine.want == "" and _click != "":
+				engine.want = _click
+			if engine.hero["t"] >= 1.0 and engine.want != "":
+				_click = ""
 		engine.tick()
 
 
@@ -67,10 +75,28 @@ func _held() -> String:
 			if Input.is_physical_key_pressed(kc):
 				return true
 		return false
-	if k.call([KEY_Q, KEY_KP_7, KEY_LEFT]): return "ul"
-	if k.call([KEY_E, KEY_KP_9, KEY_UP]): return "ur"
-	if k.call([KEY_Z, KEY_Y, KEY_KP_1, KEY_DOWN]): return "dl"
-	if k.call([KEY_C, KEY_KP_3, KEY_RIGHT]): return "dr"
+	if k.call([KEY_Q, KEY_KP_7]): return "ul"
+	if k.call([KEY_E, KEY_KP_9]): return "ur"
+	if k.call([KEY_Z, KEY_Y, KEY_KP_1]): return "dl"
+	if k.call([KEY_C, KEY_KP_3]): return "dr"
+	# the arrows: two together make a diagonal; a lone one, held past a short grace, its quarter turn
+	var u: bool = k.call([KEY_UP])
+	var d: bool = k.call([KEY_DOWN])
+	var l: bool = k.call([KEY_LEFT])
+	var r: bool = k.call([KEY_RIGHT])
+	if (u or d) and (l or r):
+		_single_t = 0.0
+		if u: return "ul" if l else "ur"
+		return "dl" if l else "dr"
+	if u or d or l or r:
+		_single_t += T.TICK
+		if _single_t >= GRACE:
+			if u: return "ur"
+			if r: return "dr"
+			if d: return "dl"
+			return "ul"
+		return ""
+	_single_t = 0.0
 	var ax := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
 	if Input.is_joy_button_pressed(0, JOY_BUTTON_DPAD_LEFT): ax += Vector2(-1, -1)
 	if Input.is_joy_button_pressed(0, JOY_BUTTON_DPAD_UP): ax += Vector2(1, -1)
@@ -95,3 +121,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if over and event.is_action_pressed("ui_accept"):
 		start(0)
+		return
+	# a click: hop towards the neighbouring cube (or disc) nearest the pointer
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var cam := get_viewport().get_camera_3d()
+		if cam:
+			var at: Vector2i = engine.hero["to"]
+			var best := ""
+			var best_d := 90.0  # pixels: a click far from every neighbour does nothing
+			for dk in T.DIRS:
+				var c: Vector2i = at + T.DIRS[dk]
+				if not T.on_pyramid(c) and engine.disc_at(c) < 0:
+					continue
+				var sp := cam.unproject_position(TumbleEngine.cube3(c) + Vector3(0, 0.5, 0))
+				var dd: float = sp.distance_to(event.position)
+				if dd < best_d:
+					best_d = dd
+					best = dk
+			_click = best
