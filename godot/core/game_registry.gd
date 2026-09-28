@@ -276,6 +276,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Every key in the cavern before the air runs out.",
 		"inspired_by": "Manic Miner (1983)",
 		"scene": "res://games/deepbreath/scenes/deepbreath_game.tscn",
+		"card": "res://core/ui/cards/deepbreath.png",
 		"accent": Color(0.5, 0.85, 1.0),
 		"props": [["res://games/deepbreath/art/models/miner.glb", "model", 0.4],
 			["res://games/deepbreath/art/models/key.glb", "model", 0.3],
