@@ -31,7 +31,8 @@ var _shot: Node3D
 var _bombs: Array[Node3D] = []
 var _ufo: Node3D
 var _shields: Array[MultiMeshInstance3D] = []
-var _fx: Bursts
+var _fx: NovaFx
+var _slow := 0.0   ## seconds of slow motion left (real time), after the cannon is hit
 var _time := 0.0
 var _shake := 0.0
 var _sweep := 0.0
@@ -85,7 +86,7 @@ func _ready() -> void:
 	camera.far = 4000.0
 	camera.current = true
 	add_child(camera)
-	_fx = Bursts.new()
+	_fx = NovaFx.new()
 	add_child(_fx)
 	game.game_started.connect(_on_game)
 	if game.engine:
@@ -258,14 +259,20 @@ func _on_event(kind: String, d: Dictionary) -> void:
 	var e := game.engine
 	match kind:
 		"hit":
+			# the alien shatters: voxel shards in its colour, a white core, a shockwave ring, sparks and a flash
 			var col: Color = COLORS[d["kind"]]
 			var p := world(d["pos"], 0.1)
-			_fx.burst(p, col, 26, 3.5, 0.6, 0.08, 1.0, -2.0, 1.0, "glow")
-			_fx.burst(p, Color(1, 1, 1), 8, 2.0, 0.3, 0.05, 1.0, 0.0, 1.0, "glow")
-			_fx.flash(p + Vector3(0, -2.0, 1.5), col, 1.2)
-			_shake = maxf(_shake, 0.12)
+			_fx.shards(p, col, 18, 4.0, 1.2, 1.0)
+			_fx.ring(p, col.lerp(Color.WHITE, 0.3), 1.6, 0.4, 4.0)
+			_fx.burst(p, col, 36, 5.0, 0.7, 0.14, 1.0, -2.0, 1.0, "glow")
+			_fx.burst(p, Color(1, 1, 1), 12, 2.5, 0.3, 0.22, 1.0, 0.0, 1.0, "glow")
+			_fx.flash(p + Vector3(0, -1.5, 1.5), col, 2.4)
+			_shake = maxf(_shake, 0.18)
 		"ufo_hit":
 			var p := world(d["pos"], 0.1)
+			_fx.shards(p, Color(1.0, 0.45, 0.3), 30, 5.0, 1.4, 1.3)
+			_fx.ring(p, Color(1.0, 0.7, 0.4), 2.2, 0.6, 4.0)
+			_fx.ring(p, Color(1.0, 0.4, 0.3), 1.2, 0.4, 3.0)
 			_fx.burst(p, Color(1.0, 0.4, 0.3), 60, 5.0, 1.0, 0.1, 1.0, -2.0, 1.0, "glow")
 			_fx.flash(p + Vector3(0, -2.0, 1.5), Color(1.0, 0.6, 0.4), 3.0)
 			_shake = 0.4
@@ -274,16 +281,38 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"shield":
 			_refresh_shield(e, d["index"])
 			_fx.burst(world(d["pos"], 0.1), Color(0.3, 1.0, 0.6), 10, 2.0, 0.4, 0.05, 1.0, -4.0, 1.0, "glow")
-		"bomb_hit", "miss", "bomb_ground":
+		"bomb_hit":
+			# shot meets bomb: an electric crackle, blue-white sparks and a sharp little ring
+			var p := world(d["pos"], 0.1)
+			_fx.burst(p, Color(0.6, 0.85, 1.0), 40, 6.0, 0.4, 0.11, 1.0, 0.0, 1.0, "glow")
+			_fx.burst(p, Color(1.0, 0.9, 0.6), 14, 3.0, 0.5, 0.16, 1.0, -3.0, 1.0, "glow")
+			_fx.shards(p, Color(0.7, 0.9, 1.0), 8, 3.0, 0.8, 0.6)
+			_fx.ring(p, Color(0.6, 0.85, 1.0), 1.4, 0.3, 5.0)
+			_fx.flash(p + Vector3(0, -1.5, 1.2), Color(0.6, 0.85, 1.0), 1.8)
+			_shake = maxf(_shake, 0.15)
+		"miss", "bomb_ground":
 			_fx.burst(world(d["pos"], 0.1), Color(1.0, 0.8, 0.5), 8, 1.5, 0.3, 0.05, 1.0, -3.0, 1.0, "glow")
 		"shot":
 			_recoil = 1.0
 		"die":
+			# the cannon goes up: a white flash and a big shockwave, hull shards, fire, a smoke column, then two
+			# secondary blasts; everything slows for a moment
 			var p := world(d["pos"], 0.2)
-			_fx.burst(p, Color(0.4, 1.0, 0.7), 50, 4.0, 1.0, 0.09, 1.0, -3.0, 1.0, "glow")
-			_fx.burst(p, Color(1.0, 0.6, 0.3), 30, 3.0, 0.8, 0.12, 0.0, -5.0, 0.7, "smoke")
-			_fx.flash(p + Vector3(0, -1.5, 1.5), Color(1.0, 0.7, 0.4), 3.0)
-			_shake = 0.9
+			_fx.flash(p + Vector3(0, -1.5, 1.5), Color(1.0, 0.8, 0.5), 4.0)
+			_fx.ring(p, Color(1.0, 0.85, 0.6), 4.5, 0.8, 5.0)
+			_fx.ring(p, Color(0.4, 1.0, 0.7), 2.4, 0.5, 4.0)
+			_fx.shards(p, Color(0.8, 0.95, 1.0), 30, 5.5, 1.6, 1.6)
+			_fx.shards(p, Color(1.0, 0.55, 0.2), 22, 4.5, 1.3, 1.4)
+			_fx.burst(p, Color(1.0, 0.6, 0.25), 70, 5.5, 1.0, 0.22, 1.0, -2.0, 1.0, "glow")
+			_fx.burst(p, Color(0.35, 0.3, 0.3), 36, 1.8, 2.4, 0.6, 0.0, 1.5, 1.0, "smoke")
+			for k in 2:
+				get_tree().create_timer(0.25 + 0.2 * k).timeout.connect(func():
+					var q := p + Vector3((0.35 if k == 0 else -0.3), 0.15, 0.1)
+					_fx.burst(q, Color(1.0, 0.7, 0.3), 34, 3.5, 0.7, 0.18, 1.0, -2.0, 1.0, "glow")
+					_fx.ring(q, Color(1.0, 0.75, 0.4), 1.8, 0.4, 4.0)
+					_shake = maxf(_shake, 0.5))
+			_shake = 1.0
+			_slow = 0.6
 		"step":
 			for i in _inv_anims.size():
 				var ap: AnimationPlayer = _inv_anims[i]
@@ -376,6 +405,15 @@ func _process(delta: float) -> void:
 		_ufo = null
 	_shake = maxf(0.0, _shake - delta * 1.6)
 	_sweep = maxf(0.0, _sweep - delta / 2.5)
+	# a moment of slow motion after the cannon is hit (the game's ticks slow with it; real time counts it down)
+	if _slow > 0.0:
+		if Engine.time_scale > 1.01:
+			_slow = 0.0   # a capture is fast-forwarding: leave its time alone
+		else:
+			Engine.time_scale = 0.35
+			_slow -= delta / 0.35
+			if _slow <= 0.0:
+				Engine.time_scale = 1.0
 	_place_camera(delta, false, lowest)
 
 
@@ -397,3 +435,8 @@ func _place_camera(delta: float, snap := false, lowest := 120.0) -> void:
 	_cam_look = _cam_look.lerp(look, k2)
 	camera.position = _cam_pos + j
 	camera.look_at(_cam_look, Vector3.UP)
+
+
+func _exit_tree() -> void:
+	if _slow > 0.0:
+		Engine.time_scale = 1.0
