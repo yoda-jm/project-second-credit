@@ -3,7 +3,7 @@ extends GdUnitTestSuite
 ## imports; the rest must match an export preset's include filter, or a release build starts with no levels (Prism
 ## Breaker crashed on macOS without its walls).
 
-const SKIP := ["gd", "uid", "tscn", "tres", "gdshader", "import", "md", "txt", "mid"]
+const SKIP := ["gd", "uid", "tscn", "tres", "gdshader", "gdshaderinc", "import", "md", "txt", "mid"]
 
 
 func test_every_game_data_file_is_exported() -> void:
