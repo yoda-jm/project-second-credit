@@ -328,6 +328,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Hold the coast against the marching fleet, one shot at a time.",
 		"inspired_by": "Space Invaders (1978)",
 		"scene": "res://games/novawardens/scenes/novawardens_game.tscn",
+		"card": "res://core/ui/cards/novawardens.png",
 		"accent": Color(0.3, 1.0, 0.6),
 		"props": [["res://games/novawardens/art/models/squid.glb", "model", 0.35],
 			["res://games/novawardens/art/models/crab.glb", "model", 0.35],
