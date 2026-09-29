@@ -32,6 +32,7 @@ var _bombs: Array[Node3D] = []
 var _ufo: Node3D
 var _shields: Array[MultiMeshInstance3D] = []
 var _fx: NovaFx
+var _march_hold := 0.0   ## after a step, how long the aliens' follow-through plays before they hold
 var _slow := 0.0   ## seconds of slow motion left (real time), after the cannon is hit
 var _time := 0.0
 var _shake := 0.0
@@ -314,10 +315,14 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_shake = 1.0
 			_slow = 0.6
 		"step":
+			# each step plays the move into the next pose (the limbs follow through and settle), then holds it
 			for i in _inv_anims.size():
 				var ap: AnimationPlayer = _inv_anims[i]
 				if ap:
-					ap.seek(ap.current_animation_length * 0.5 * e.frame, true)
+					ap.play("march")
+					ap.seek(ap.current_animation_length * 0.5 * (1 - e.frame), true)
+					ap.seek(ap.current_animation_length * 0.5 * e.frame, false)
+			_march_hold = 0.2
 		"cleared":
 			_sweep = 1.0
 		"wave":
@@ -330,6 +335,12 @@ func _process(delta: float) -> void:
 	var e := game.engine
 	if e == null or _invaders.is_empty():
 		return
+	if _march_hold > 0.0:
+		_march_hold -= delta
+		if _march_hold <= 0.0:
+			for ap in _inv_anims:
+				if ap:
+					(ap as AnimationPlayer).pause()
 	var lowest := 0.0
 	for i in _invaders.size():
 		var n := _invaders[i]
