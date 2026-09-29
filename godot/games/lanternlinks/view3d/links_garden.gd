@@ -108,10 +108,10 @@ func build() -> void:
 	_flies.initial_velocity_min = 0.05
 	_flies.initial_velocity_max = 0.2
 	_flies.gravity = Vector3.ZERO
-	_flies.scale_amount_min = 0.03
-	_flies.scale_amount_max = 0.05
+	_flies.scale_amount_min = 0.6
+	_flies.scale_amount_max = 1.0
 	var q := QuadMesh.new()
-	q.size = Vector2.ONE
+	q.size = Vector2.ONE * 0.05   # the sprite's own size (particle scale alone doesn't shrink a billboard here)
 	_flies.mesh = q
 	_flies.material_override = Fx.material("glow", Color(0.85, 1.0, 0.45))
 	var fade := Gradient.new()
@@ -226,19 +226,27 @@ func dress(course: LinksCourse, index: int) -> void:
 		s.shadow_blur = 2.0
 		_dress.add_child(s)
 		_floods.append(s)
+		# the lamp: a dark housing with a glowing lens facing the course
 		var head := MeshInstance3D.new()
 		var bm := BoxMesh.new()
-		bm.size = Vector3(0.3, 0.18, 0.22)
+		bm.size = Vector3(0.26, 0.2, 0.16)
 		head.mesh = bm
+		head.material_override = Pbr.local("metal", Color(0.25, 0.26, 0.28), 1.0, 0.8)
+		head.position = s.position
+		head.rotation = s.rotation
+		_dress.add_child(head)
+		var lens := MeshInstance3D.new()
+		var lm2 := BoxMesh.new()
+		lm2.size = Vector3(0.2, 0.14, 0.01)
+		lens.mesh = lm2
 		var hm := StandardMaterial3D.new()
 		hm.albedo_color = Color(1.0, 0.95, 0.85)
 		hm.emission_enabled = true
 		hm.emission = Color(1.0, 0.92, 0.8)
-		head.material_override = hm
+		lens.material_override = hm
 		_glows.append(hm)
-		head.position = s.position
-		head.rotation = s.rotation
-		_dress.add_child(head)
+		lens.position = Vector3(0, 0, -0.085)
+		head.add_child(lens)
 	# trees further out, shrubs and rocks near the course, garden pieces
 	var placed: Array[Vector2] = []
 	for k in 16:

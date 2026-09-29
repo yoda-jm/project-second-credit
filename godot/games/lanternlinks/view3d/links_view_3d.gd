@@ -14,7 +14,7 @@ const E = preload("res://games/lanternlinks/engine/links_engine.gd")
 const C = preload("res://games/lanternlinks/view3d/links_course.gd")
 const M := "res://games/lanternlinks/art/models/"
 const GUIDE_DOTS := 36
-const TRAIL := 26
+const TRAIL := 14
 
 @export var game: LinksGame
 
@@ -382,7 +382,7 @@ func _update_ball(delta: float, p: Vector3) -> void:
 			var side := dirv.cross(cam_fwd).normalized()
 			var f := float(i) / (_trail_pts.size() - 1)
 			var wdt := P.R * 0.45 * f
-			var c := Color(col.r, col.g, col.b, f * f * (0.15 + lamp * 0.35))
+			var c := Color(col.r, col.g, col.b, f * f * (0.1 + lamp * 0.2))
 			im.surface_set_color(c)
 			im.surface_add_vertex(q + side * wdt)
 			im.surface_set_color(c)
