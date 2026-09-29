@@ -119,8 +119,8 @@ func _init(view: FrostpeakView3D, vn: FrostpeakBiathlon) -> void:
 	pm.initial_velocity_min = 1.0
 	pm.initial_velocity_max = 2.5
 	pm.gravity = Vector3(0, -4, 0)
-	pm.scale_min = 0.4
-	pm.scale_max = 1.0
+	pm.scale_min = 0.571
+	pm.scale_max = 1.43
 	pm.scale_curve = _curve_tex(Fx.size_curve(true))
 	_spray.process_material = pm
 	var q := QuadMesh.new()

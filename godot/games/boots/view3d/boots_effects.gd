@@ -3,6 +3,11 @@ extends Bursts
 ## Muddy Boots effects: muzzle flashes, dirt kicked up by bullets, splashes, explosions, hits, sparkles.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 7.93
+
+
 func muzzle(pos: Vector3) -> void:
 	burst(pos, Color(1.0, 0.8, 0.4), 5, 2.0, 0.08, 0.25, 1.0, 0.0, 1.0, "glow")
 

@@ -356,8 +356,8 @@ func _chimney(p: Vector3) -> void:
 	pm.initial_velocity_min = 1.2
 	pm.initial_velocity_max = 1.8
 	pm.gravity = Vector3(0.35, 0.1, 0.1)
-	pm.scale_min = 2.0
-	pm.scale_max = 3.0
+	pm.scale_min = 0.8
+	pm.scale_max = 1.2
 	pm.scale_curve = _curve_tex(Fx.size_curve(true))
 	pm.color_ramp = _fade()
 	smoke.process_material = pm

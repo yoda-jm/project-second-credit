@@ -17,6 +17,11 @@ var _rockets: Array[Dictionary] = [] ## rising rockets: {node, from, to, t, col}
 var _rng := RandomNumberGenerator.new()
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 18.6
+
+
 func _ready() -> void:
 	super()
 	_rng.seed = 5
@@ -33,6 +38,7 @@ func _ready() -> void:
 		c.mesh = q
 		var m := StandardMaterial3D.new()
 		m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		m.billboard_keep_scale = true
 		m.vertex_color_use_as_albedo = true
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		m.emission_enabled = true
@@ -50,8 +56,8 @@ func _ready() -> void:
 		c.angle_max = 360.0
 		c.angular_velocity_min = -540.0
 		c.angular_velocity_max = 540.0
-		c.scale_amount_min = 0.7
-		c.scale_amount_max = 1.4
+		c.scale_amount_min = 0.667
+		c.scale_amount_max = 1.33
 		var g := Gradient.new()
 		g.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 		g.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
@@ -76,8 +82,8 @@ func _ready() -> void:
 	var aq := QuadMesh.new()
 	aq.size = Vector2(0.16, 0.16)
 	_air.mesh = aq
-	_air.scale_amount_min = 0.4
-	_air.scale_amount_max = 1.0
+	_air.scale_amount_min = 0.571
+	_air.scale_amount_max = 1.43
 	add_child(_air)
 	# the fly's sparkle trail
 	_fly_trail = CPUParticles3D.new()
@@ -96,8 +102,8 @@ func _ready() -> void:
 	_fly_trail.mesh = fq
 	_fly_trail.material_override = Fx.material("glow", Color(1.0, 0.95, 0.5))
 	_fly_trail.scale_amount_curve = Fx.size_curve(false)
-	_fly_trail.scale_amount_min = 0.5
-	_fly_trail.scale_amount_max = 1.2
+	_fly_trail.scale_amount_min = 0.588
+	_fly_trail.scale_amount_max = 1.41
 	_fly_trail.emitting = false
 	add_child(_fly_trail)
 
@@ -114,22 +120,22 @@ func set_air(mood: int) -> void:
 			g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0.1), Color(1, 1, 1, 0),
 				Color(1, 1, 1, 1), Color(1, 1, 1, 0.05), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0.2),
 				Color(1, 1, 1, 0)])
-			_air.scale_amount_min = 0.5
-			_air.scale_amount_max = 1.1
+			_air.scale_amount_min = 0.625
+			_air.scale_amount_max = 1.38
 		1:
 			_air.amount = 30
 			_air.material_override = Fx.material("glow", Color(1.0, 0.6, 0.3, 0.55))
 			g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.8), Color(1, 1, 1, 0)])
 			g.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-			_air.scale_amount_min = 0.25
-			_air.scale_amount_max = 0.6
+			_air.scale_amount_min = 0.588
+			_air.scale_amount_max = 1.41
 		_:
 			_air.amount = 34
 			_air.material_override = Fx.material("glow", Color(1.0, 0.92, 0.6, 0.45))
 			g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.7), Color(1, 1, 1, 0)])
 			g.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
-			_air.scale_amount_min = 0.2
-			_air.scale_amount_max = 0.5
+			_air.scale_amount_min = 0.571
+			_air.scale_amount_max = 1.43
 	_air.color_ramp = g
 	_air.restart()
 

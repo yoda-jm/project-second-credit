@@ -707,8 +707,8 @@ func _build_world() -> void:
 	pm.gravity = Vector3(0, -0.4, 0)
 	pm.turbulence_enabled = true
 	pm.turbulence_noise_strength = 0.6
-	pm.scale_min = 0.5
-	pm.scale_max = 1.0
+	pm.scale_min = 0.667
+	pm.scale_max = 1.33
 	_snowfall.process_material = pm
 	var q := QuadMesh.new()
 	q.size = Vector2(0.1, 0.1)
@@ -1011,8 +1011,8 @@ func _build_plaza() -> void:
 	pm.initial_velocity_min = 1.5
 	pm.initial_velocity_max = 3.0
 	pm.gravity = Vector3(0, 0.6, 0)
-	pm.scale_min = 0.4
-	pm.scale_max = 1.0
+	pm.scale_min = 0.571
+	pm.scale_max = 1.43
 	sparks.process_material = pm
 	var q := QuadMesh.new()
 	q.size = Vector2(0.35, 0.35)

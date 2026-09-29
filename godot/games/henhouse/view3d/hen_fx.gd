@@ -14,11 +14,17 @@ var _pollen: CPUParticles3D
 var _feather_mat: StandardMaterial3D
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 21.8
+
+
 func _ready() -> void:
 	super()
 	# a feather: a soft, long, slightly glossy blade that tumbles as it falls
 	_feather_mat = StandardMaterial3D.new()
 	_feather_mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	_feather_mat.billboard_keep_scale = true
 	_feather_mat.vertex_color_use_as_albedo = true
 	_feather_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_feather_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
@@ -68,6 +74,7 @@ func _ready() -> void:
 		c.mesh = q
 		var m := StandardMaterial3D.new()
 		m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		m.billboard_keep_scale = true
 		m.vertex_color_use_as_albedo = true
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		m.emission_enabled = true
@@ -85,8 +92,8 @@ func _ready() -> void:
 		c.angle_max = 360.0
 		c.angular_velocity_min = -540.0
 		c.angular_velocity_max = 540.0
-		c.scale_amount_min = 0.7
-		c.scale_amount_max = 1.4
+		c.scale_amount_min = 0.667
+		c.scale_amount_max = 1.33
 		var g := Gradient.new()
 		g.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 		g.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
@@ -112,8 +119,8 @@ func _ready() -> void:
 	pq.size = Vector2(0.1, 0.1)
 	_pollen.mesh = pq
 	_pollen.material_override = Fx.material("glow", Color(1.0, 0.85, 0.5, 0.55))
-	_pollen.scale_amount_min = 0.3
-	_pollen.scale_amount_max = 0.9
+	_pollen.scale_amount_min = 0.5
+	_pollen.scale_amount_max = 1.5
 	var pg := Gradient.new()
 	pg.offsets = PackedFloat32Array([0.0, 0.3, 0.7, 1.0])
 	pg.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0)])

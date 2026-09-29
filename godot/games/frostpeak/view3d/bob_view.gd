@@ -136,8 +136,8 @@ func _init(view: FrostpeakView3D, vn: FrostpeakBobVenue) -> void:
 	pm.initial_velocity_min = 0.5
 	pm.initial_velocity_max = 1.5
 	pm.gravity = Vector3(0, -1.0, 0)
-	pm.scale_min = 0.5
-	pm.scale_max = 1.2
+	pm.scale_min = 0.588
+	pm.scale_max = 1.41
 	pm.scale_curve = _curve_tex(Fx.size_curve(true))
 	_dust.process_material = pm
 	var q := QuadMesh.new()
@@ -160,8 +160,8 @@ func _init(view: FrostpeakView3D, vn: FrostpeakBobVenue) -> void:
 	sp.initial_velocity_min = 1.5
 	sp.initial_velocity_max = 4.0
 	sp.gravity = Vector3(0, -6, 0)
-	sp.scale_min = 0.5
-	sp.scale_max = 1.3
+	sp.scale_min = 0.556
+	sp.scale_max = 1.44
 	sp.scale_curve = _curve_tex(Fx.size_curve(true))
 	_spray.process_material = sp
 	var q2 := QuadMesh.new()

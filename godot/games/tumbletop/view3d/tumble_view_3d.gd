@@ -107,6 +107,7 @@ func _ready() -> void:
 	add_child(_clouds)
 	_motes()
 	_fx = Bursts.new()
+	_fx.size_unit = 20.7   # this game's sizes: its median burst about 0.4 m across, a little more at birth
 	add_child(_fx)
 	game.level_started.connect(_on_level)
 	if game.engine:
@@ -129,8 +130,8 @@ func _motes() -> void:
 	pr.spread = 180.0
 	pr.turbulence_enabled = true
 	pr.turbulence_noise_strength = 0.4
-	pr.scale_min = 0.5
-	pr.scale_max = 1.2
+	pr.scale_min = 0.588
+	pr.scale_max = 1.41
 	var fade := Gradient.new()
 	fade.set_color(0, Color(1, 1, 1, 0))
 	fade.add_point(0.2, Color(1, 1, 1, 1))

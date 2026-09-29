@@ -131,6 +131,7 @@ func _ready() -> void:
 	camera.attributes = _attr
 	add_child(camera)
 	_fx = Bursts.new()
+	_fx.size_unit = 26.5   # this game's sizes: its median burst about 0.4 m across, a little more at birth
 	add_child(_fx)
 	game.level_started.connect(_on_level)
 	if game.engine:
@@ -264,8 +265,8 @@ func _motes(parent: Node3D, col: Color, extent: Vector3, amount: int, drift: Vec
 	pm.turbulence_noise_strength = 0.6
 	pm.turbulence_noise_scale = 3.0
 	pm.turbulence_noise_speed_random = 0.3
-	pm.scale_min = 0.5
-	pm.scale_max = 1.3
+	pm.scale_min = 0.556
+	pm.scale_max = 1.44
 	var g := Gradient.new()
 	g.offsets = PackedFloat32Array([0.0, 0.2, 0.45, 0.55, 0.8, 1.0])
 	g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0.35), Color(1, 1, 1, 1),

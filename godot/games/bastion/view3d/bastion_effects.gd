@@ -3,6 +3,11 @@ extends Bursts
 ## Bastion Coast effects: muzzle smoke, splashes, dirt, fire, dust.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 0.975
+
+
 func dust(pos: Vector3, amount: int) -> void:
 	burst(pos, Color(0.78, 0.7, 0.58, 0.7), amount, 1.6, 0.8, 1.6, 0.0, -1.5, 1.0, "smoke")
 

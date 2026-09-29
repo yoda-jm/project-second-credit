@@ -10,6 +10,11 @@ var _next_ring := 0
 var _ring_mat: ShaderMaterial
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 23.3
+
+
 func _ready() -> void:
 	super._ready()
 	_ring_mat = ShaderMaterial.new()

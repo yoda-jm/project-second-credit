@@ -296,8 +296,8 @@ func _build_backdrop() -> void:
 	snow.gravity = Vector3(0, 0.02, 0)
 	snow.initial_velocity_min = 0.05
 	snow.initial_velocity_max = 0.2
-	snow.scale_amount_min = 0.025
-	snow.scale_amount_max = 0.06
+	snow.scale_amount_min = 0.588
+	snow.scale_amount_max = 1.41
 	var qm := QuadMesh.new()
 	qm.size = Vector2(0.5, 0.5)
 	snow.mesh = qm
@@ -659,8 +659,8 @@ func _make_ghost() -> Node3D:
 	trail.emission_sphere_radius = 0.4
 	trail.gravity = Vector3(0, 0.4, 0)
 	trail.initial_velocity_max = 0.3
-	trail.scale_amount_min = 0.12
-	trail.scale_amount_max = 0.3
+	trail.scale_amount_min = 0.571
+	trail.scale_amount_max = 1.43
 	var qm := QuadMesh.new()
 	qm.size = Vector2(0.5, 0.5)
 	trail.mesh = qm

@@ -63,6 +63,7 @@ func _ready() -> void:
 	camera.current = true
 	add_child(camera)
 	_fx = Bursts.new()
+	_fx.size_unit = 23.3   # this game's sizes: its median burst about 0.4 m across, a little more at birth
 	add_child(_fx)
 	game.level_started.connect(_on_level)
 	if game.engine:

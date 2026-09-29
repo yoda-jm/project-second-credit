@@ -3,6 +3,11 @@ extends Bursts
 ## Ingot Run effects: the zap and crumble of a dug brick, dust when a hole closes, gold sparkles.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 15.5
+
+
 func dig(pos: Vector3) -> void:
 	burst(pos, Color(0.4, 0.85, 1.0), 14, 2.5, 0.35, 0.12, 1.0, -2.0, 1.0, "glow")
 	burst(pos, Color(0.7, 0.55, 0.4), 16, 2.5, 0.7, 0.12, 0.0, -10.0, 1.0, "soft")

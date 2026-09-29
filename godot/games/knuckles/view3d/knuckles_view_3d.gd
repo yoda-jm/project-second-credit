@@ -245,8 +245,8 @@ func _steam(pos: Vector3, amount: int = 14, size: float = 1.0) -> void:
 	p.initial_velocity_min = 0.5
 	p.initial_velocity_max = 0.9
 	p.gravity = Vector3(0.25, 0.15, 0)
-	p.scale_amount_min = 1.2 * size
-	p.scale_amount_max = 2.0 * size
+	p.scale_amount_min = 0.75 * size
+	p.scale_amount_max = 1.25 * size
 	p.scale_amount_curve = Fx.size_curve(true)
 	var g := Gradient.new()
 	g.set_color(0, Color(1, 1, 1, 0))

@@ -14,6 +14,11 @@ var _rockets: Array[Dictionary] = []    ## {pos, vel, fuse, cols}
 var _paper := {}
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across)
+	size_unit = 5.3
+
+
 func _ready() -> void:
 	super._ready()
 	var q := QuadMesh.new()
@@ -119,12 +124,7 @@ func _round() -> void:
 func burst(pos: Vector3, color: Color, amount: int, speed: float, life: float, size: float, glow: float, gravity: float,
 		up: float = 1.0, kind: String = "") -> void:
 	super.burst(pos, color, amount, speed, life, size, glow, gravity, up, kind)
-	# on a mini-golf scale the sprite itself must be small: size it directly (the pool's quads are 0.4 m)
-	var p := _pool[(_next - 1 + _pool.size()) % _pool.size()]
-	p.spread = 70.0
-	(p.mesh as QuadMesh).size = Vector2.ONE * size * 2.0
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.0
+	_pool[(_next - 1 + _pool.size()) % _pool.size()].spread = 70.0
 
 
 func _process(delta: float) -> void:

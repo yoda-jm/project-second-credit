@@ -13,6 +13,11 @@ var _next_ring := 0
 var _shard_mats := {}
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 12.3
+
+
 func _ready() -> void:
 	super._ready()
 	var box := BoxMesh.new()

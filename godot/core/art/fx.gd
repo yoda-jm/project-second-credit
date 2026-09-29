@@ -2,6 +2,7 @@ class_name Fx
 extends RefCounted
 ## Shared particle materials: soft round sprites instead of flat squares. "glow" is additive (fire, sparks,
 ## flashes), "smoke" is a soft, noisy puff that stays lit by the scene, "soft" is a plain soft disc (spray, dust).
+## A sprite is its quad mesh's size times the particle's scale (scale_amount and its curve).
 
 static var _cache := {}
 
@@ -51,6 +52,9 @@ static func material(kind: String, tint: Color = Color.WHITE) -> StandardMateria
 		return _cache[key]
 	var m := StandardMaterial3D.new()
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	# without this the billboard drops each particle's scale (CPU and GPU particles alike), and every sprite was its
+	# quad's full size whatever size it asked for
+	m.billboard_keep_scale = true
 	m.vertex_color_use_as_albedo = true
 	m.albedo_color = tint
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA

@@ -111,7 +111,7 @@ func build() -> void:
 	_flies.scale_amount_min = 0.6
 	_flies.scale_amount_max = 1.0
 	var q := QuadMesh.new()
-	q.size = Vector2.ONE * 0.05   # the sprite's own size (particle scale alone doesn't shrink a billboard here)
+	q.size = Vector2.ONE * 0.06
 	_flies.mesh = q
 	_flies.material_override = Fx.material("glow", Color(0.85, 1.0, 0.45))
 	var fade := Gradient.new()

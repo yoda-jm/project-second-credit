@@ -3,6 +3,11 @@ extends Bursts
 ## Crate Keeper effects: sawdust scuffed up by a push, the green glow of a crate settling on its goal.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 12.3
+
+
 func scuff(pos: Vector3) -> void:
 	burst(pos, Color(0.75, 0.62, 0.45, 0.7), 6, 0.8, 0.5, 0.18, 0.0, -2.0, 0.3, "soft")
 

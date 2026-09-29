@@ -234,8 +234,8 @@ func _build_stage() -> void:
 	motes.gravity = Vector3.ZERO
 	motes.initial_velocity_min = 1.0
 	motes.initial_velocity_max = 2.5
-	motes.scale_amount_min = 0.03
-	motes.scale_amount_max = 0.1
+	motes.scale_amount_min = 0.462
+	motes.scale_amount_max = 1.54
 	var qm := QuadMesh.new()
 	qm.size = Vector2(0.5, 0.5)
 	motes.mesh = qm
@@ -371,8 +371,8 @@ func _on_stage(e: PrismEngine) -> void:
 		p.gravity = Vector3.ZERO
 		p.initial_velocity_min = 2.5
 		p.initial_velocity_max = 4.0
-		p.scale_amount_min = 0.08
-		p.scale_amount_max = 0.18
+		p.scale_amount_min = 0.615
+		p.scale_amount_max = 1.38
 		p.scale_amount_curve = Fx.size_curve(false)
 		var qm := QuadMesh.new()
 		qm.size = Vector2(0.5, 0.5)

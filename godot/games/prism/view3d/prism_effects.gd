@@ -17,6 +17,11 @@ var _trail_cols := {}  ## key -> Color
 var _rng := RandomNumberGenerator.new()
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 16.9
+
+
 func _ready() -> void:
 	super._ready()
 	_rng.seed = 13

@@ -3,6 +3,11 @@ extends Bursts
 ## Fruitburrow effects: soil crumbs, fruit sparkles, apple splats, monster pops, confetti.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 2.99
+
+
 func crumbs(pos: Vector3, big: bool) -> void:
 	burst(pos, Color(0.45, 0.32, 0.22), 18 if big else 10, 2.4, 0.7, 0.45, 0.0, -9.0, 0.6, "soft")
 	burst(pos, Color(0.55, 0.45, 0.35, 0.5), 5, 0.6, 1.0, 1.4, 0.0, 0.2, 1.0, "smoke")

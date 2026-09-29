@@ -4,6 +4,11 @@ extends Bursts
 ## splinters from a broken bat.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 7.41
+
+
 func hit(pos: Vector3, heavy: bool) -> void:
 	burst(pos, Color(1.0, 0.95, 0.7), 18 if heavy else 9, 5.0 if heavy else 3.0, 0.18, 0.3 if heavy else 0.2, 1.0, 0.0, 1.0, "glow")
 	burst(pos, Color(1.0, 1.0, 1.0), 1, 0.0, 0.08, 1.4 if heavy else 0.8, 1.0, 0.0, 1.0, "glow")  # the white flash

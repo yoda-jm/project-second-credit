@@ -4,6 +4,11 @@ extends Bursts
 ## of a block slamming down, a bomber's poof, power-up sparkles.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 3.9
+
+
 func blast(pos: Vector3, scale: float) -> void:
 	burst(pos, Color(1.0, 0.6, 0.2), int(26 * scale), 3.0 * scale, 0.45, 0.9 * scale, 1.0, 1.5, 1.0, "glow")
 	burst(pos, Color(1.0, 0.9, 0.5), int(18 * scale), 6.0 * scale, 0.4, 0.12, 1.0, -8.0, 1.0, "glow")

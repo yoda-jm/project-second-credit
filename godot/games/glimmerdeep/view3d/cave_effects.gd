@@ -19,7 +19,7 @@ func _ready() -> void:
 		p.explosiveness = 0.9
 		p.local_coords = false
 		var q := QuadMesh.new()
-		q.size = Vector2(0.2, 0.2)
+		q.size = Vector2(0.23, 0.23)   # x size (median 1.6): the median burst keeps its 0.2 m sprites, a little more at birth
 		p.mesh = q
 		add_child(p)
 		_pool.append(p)

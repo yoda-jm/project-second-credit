@@ -3,6 +3,11 @@ extends Bursts
 ## Whisker Alley effects: dust puffs, cartoon stars, splashes, sparkles, the eel's zap, confetti.
 
 
+func _init() -> void:
+	# sizes in this game's own unit (its median burst about 0.4 m across, a little more at birth)
+	size_unit = 5.72
+
+
 func dust(pos: Vector3, amount: int) -> void:
 	burst(pos, Color(0.6, 0.58, 0.62, 0.55), amount, 1.2, 0.8, 1.0, 0.0, -0.5, 1.0, "smoke")
 

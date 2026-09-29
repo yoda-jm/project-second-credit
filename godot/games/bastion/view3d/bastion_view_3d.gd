@@ -759,8 +759,8 @@ func _make_wake() -> CPUParticles3D:
 	p.initial_velocity_min = 0.05
 	p.initial_velocity_max = 0.2
 	p.gravity = Vector3.ZERO
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.2
+	p.scale_amount_min = 0.667
+	p.scale_amount_max = 1.33
 	var q := QuadMesh.new()
 	q.size = Vector2(0.35, 0.35)
 	q.orientation = PlaneMesh.FACE_Y

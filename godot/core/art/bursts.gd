@@ -3,6 +3,15 @@ extends Node3D
 ## Pooled particle bursts and soft light flashes, shared by the games (each game extends it with its own
 ## effects). Particles use the soft round materials of Fx, never flat squares.
 
+## A burst's sprites are `size` x SPRITE x size_unit across (x 0.5 to 1, shrinking or growing over their life): each
+## game sets the unit that suits its scale, so its sizes can stay small numbers.
+const SPRITE := 0.4
+
+var size_unit := 1.0:
+	set(v):
+		size_unit = v
+		for p in _pool:
+			(p.mesh as QuadMesh).size = Vector2.ONE * SPRITE * v
 var _pool: Array[CPUParticles3D] = []
 var _next := 0
 var _lights: Array[OmniLight3D] = []
@@ -17,7 +26,7 @@ func _ready() -> void:
 		p.explosiveness = 0.85
 		p.local_coords = false
 		var q := QuadMesh.new()
-		q.size = Vector2(0.4, 0.4)
+		q.size = Vector2.ONE * SPRITE * size_unit
 		p.mesh = q
 		add_child(p)
 		_pool.append(p)
