@@ -544,6 +544,12 @@ func _place_camera(delta: float, bpos: Vector3) -> void:
 	if phase != E.Phase.INTRO and phase != E.Phase.CARD and phase != E.Phase.FINAL and e != null and not game.setup:
 		pos.x = clampf(pos.x, inner.position.x, inner.end.x)
 		pos.z = clampf(pos.z, inner.position.y, inner.end.y)
+	# over the windmill, never through it
+	for g in h.gadgets:
+		if g["type"] == "windmill":
+			var d := Vector2(pos.x, pos.z).distance_to(g["hub"])
+			if d < 2.0:
+				pos.y = maxf(pos.y, lerpf(3.1, pos.y, smoothstep(0.6, 2.0, d)))
 	var ground := -10.0
 	var p2 := Vector2(pos.x, pos.z)
 	if h.index(p2) >= 0 and not h.solid_at(p2):

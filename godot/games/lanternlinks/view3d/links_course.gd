@@ -548,16 +548,27 @@ func _tee() -> void:
 	mat.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mat)
 	for sx in [-0.18, 0.18]:
-		var m := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 0.025
-		sm.height = 0.05
-		m.mesh = sm
-		var gm := _std(Color(1.0, 0.85, 0.45), 0.3, 0.0, 0.6)
+		# a tee marker: a little brass post with a glowing cap (not round, so it never passes for a ball)
+		var post := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = 0.012
+		cm.bottom_radius = 0.016
+		cm.height = 0.06
+		post.mesh = cm
+		post.material_override = _std(Color(0.8, 0.6, 0.3), 0.3, 0.9)
+		post.position = Vector3(t.x + sx, hgt + 0.03, t.y - 0.18)
+		add_child(post)
+		var cap := MeshInstance3D.new()
+		var cc := CylinderMesh.new()
+		cc.top_radius = 0.016
+		cc.bottom_radius = 0.016
+		cc.height = 0.012
+		cap.mesh = cc
+		var gm := _std(Color(1.0, 0.8, 0.4), 0.3, 0.0, 0.8)
 		glow_mats.append(gm)
-		m.material_override = gm
-		m.position = Vector3(t.x + sx, hgt + 0.03, t.y - 0.18)
-		add_child(m)
+		cap.material_override = gm
+		cap.position = post.position + Vector3(0, 0.036, 0)
+		add_child(cap)
 
 
 func _boosts() -> void:
