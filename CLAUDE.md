@@ -150,9 +150,12 @@ decisions below are settled unless the owner reopens them.
 27. Game 24, **Jelly Spike** (Blobby Volley-like, `godot/games/jellyspike/`): blob volleyball, the three-touch rule
    (reset when the ball crosses), rally points to 15 by two; a CPU that reads the ball now and then with aim noise;
    F2 or `--versus` for two players; the beach diorama (`view3d/spike_beach.gd`) cycles noon, sunset and night.
-28. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+28. Game 25, **Nova Wardens** (Space Invaders-like, `godot/games/novawardens/`): the classic rules in the arcade's
+   224 x 256 pixel space (ripple march, bombs, the mothership's 23rd shot, pixel shields shown as voxels); an
+   autopilot that leads its targets; the night coast (`view3d/nova_backdrop.gd`) with `alarm()` as the fleet descends.
+29. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-29. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+30. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

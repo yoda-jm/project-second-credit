@@ -194,6 +194,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   by `tools/blender/jellyspike_props.py`; sound effects and music by `tools/audio/jellyspike_sfx.py` and
   `jellyspike_music.py`.
 
+## Game 25 (Nova Wardens, working title)
+
+- Inspired by *Space Invaders* (Taito, 1978). None of its code, graphics or sounds are in this repo: the three aliens,
+  the cannon, the mothership, the night coast and the march beat are our own designs.
+- Models by `tools/blender/novawardens_models.py`, the night coast by `tools/blender/novawardens_city.py` (with shaders
+  in `godot/games/novawardens/shaders/`); sound effects and music by `tools/audio/novawardens_sfx.py` and
+  `novawardens_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

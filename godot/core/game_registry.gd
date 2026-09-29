@@ -321,8 +321,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/jellyspike/art/models/blob_red.glb", "model", 0.35],
 			["res://games/jellyspike/art/models/beach_ball.glb", "model", 0.3]],
 	},
+	{
+		"id": "novawardens",
+		"style": "Arcade",
+		"title": "Nova Wardens",
+		"tagline": "Hold the coast against the marching fleet, one shot at a time.",
+		"inspired_by": "Space Invaders (1978)",
+		"scene": "res://games/novawardens/scenes/novawardens_game.tscn",
+		"accent": Color(0.3, 1.0, 0.6),
+		"props": [["res://games/novawardens/art/models/squid.glb", "model", 0.35],
+			["res://games/novawardens/art/models/crab.glb", "model", 0.35],
+			["res://games/novawardens/art/models/octopus.glb", "model", 0.3]],
+	},
 ]
-
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
 	var out: Array[String] = []

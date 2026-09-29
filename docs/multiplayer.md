@@ -44,6 +44,7 @@ level, apart in time or space, racing the clock and each other's shadow), **Spli
 | 22 | **Tumbletop** (Q*bert) | Versus on one pyramid: each player paints cubes their own colour, stealing the other's | Co-op: two hoppers share the pyramid, the serpent chases the nearer; ghost race for the fastest round | Versus |
 | 23 | **Pop Voyage** (Pang) | Co-op for two travellers (the original's two-player mode) | Versus: split screen, balloons you pop drop onto the other's stage | Co-op |
 | 24 | **Jelly Spike** (Blobby Volley) | Versus on one keyboard (done, F2) | 2 v 2 with four blobs; a ghost-free tournament ladder against CPU temperaments | Versus, rollback preferred (fast physics) |
+| 25 | **Nova Wardens** (Space Invaders) | Alternating turns (the original two-player mode) | Co-op: two cannons defend together; versus: the second player steers the mothership | Ghost / co-op |
 
 ## Suggested order
 

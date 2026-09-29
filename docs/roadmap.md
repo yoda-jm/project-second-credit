@@ -52,6 +52,7 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 22 | Q*bert (1982) | *Tumbletop* | Diagonal hops on a cube pyramid, painting rules (two-step, undo), a chasing serpent lured off discs |
 | 23 | Pang (1989) | *Pop Voyage* | Splitting-ball physics, a look-ahead autopilot, a diorama per stage with its own sky, light and grade |
 | 24 | Blobby Volley (2000) | *Jelly Spike* | Ball-and-blob physics, the three-touch rule, a CPU with reading delay and aim noise, local versus |
+| 25 | Space Invaders (1978) | *Nova Wardens* | The ripple march, per-pixel shields as voxels, an autopilot that leads its targets, a reactive night backdrop |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own
