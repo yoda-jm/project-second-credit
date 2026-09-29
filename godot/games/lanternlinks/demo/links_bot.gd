@@ -116,8 +116,8 @@ func _next_stage() -> bool:
 			angle = s[1]
 			power = s[2]
 	if skill > 0.0:
-		angle += rng.randfn(0.0, 0.03 * skill)
-		power = clampf(power * (1.0 + rng.randfn(0.0, 0.06 * skill)), 0.05, 1.0)
+		angle += rng.randfn(0.0, 0.05 * skill)
+		power = clampf(power * (1.0 + rng.randfn(0.0, 0.09 * skill)), 0.05, 1.0)
 	ready = true
 	return true
 

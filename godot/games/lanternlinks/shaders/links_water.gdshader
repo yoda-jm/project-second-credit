@@ -4,8 +4,9 @@
 shader_type spatial;
 render_mode cull_back, specular_schlick_ggx;
 
-uniform vec3 deep : source_color = vec3(0.02, 0.1, 0.12);
-uniform vec3 shallow : source_color = vec3(0.08, 0.28, 0.3);
+uniform vec3 deep : source_color = vec3(0.04, 0.16, 0.17);
+uniform vec3 shallow : source_color = vec3(0.12, 0.36, 0.34);
+uniform vec3 sky_tint : source_color = vec3(1.0, 0.75, 0.5);   // the sky it mirrors at grazing angles
 uniform float flow = 0.0;
 uniform vec3 splash_pos = vec3(0.0, -100.0, 0.0);
 uniform float splash_t = 10.0;
@@ -40,7 +41,7 @@ void fragment() {
 	NORMAL_MAP = normalize(vec3(-hx * 3.0, -hz * 3.0, 1.0)) * 0.5 + 0.5;
 	NORMAL_MAP_DEPTH = 1.0;
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
-	ALBEDO = mix(deep, shallow, 0.3 + 0.4 * h0) * (1.0 - fres * 0.5);
+	ALBEDO = mix(mix(deep, shallow, 0.3 + 0.4 * h0), sky_tint * 0.6, fres * 0.7);
 	ROUGHNESS = 0.04;
 	METALLIC = 0.0;
 	SPECULAR = 0.9;

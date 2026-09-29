@@ -94,8 +94,10 @@ func ring(pos: Vector3, col: Color, size: float, life: float) -> void:
 	_next_r = (_next_r + 1) % RINGS
 	var mi: MeshInstance3D = r["node"]
 	mi.position = pos
+	mi.scale = Vector3.ONE * size * 0.2
 	mi.visible = true
 	(r["mat"] as ShaderMaterial).set_shader_parameter("col", col)
+	(r["mat"] as ShaderMaterial).set_shader_parameter("k", 0.0)
 	r["age"] = 0.0
 	r["life"] = life
 	r["size"] = size
@@ -117,7 +119,12 @@ func _round() -> void:
 func burst(pos: Vector3, color: Color, amount: int, speed: float, life: float, size: float, glow: float, gravity: float,
 		up: float = 1.0, kind: String = "") -> void:
 	super.burst(pos, color, amount, speed, life, size, glow, gravity, up, kind)
-	_pool[(_next - 1 + _pool.size()) % _pool.size()].spread = 70.0
+	# on a mini-golf scale the sprite itself must be small: size it directly (the pool's quads are 0.4 m)
+	var p := _pool[(_next - 1 + _pool.size()) % _pool.size()]
+	p.spread = 70.0
+	(p.mesh as QuadMesh).size = Vector2.ONE * size * 2.0
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.0
 
 
 func _process(delta: float) -> void:

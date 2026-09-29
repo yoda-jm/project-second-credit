@@ -236,9 +236,9 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"sink":
 			_sink_t = 0.0
 			var cp := Vector3(e.hole.cup.x, e.hole.cup_h + 0.02, e.hole.cup.y)
-			fx.burst(cp, Color(1.0, 0.85, 0.45), 40, 1.6, 0.9, 0.05, 1.0, -1.5, 1.0, "glow")
+			fx.burst(cp, Color(0.7, 0.55, 0.28), 22, 1.4, 0.8, 0.03, 1.0, -1.5, 1.0, "glow")
 			fx.ring(cp, Color(1.0, 0.85, 0.5), 0.8, 0.7)
-			fx.flash(cp + Vector3(0, 0.4, 0), Color(1.0, 0.8, 0.5), 2.2)
+			fx.flash(cp + Vector3(0, 0.4, 0), Color(1.0, 0.8, 0.5), 1.2)
 		"holed":
 			var cp2 := Vector3(e.hole.cup.x, e.hole.cup_h + 0.05, e.hole.cup.y)
 			var over: int = int(d["strokes"]) - int(d["par"])
@@ -353,17 +353,18 @@ func _update_ball(delta: float, p: Vector3) -> void:
 	_ball.scale = Vector3(1.0 + (1.0 - sq) * 0.5, sq, 1.0 + (1.0 - sq) * 0.5)
 	var lamp := garden.lamp_level()
 	_ball_mat.emission = col.lerp(Color.WHITE, 0.5)
-	_ball_mat.emission_energy_multiplier = lamp * 0.25
+	_ball_mat.emission_energy_multiplier = maxf(0.0, lamp - 0.3) * 0.3
 	_ball_light.visible = showing
 	_ball_light.position = p + Vector3(0, 0.08, 0)
 	_ball_light.light_color = col.lerp(Color.WHITE, 0.3)
-	_ball_light.light_energy = 0.15 + lamp * 0.5
+	_ball_light.light_energy = maxf(0.0, lamp - 0.3) * 0.45
 	# the trail: recent positions while the ball moves fast
 	var speed := moved.length() / maxf(delta, 1e-4)
 	if showing and speed > 0.4:
 		_trail_pts.append(p)
 	elif not _trail_pts.is_empty():
-		_trail_pts.pop_front()
+		for k in mini(3, _trail_pts.size()):
+			_trail_pts.pop_front()
 	while _trail_pts.size() > TRAIL:
 		_trail_pts.pop_front()
 	var im := _trail.mesh as ImmediateMesh
@@ -380,8 +381,8 @@ func _update_ball(delta: float, p: Vector3) -> void:
 				dirv = Vector3.RIGHT
 			var side := dirv.cross(cam_fwd).normalized()
 			var f := float(i) / (_trail_pts.size() - 1)
-			var wdt := P.R * 0.8 * f
-			var c := Color(col.r, col.g, col.b, f * (0.35 + lamp * 0.45))
+			var wdt := P.R * 0.45 * f
+			var c := Color(col.r, col.g, col.b, f * f * (0.15 + lamp * 0.35))
 			im.surface_set_color(c)
 			im.surface_add_vertex(q + side * wdt)
 			im.surface_set_color(c)
@@ -471,7 +472,7 @@ func _update_putter(delta: float, bpos: Vector3) -> void:
 	# the head's face (its +X) faces along the shot; the shaft leans back over the golfer's hands
 	_putter.basis = Basis(Vector3.UP, -ang)
 	var fade := 1.0 if aiming else clampf(_putter_swing * 3.0, 0.0, 1.0)
-	_putter.scale = Vector3.ONE * (0.6 + 0.4 * fade)
+	_putter.scale = Vector3.ONE * 0.78 * (0.6 + 0.4 * fade)
 
 
 # --- the camera ---

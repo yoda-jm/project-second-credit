@@ -135,7 +135,7 @@ static func _clear(h: LinksHole, a: Vector2, b: Vector2) -> bool:
 
 func _plan() -> void:
 	_wait_task()
-	_bot.skill = 0.45 if demo else 0.7
+	_bot.skill = 0.8 if demo else 0.9
 	_cpu_at = engine.clock + LEAD
 	_cpu_ready = false
 	cpu_thinking = true

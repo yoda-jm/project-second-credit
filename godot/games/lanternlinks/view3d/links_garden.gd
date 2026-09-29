@@ -43,8 +43,8 @@ func build() -> void:
 	env.glow_hdr_threshold = 1.0
 	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
 	env.set_glow_level(2, 1.0)
-	env.set_glow_level(3, 0.8)
-	env.set_glow_level(4, 0.6)
+	env.set_glow_level(3, 0.45)
+	env.set_glow_level(4, 0.15)
 	env.fog_enabled = true
 	env.fog_sky_affect = 0.0
 	env.adjustment_enabled = true
@@ -90,7 +90,10 @@ func build() -> void:
 	pm.subdivide_depth = 4
 	pm.subdivide_width = 4
 	lawn.mesh = pm
-	lawn.material_override = Pbr.material("grass_lush", Color(0.62, 0.74, 0.5), 0.45)
+	var lm := Pbr.material("grass_lush", Color(0.62, 0.74, 0.5), 0.45).duplicate() as StandardMaterial3D
+	lm.metallic_specular = 0.15   # a lawn, not a glittering carpet, under the low sun
+	lm.normal_scale = 0.5
+	lawn.material_override = lm
 	lawn.position = Vector3(0, C.GROUND, 0)
 	add_child(lawn)
 	_dress = Node3D.new()
@@ -383,8 +386,8 @@ func _flowers(hole: LinksHole, rng: RandomNumberGenerator) -> void:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
 	var sp := SphereMesh.new()
-	sp.radius = 0.03
-	sp.height = 0.045
+	sp.radius = 0.018
+	sp.height = 0.03
 	sp.radial_segments = 6
 	sp.rings = 3
 	mm.mesh = sp
@@ -394,8 +397,8 @@ func _flowers(hole: LinksHole, rng: RandomNumberGenerator) -> void:
 	var leaves := MultiMesh.new()
 	leaves.transform_format = MultiMesh.TRANSFORM_3D
 	var lm := SphereMesh.new()
-	lm.radius = 0.07
-	lm.height = 0.08
+	lm.radius = 0.05
+	lm.height = 0.06
 	lm.radial_segments = 8
 	lm.rings = 4
 	leaves.mesh = lm
@@ -405,10 +408,10 @@ func _flowers(hole: LinksHole, rng: RandomNumberGenerator) -> void:
 			if hole.kind[y * hole.w + x] != H.WALL:
 				continue
 			var bed := _course._bed(x, y) if _course else H.CELL
-			for k in 3:
+			for k in 4:
 				var p := Vector2(x + rng.randf_range(0.28, 0.72), y + rng.randf_range(0.28, 0.72)) * H.CELL
 				lx.append(Transform3D(Basis().scaled(Vector3(1.0, rng.randf_range(0.5, 0.9), 1.0)), Vector3(p.x, bed + 0.01, p.y)))
-				for f in 2:
+				for f in 3:
 					var q := p + Vector2(rng.randf_range(-0.05, 0.05), rng.randf_range(-0.05, 0.05))
 					xs.append(Transform3D(Basis(), Vector3(q.x, bed + 0.05 + rng.randf() * 0.02, q.y)))
 					cs.append(palette[rng.randi() % palette.size()])
@@ -501,6 +504,7 @@ func _apply() -> void:
 	if _bulbs:
 		(_bulbs.material_override as StandardMaterial3D).emission_energy_multiplier = lamp * 2.6
 	if _course:
+		_course.water_mat.set_shader_parameter("sky_tint", _k3(t, Color(1.0, 0.78, 0.55), Color(0.85, 0.5, 0.45), Color(0.12, 0.14, 0.25)))
 		for m2 in _course.glow_mats:
 			m2.emission_energy_multiplier = 0.4 + lamp * 1.6
 	_flies.emitting = t > 0.35
