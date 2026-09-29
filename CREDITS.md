@@ -202,6 +202,15 @@ Second Credit stands on the work of many people. Everything below is free and op
   in `godot/games/novawardens/shaders/`); sound effects and music by `tools/audio/novawardens_sfx.py` and
   `novawardens_music.py`.
 
+## Game 26 (Lantern Links, working title)
+
+- Inspired by the 80s mini-golf games *Mini-Putt* (Accolade, 1987) and *Zany Golf* (Electronic Arts, 1988). None of their
+  holes, code, graphics or sounds are in this repo: the nine holes of the Lantern Garden, the garden and its props,
+  the sounds and the music are our own.
+- Props by `tools/blender/lanternlinks_models.py`; the course's felt, rails, beds, water, pipes and loop are built in
+  the game from the hole files (`godot/games/lanternlinks/view3d/links_course.gd`), the sky adapted from Jelly Spike's;
+  sound effects and music by `tools/audio/lanternlinks_sfx.py` and `lanternlinks_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

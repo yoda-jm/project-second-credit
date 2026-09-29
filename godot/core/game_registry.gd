@@ -334,6 +334,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/novawardens/art/models/crab.glb", "model", 0.35],
 			["res://games/novawardens/art/models/octopus.glb", "model", 0.3]],
 	},
+	{
+		"id": "lanternlinks",
+		"style": "Sports",
+		"title": "Lantern Links",
+		"tagline": "Nine holes of mini-golf in a lantern garden, from golden hour into the night.",
+		"inspired_by": "Mini-Putt (1987), Zany Golf (1988)",
+		"scene": "res://games/lanternlinks/scenes/lanternlinks_game.tscn",
+		"accent": Color(1.0, 0.72, 0.38),
+		"props": [["res://games/lanternlinks/art/models/windmill.glb", "model", 0.3],
+			["res://games/lanternlinks/art/models/lantern_post.glb", "model", 0.3],
+			["res://games/lanternlinks/art/models/flag.glb", "model", 0.35]],
+	},
 ]
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:

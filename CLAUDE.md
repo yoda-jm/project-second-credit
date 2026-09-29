@@ -153,9 +153,14 @@ decisions below are settled unless the owner reopens them.
 28. Game 25, **Nova Wardens** (Space Invaders-like, `godot/games/novawardens/`): the classic rules in the arcade's
    224 x 256 pixel space (ripple march, bombs, the mothership's 23rd shot, pixel shields shown as voxels); an
    autopilot that leads its targets; the night coast (`view3d/nova_backdrop.gd`) with `alarm()` as the fleet descends.
-29. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+29. Game 26, **Lantern Links** (mini-golf, after Mini-Putt and Zany Golf, `godot/games/lanternlinks/`): nine holes in
+   `courses/lantern_garden.links` (our text format: cells, heights, ramps, bumps, gadgets; spec in
+   `docs/games/lanternlinks.md`), arcade 2.5D ball physics (`engine/links_physics.gd`), windmill, loop, jump, pipes,
+   bumpers, movers, a turnstile; 1-4 seats, any the CPU (`demo/links_bot.gd`, plans on a worker thread); golden hour
+   to night across the round. `--hole=N`, `--players=N`.
+30. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-30. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+31. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

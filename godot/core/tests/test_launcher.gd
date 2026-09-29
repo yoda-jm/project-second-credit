@@ -74,7 +74,7 @@ func test_styles_filter_the_cards() -> void:
 	var launcher = runner.scene()
 	launcher._set_style("Sports")
 	var vis: Array = launcher._visible_games()
-	assert_int(vis.size()).is_equal(1)
+	assert_int(vis.size()).is_equal(GameRegistry.GAMES.filter(func(g): return g.get("style", "") == "Sports").size())
 	assert_str(GameRegistry.GAMES[launcher._selected]["style"]).is_equal("Sports")
 	launcher._set_style("")
 	assert_int(launcher._visible_games().size()).is_equal(GameRegistry.GAMES.size())
