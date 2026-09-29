@@ -717,12 +717,12 @@ func _pipe(g: Dictionary) -> Node3D:
 					st.add_vertex(v[0])
 		prev = ring
 	var glass := StandardMaterial3D.new()
-	glass.albedo_color = Color(0.75, 0.9, 1.0, 0.22)
+	glass.albedo_color = Color(0.75, 0.9, 1.0, 0.1)
 	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	glass.roughness = 0.05
-	glass.metallic_specular = 1.0
+	glass.metallic_specular = 0.6
 	glass.rim_enabled = true
-	glass.rim = 0.6
+	glass.rim = 0.25
 	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var tube := MeshInstance3D.new()
 	tube.mesh = st.commit()

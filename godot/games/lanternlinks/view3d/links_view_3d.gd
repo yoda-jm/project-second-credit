@@ -527,7 +527,7 @@ func _place_camera(delta: float, bpos: Vector3) -> void:
 			E.Phase.SUNK:
 				var cup2 := Vector3(h.cup.x, h.cup_h, h.cup.y)
 				var a2 := atan2(_cam_pos.z - cup2.z, _cam_pos.x - cup2.x) + delta * 0.25
-				pos = cup2 + Vector3(cos(a2) * 1.1, 0.55, sin(a2) * 1.1)
+				pos = cup2 + Vector3(cos(a2) * 1.0, 0.85, sin(a2) * 1.0)
 				look = cup2 + Vector3(0, 0.05, 0)
 				rate = 2.0
 			E.Phase.LOST, E.Phase.PICKUP:
