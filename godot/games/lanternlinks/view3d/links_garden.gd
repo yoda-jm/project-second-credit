@@ -504,7 +504,7 @@ func _apply() -> void:
 	for l in _lights:
 		l.light_energy = lamp * 1.4
 	for s in _floods:
-		s.light_energy = smoothstep(0.35, 0.9, t) * 3.0
+		s.light_energy = smoothstep(0.2, 0.8, t) * 4.5
 		s.visible = s.light_energy > 0.01
 	for m in _glows:
 		if m is StandardMaterial3D:
