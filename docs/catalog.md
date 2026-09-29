@@ -1,6 +1,6 @@
 # Candidate catalog
 
-All 52 games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the inspiration only; every remake gets an original title.
+All 53 games considered for remakes, generated from `catalog/` by `catalog/tools/make_briefs.py`. The roadmap games come first ([roadmap.md](roadmap.md)); the rest are parked ideas, some of which the stack makes almost free later. Descriptions were drafted from memory and not verified. Names refer to the inspiration only; every remake gets an original title.
 
 ## Roadmap
 
@@ -629,3 +629,15 @@ All 52 games considered for remakes, generated from `catalog/` by `catalog/tools
 **Remake ideas.** A 3D armada with a light show per wave, destructible bunkers, music that locks to the march, boss waves and formation variants, chain bonuses, co-op and versus (send cleared rows to your rival).
 
 **Modern takes.** Space Invaders Extreme (2008), Space Invaders Infinity Gene (2009), Space Invaders Forever (2020)
+
+### Mini-Putt
+
+*1987 · Accolade · DOS / C64 / Amiga · Sports / Mini-golf · remake effort: small*
+
+**Loop.** Putt a ball round short walled holes, each with a gadget (windmills, ramps, loops, water, moving walls), in as few strokes as possible over a course of holes, alone or in turns with friends.
+
+**Why remake it.** Mini-golf is the friendliest sport there is and a physics toy at heart: a remake can make every hole a little lit diorama, the ball's run a show, and hot seat play a party. Zany Golf (1988) showed how wild the gadgets can get.
+
+**Remake ideas.** Lit 3D dioramas per hole, a ball with real bounce and roll, a light show for a hole in one, hot seat with CPU seats, a hole editor and shareable courses.
+
+**Modern takes.** Golf With Your Friends (2020), Walkabout Mini Golf (2021, VR)

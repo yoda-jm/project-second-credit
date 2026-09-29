@@ -1,6 +1,6 @@
 # Candidate catalog
 
-Source for a single-page catalog of 52 games considered for remakes, with screenshots, gameplay notes, build
+Source for a single-page catalog of 53 games considered for remakes, with screenshots, gameplay notes, build
 order and the survey of existing free versions.
 
 - `games.json`: core data (year, platform, loop, pitch, effort 1–5, `roadmap` position, `adds` to the stack)

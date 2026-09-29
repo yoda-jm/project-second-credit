@@ -744,5 +744,19 @@
   "pitch": "The simplest shooter there is, and one of the easiest to make spectacular: a marching 3D armada, bunkers that chip away voxel by voxel, a heartbeat that quickens with the march. Invaders Extreme and Infinity Gene show how far the formula stretches.",
   "complexity": 1,
   "modern": "Space Invaders Extreme (2008), Space Invaders Infinity Gene (2009), Space Invaders Forever (2020)"
+ },
+ {
+  "id": "miniputt",
+  "name": "Mini-Putt",
+  "year": 1987,
+  "platform": "DOS / C64 / Amiga",
+  "dev": "Accolade",
+  "genre": "Sports / Mini-golf",
+  "wiki": "Mini-Putt",
+  "source": "you",
+  "loop": "Putt a ball round short walled holes, each with a gadget (windmills, ramps, loops, water, moving walls), in as few strokes as possible over a course of holes, alone or in turns with friends.",
+  "pitch": "Mini-golf is the friendliest sport there is and a physics toy at heart: a remake can make every hole a little lit diorama, the ball's run a show, and hot seat play a party. Zany Golf (1988) showed how wild the gadgets can get.",
+  "complexity": 2,
+  "modern": "Golf With Your Friends (2020), Walkabout Mini Golf (2021, VR)"
  }
 ]

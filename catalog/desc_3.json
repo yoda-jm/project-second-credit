@@ -40,5 +40,12 @@
   "challenge": "Timing single shots against a quickening march, managing the bunkers, and not letting the invaders reach the ground.",
   "unique": "The march that speeds up as you win, with its four-note bass heartbeat keeping pace: tension built from almost nothing.",
   "remake_hooks": "A 3D armada with a light show per wave, destructible bunkers, music that locks to the march, boss waves and formation variants, chain bonuses, co-op and versus (send cleared rows to your rival)."
+ },
+ "miniputt": {
+  "gameplay": "Each hole is a short felt lane bordered by walls, with a tee, a cup and one or two gadgets: a windmill whose sails block the tunnel, ramps and jumps, water, sand, moving obstacles. The player aims, sets the power and putts; banks and slopes do the rest. Strokes are counted against par over a course of holes.",
+  "levels": "Several themed courses of nine holes each (numbers to check against the original).",
+  "challenge": "Reading banks and slopes, timing shots through moving gadgets, and the nerve to go for the hole in one.",
+  "unique": "A calm, readable sport turned into a set of little physics puzzles, one per hole, playable by the whole family in turns.",
+  "remake_hooks": "Lit 3D dioramas per hole, a ball with real bounce and roll, a light show for a hole in one, hot seat with CPU seats, a hole editor and shareable courses."
  }
 }
