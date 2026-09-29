@@ -20,6 +20,9 @@ uniform float far_dist = 300.0;
 uniform vec3 glint_dir = vec3(0.3, 0.1, -0.95); // towards the sun or the moon: its path of glitter on the water
 uniform vec3 glint_col : source_color = vec3(1.0, 0.8, 0.5);
 uniform float glint = 0.0;
+uniform float glint_path = 0.0;   // a broad warm column under a low sun (golden hour)
+uniform float glint_ripple = 2.5; // how rough the mirror is: wider, more broken glitter
+uniform float sheen = 0.15;       // how much of the horizon colour the grazing water mirrors
 
 varying vec3 wpos;
 varying float dist_out;
@@ -96,7 +99,7 @@ void fragment() {
 	float ca = vnoise(wpos.xz * 1.7 + vec2(t * 0.35, -t * 0.25)) * vnoise(wpos.xz * 2.3 - vec2(t * 0.3, t * 0.2));
 	col += shallow_col * smoothstep(0.25, 0.55, ca) * smoothstep(8.0, 1.0, d) * 0.35;
 	float fr = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 5.0);
-	col = mix(col, sheen_col, fr * 0.15);
+	col = mix(col, sheen_col, fr * sheen);
 	// the breakers: a crest line rolling in, foam trailing behind it, lace in the surf zone
 	float dc = crest_at(wpos.x);
 	float ph = cycle(wpos.x);
@@ -112,9 +115,14 @@ void fragment() {
 	// the glitter path: sparkles where the ripples mirror the sun (or the moon) to the camera
 	if (glint > 0.0) {
 		vec3 vd = normalize(wpos - CAMERA_POSITION_WORLD);
-		vec3 nwg = normalize(vec3(-g.x * 2.5, 1.0, -g.y * 2.5));
+		vec3 nwg = normalize(vec3(-g.x * glint_ripple, 1.0, -g.y * glint_ripple));
 		float r = max(dot(reflect(vd, nwg), normalize(glint_dir)), 0.0);
-		EMISSION = glint_col * (pow(r, 350.0) * 6.0 + pow(r, 40.0) * 0.25) * glint * (1.0 - clamp(lace, 0.0, 1.0));
+		// the smooth column: the reflection of the sun's halo off the gently tilted swell
+		vec3 nws = normalize(vec3(-g.x * 0.6, 1.0, -g.y * 0.6));
+		float rs = max(dot(reflect(vd, nws), normalize(glint_dir)), 0.0);
+		float sparkle = pow(r, 350.0) * 6.0 + pow(r, 40.0) * 0.25;
+		float column = (pow(rs, 60.0) * 0.8 + pow(rs, 12.0) * 0.18) * glint_path;
+		EMISSION = glint_col * (sparkle + column) * glint * (1.0 - clamp(lace, 0.0, 1.0));
 	}
 	ALBEDO = col;
 	ROUGHNESS = gloss + far * 0.1 + lace * 0.4;

@@ -5,8 +5,10 @@ extends Node3D
 ## 0 Noon (high sun, turquoise sea), 1 Golden Hour (the sun low over the sea, torches lit), 2 Moonlit Luau (night:
 ## lanterns, tiki torches and the bonfire). build(variant) loads the diorama, swaps the materials the Blender script
 ## marks by name for the beach shaders (sand grain, the sea and its breakers, the swash on the sand, the net, palms and
-## flags in the breeze, clouds, lanterns, flames), adds the sky dome, seagulls, sparks and lights, and animates the
-## spectators (crabs scuttle, gulls turn and hop; cheer(side) makes them celebrate), boats and clouds in _process.
+## flags in the breeze, clouds, lanterns, flames; wood and thatch get a grain, palm trunks ring bark), adds the sky
+## dome, seagulls, sparks and lights, and animates the spectators (crabs scuttle, gulls turn and hop; cheer(side) makes
+## them celebrate), boats and clouds in _process. A BeachLife child brings the occasional background event (crabs
+## crossing, dolphins, a gull landing on a post, kites, a falling coconut, a turtle, pelicans, a ferry or a sailboat).
 ## The view owns the WorldEnvironment and the sun: it reads environment_for(variant) (the same keys as PopBackdrop)
 ## and may call make_environment() and setup_sun() with that dictionary.
 ##
@@ -22,8 +24,26 @@ const DOME_RADIUS := 1500.0
 const BOARD_SIZE := Vector2(2.8, 1.5)  ## the scoreboard's dark face, metres
 
 const VARIANTS := [
-	{   # 0 Noon: the sun high behind the camera on the left, a bright turquoise sea
-		"name": "Noon",
+	{   # 0 Golden Hour: a big low sun just over the sea on the right, a gold-to-rose sky, clouds lit from below, the
+		# sun's path glittering on the water, long warm shadows across the court, rim light, the torches just lit
+		"name": "Golden Hour", "key": "golden",
+		"sky_top": Color("#27306e"), "sky_mid": Color("#c9667e"), "sky_horizon": Color("#ffa650"),
+		"mid_height": 0.1, "top_height": 0.42,
+		"ground_horizon": Color("#e89060"), "ground_bottom": Color("#7a5068"),
+		"sun_color": Color("#ffa258"), "light_from": Vector3(0.66, 0.19, -0.73), "sun_energy": 2.1,
+		"sun_sky": Vector3(0.27, 0.058, -0.96), "sun_disc": 1.0, "sun_glow": 0.9, "sun_size": 0.13,
+		"sun_disc_col": Color("#ffd89a"), "sun_hot": 4.5,
+		"horizon_glow": 0.85, "glow_col": Color("#ff8a3c"), "anti_glow": 0.45, "anti_col": Color("#e0869a"),
+		"streaks": 0.9, "streak_col": Color("#ffc27a"), "streak_shade": Color("#8a5a7c"), "cloud_glow": 0.9,
+		"ambient_color": Color("#a07ab0"), "ambient_energy": 0.62,
+		"fog_color": Color("#e8906c"), "fog_density": 0.0021, "fog_sun_scatter": 0.6,
+		"exposure": 1.02, "glow_intensity": 0.75, "glow_threshold": 1.0, "saturation": 1.18, "contrast": 1.07,
+		"clouds": 0.34, "cloud_shade": Color("#7a4c78"), "stars": 0.0, "moon": 0.0,
+		"water": [Color("#1a3f6e"), Color("#b0707a"), Color("#3a8c98"), Color("#c09070"), Color("#ffe6c8")],
+		"wave": 0.1, "wind": 0.025, "lanterns": 1.6, "fire": true, "night": false,
+	},
+	{   # 1 Noon: the sun high behind the camera on the left, a bright turquoise sea
+		"name": "Noon", "key": "noon",
 		"sky_top": Color("#2a7fe0"), "sky_mid": Color("#79bdf2"), "sky_horizon": Color("#d8f1fb"),
 		"ground_horizon": Color("#c4e2ea"), "ground_bottom": Color("#e6d4a8"),
 		"sun_color": Color("#fff3dc"), "light_from": Vector3(-0.45, 0.78, 0.45), "sun_energy": 1.85,
@@ -35,21 +55,8 @@ const VARIANTS := [
 		"water": [Color("#0a6aa6"), Color("#5aa8d4"), Color("#34d0c4"), Color("#e8d4a4"), Color("#f6fcff")],
 		"wave": 0.12, "wind": 0.03, "lanterns": 0.0, "fire": false, "night": false,
 	},
-	{   # 1 Golden Hour: the sun low over the sea on the right, warm side light, the torches just lit
-		"name": "Golden Hour",
-		"sky_top": Color("#2f4a92"), "sky_mid": Color("#b77a9a"), "sky_horizon": Color("#ffbf72"),
-		"ground_horizon": Color("#e0a27a"), "ground_bottom": Color("#9a6a5a"),
-		"sun_color": Color("#ffb46e"), "light_from": Vector3(0.86, 0.26, -0.05), "sun_energy": 1.55,
-		"sun_sky": Vector3(0.28, 0.065, -0.96), "sun_disc": 1.0, "sun_glow": 0.95,
-		"ambient_color": Color("#b890a8"), "ambient_energy": 0.7,
-		"fog_color": Color("#eaa47e"), "fog_density": 0.0035, "fog_sun_scatter": 0.3,
-		"exposure": 1.0, "glow_intensity": 0.6, "glow_threshold": 1.1, "saturation": 1.12, "contrast": 1.05,
-		"clouds": 0.3, "cloud_shade": Color("#9a6a8a"), "stars": 0.0, "moon": 0.0,
-		"water": [Color("#1d4f7c"), Color("#c89088"), Color("#3fa8a8"), Color("#c8a07a"), Color("#fff0dc")],
-		"wave": 0.1, "wind": 0.025, "lanterns": 1.4, "fire": true, "night": false,
-	},
 	{   # 2 Moonlit Luau: night; moonlight from behind the camera, lanterns, torches and the bonfire
-		"name": "Moonlit Luau",
+		"name": "Moonlit Luau", "key": "night",
 		"sky_top": Color("#040a20"), "sky_mid": Color("#0d1c48"), "sky_horizon": Color("#2c3c74"),
 		"ground_horizon": Color("#1a2450"), "ground_bottom": Color("#10142a"),
 		"sun_color": Color("#a4b8ff"), "light_from": Vector3(-0.35, 0.6, 0.72), "sun_energy": 0.4,
@@ -65,6 +72,7 @@ const VARIANTS := [
 ]
 
 var variant := 0
+var key := "golden"  ## the variant's look: golden, noon or night
 var _t := 0.0
 var _bob: Array = []      ## [node, rest transform, height, rate, phase, roll]
 var _drift: Array = []    ## [node, speed, x min, x max]
@@ -147,6 +155,11 @@ static func setup_sun(sun: DirectionalLight3D, d: Dictionary) -> void:
 	sun.light_energy = d["sun_energy"]
 	sun.shadow_enabled = true
 	sun.directional_shadow_max_distance = 55.0
+	# two cascades: the court and the near props in the first, the long palm shadows in the second (four cost a lot
+	# more with the palms' leaflets and gain little at this range)
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+	sun.directional_shadow_split_1 = 0.3
+	sun.directional_shadow_blend_splits = true
 
 
 ## The scoreboard's blank face in this node's space: origin at its centre, basis x along the board, -z into it
@@ -166,6 +179,7 @@ func build(v: int) -> void:
 		remove_child(c)
 		c.queue_free()
 	variant = clampi(v, 0, VARIANTS.size() - 1)
+	key = VARIANTS[variant]["key"]
 	_t = 0.0
 	_bob.clear()
 	_drift.clear()
@@ -188,12 +202,16 @@ func build(v: int) -> void:
 	var night: bool = d["night"]
 	var gull_body := Color("#f4f4f2") if not night else Color("#8a92b0")
 	var gull_tip := Color("#3a3e46") if not night else Color("#1a1e2a")
-	if variant != 2:
+	if key != "night":
 		_add_birds(3, Vector3(-9, 10.5, -16), Vector3(6, 1.5, 4), gull_body, gull_tip, 0.5, 1.0)
 		_add_birds(3, Vector3(26, 11.5, -20), Vector3(6, 1.5, 4), gull_body, gull_tip, 0.5, 1.0)
 		_add_birds(4, Vector3(60, 22, -120), Vector3(18, 3, 12), gull_body, gull_tip, 0.9, 0.8)
 	if d["fire"]:
 		_add_sparks()
+	var life := BeachLife.new()
+	life.name = "life"
+	add_child(life)
+	life.setup(self, root, d, 24100 + variant)
 
 
 func _add_sky(d: Dictionary) -> void:
@@ -215,11 +233,20 @@ func _add_sky(d: Dictionary) -> void:
 	sky.set_shader_parameter("ground_col", d["fog_color"])
 	sky.set_shader_parameter("sun_dir", (d["sun_sky"] as Vector3).normalized())
 	sky.set_shader_parameter("sun_col", d["sun_color"])
+	if d.has("sun_disc_col"):
+		sky.set_shader_parameter("disc_col", d["sun_disc_col"])
+		sky.set_shader_parameter("disc_mix", 1.0)
 	sky.set_shader_parameter("sun_disc", d["sun_disc"])
-	sky.set_shader_parameter("sun_size", 0.05)
+	sky.set_shader_parameter("sun_size", d.get("sun_size", 0.05))
+	sky.set_shader_parameter("mid_height", d.get("mid_height", 0.18))
+	sky.set_shader_parameter("top_height", d.get("top_height", 0.85))
+	for k in ["horizon_glow", "glow_col", "anti_glow", "anti_col", "sun_hot", "streaks", "streak_col", "streak_shade",
+			"cloud_glow"]:
+		if d.has(k):
+			sky.set_shader_parameter(k, d[k])
 	sky.set_shader_parameter("sun_glow", d["sun_glow"])
 	sky.set_shader_parameter("cloud_amount", d["clouds"])
-	sky.set_shader_parameter("cloud_col", (d["sky_horizon"] as Color).lerp(Color.WHITE, 0.6))
+	sky.set_shader_parameter("cloud_col", (d["sky_horizon"] as Color).lerp(Color.WHITE, 0.6 if key != "golden" else 0.25))
 	sky.set_shader_parameter("cloud_shade", d["cloud_shade"])
 	sky.set_shader_parameter("stars", d["stars"])
 	sky.set_shader_parameter("moon", d["moon"])
@@ -241,7 +268,7 @@ func _dress(root: Node3D, d: Dictionary) -> void:
 		var mi := n as MeshInstance3D
 		var nm := String(mi.name)
 		var casts := nm.begins_with("near_") and not nm in ["near_sand", "near_swash", "near_prints", "near_court",
-				"near_netmesh"]
+				"near_netmesh", "near_lanterns", "near_grass"]
 		casts = casts or nm.begins_with("crab_") or nm.begins_with("gull_")
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
@@ -260,7 +287,7 @@ func _material_for(mn: String, src: Material, d: Dictionary) -> Material:
 	match mn:
 		"sand":
 			var s := _shader("beach_sand")
-			s.set_shader_parameter("sparkle", 1.0 if variant == 0 else (0.5 if variant == 1 else 0.0))
+			s.set_shader_parameter("sparkle", {"noon": 1.0, "golden": 0.8, "night": 0.0}[key])
 			s.set_shader_parameter("tint", Color.WHITE if not night else Color(0.8, 0.84, 1.0))
 			m = s
 		"sea":
@@ -274,10 +301,14 @@ func _material_for(mn: String, src: Material, d: Dictionary) -> Material:
 			w.set_shader_parameter("wave_height", d["wave"])
 			w.set_shader_parameter("gloss", 0.04 if night else 0.06)
 			w.set_shader_parameter("foam", 0.55 if night else 1.0)
-			if variant == 1:
+			if key == "golden":
 				w.set_shader_parameter("glint_dir", (d["sun_sky"] as Vector3).normalized())
-				w.set_shader_parameter("glint_col", Color("#ffc47a"))
-				w.set_shader_parameter("glint", 1.0)
+				w.set_shader_parameter("glint_col", Color("#ffc070"))
+				w.set_shader_parameter("glint", 1.3)
+				w.set_shader_parameter("glint_path", 1.0)
+				w.set_shader_parameter("glint_ripple", 3.2)
+				w.set_shader_parameter("sheen", 0.45)
+				w.set_shader_parameter("sheen_col", Color("#ffb070"))
 			elif d.has("moon_dir"):
 				w.set_shader_parameter("glint_dir", (d["moon_dir"] as Vector3).normalized())
 				w.set_shader_parameter("glint_col", Color("#c8d4ff"))
@@ -297,15 +328,32 @@ func _material_for(mn: String, src: Material, d: Dictionary) -> Material:
 		"cloud":
 			var c := _shader("beach_cloud")
 			c.set_shader_parameter("tint", Color.WHITE if not night else Color(0.5, 0.56, 0.78))
-			c.set_shader_parameter("self_light", 0.3 if variant == 0 else (0.15 if variant == 1 else 0.22))
+			c.set_shader_parameter("self_light", {"noon": 0.3, "golden": 0.12, "night": 0.22}[key])
+			if key == "golden":
+				c.set_shader_parameter("under", 1.0)
+				c.set_shader_parameter("under_col", Color("#ffa058"))
+				c.set_shader_parameter("top_col", Color("#c890b0"))
+				c.set_shader_parameter("sun_dir", (d["sun_sky"] as Vector3).normalized())
 			m = c
-		"palm_sway", "foliage_sway", "flag_sway", "bunting_sway":
+		"palm_sway", "foliage_sway", "flag_sway", "bunting_sway", "trunk_sway":
 			var s := _shader("beach_sway")
 			var wind: float = d["wind"]
-			s.set_shader_parameter("kind", {"palm_sway": 1, "foliage_sway": 0, "flag_sway": 2, "bunting_sway": 3}[mn])
+			s.set_shader_parameter("kind", {"palm_sway": 1, "foliage_sway": 0, "flag_sway": 2, "bunting_sway": 3,
+					"trunk_sway": 4}[mn])
 			s.set_shader_parameter("amp", wind * (0.6 if mn == "foliage_sway" else 1.0))
 			s.set_shader_parameter("rough", 0.75)
-			s.set_shader_parameter("translucency", 0.3 if mn == "palm_sway" else 0.2)
+			s.set_shader_parameter("translucency", (0.3 if mn == "palm_sway" else 0.2) * (1.8 if key == "golden" else 1.0))
+			if key == "golden":
+				s.set_shader_parameter("rim", 0.7)
+				s.set_shader_parameter("rim_tint", 0.6)
+			m = s
+		"wood", "thatch":
+			var s := _shader("beach_wood")
+			s.set_shader_parameter("thatch", 1.0 if mn == "thatch" else 0.0)
+			s.set_shader_parameter("rough", 0.95 if mn == "thatch" else 0.8)
+			if key == "golden":
+				s.set_shader_parameter("rim", 0.5)
+				s.set_shader_parameter("rim_tint", 0.6)
 			m = s
 		"lantern_glow", "bulb_glow":
 			var g := _shader("beach_glow")
@@ -334,13 +382,26 @@ func _material_for(mn: String, src: Material, d: Dictionary) -> Material:
 				# the colour lives in the vertex colours (the importer does not always flag it)
 				var sm := (src as BaseMaterial3D).duplicate() as BaseMaterial3D
 				sm.vertex_color_use_as_albedo = true
+				if key == "golden" and mn != "sand":
+					# a lit edge on everything against the low sun
+					sm.rim_enabled = true
+					sm.rim = 0.55
+					sm.rim_tint = 0.6
 				match mn:
 					"critter":
 						sm.roughness = 0.5
 						sm.rim_enabled = true
-						sm.rim = 0.2
+						sm.rim = maxf(sm.rim, 0.2) if key == "golden" else 0.2
 					"board":
 						sm.roughness = 0.95
+					"fabric":
+						sm.roughness = 0.97
+						sm.metallic_specular = 0.25
+					"gloss":
+						sm.roughness = 0.12
+						sm.clearcoat_enabled = true
+						sm.clearcoat = 0.6
+						sm.clearcoat_roughness = 0.1
 					"metal":
 						sm.metallic = 0.5
 						sm.roughness = 0.35
