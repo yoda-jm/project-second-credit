@@ -47,9 +47,11 @@ func _ready() -> void:
 	var cam := Camera3D.new()
 	cam.fov = 36.0
 	cam.far = 4000.0
-	cam.position = NovaBackdrop.CAMERA
+	# where the game puts its camera when the field is calm (nova_view_3d.gd, _place_camera)
+	var look := Vector3(5.6, 6.4, 0.0)
+	cam.position = look + Vector3(0.0, -1.2, 5.9 / tan(deg_to_rad(cam.fov * 0.5)))
 	add_child(cam)
-	cam.look_at(Vector3(5.6, 6.3, 0.0))
+	cam.look_at(look)
 	cam.current = true
 	if not bare:
 		_add_field()

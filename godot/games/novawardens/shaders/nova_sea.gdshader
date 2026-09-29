@@ -1,6 +1,8 @@
-// Nova Wardens night sea: a calm, glossy dark bay. Slow ripples (their normals fade with distance), the sky's
-// gradient reflected by fresnel, the moon's glittering path, the lighthouse beam sweeping over the water, and a
-// far edge that melts into the sky's horizon colour (the sea is a disc round the camera; its rim is the horizon).
+// Nova Wardens night sea: a calm, glossy dark bay. A long gentle swell rolling in and slow ripples over it (their
+// normals fade with distance), the sky's gradient reflected by fresnel, the moon's path breaking into glittering
+// flecks that come and go, the lighthouse beam
+// sweeping over the water, the distant storm's flicker, and a far edge that melts into the sky's horizon colour (the
+// sea is a disc round the camera; its rim is the horizon).
 shader_type spatial;
 render_mode unshaded, fog_disabled, shadows_disabled;
 
@@ -21,6 +23,9 @@ uniform vec3 beam_col : source_color = vec3(1.0, 0.9, 0.7);
 uniform float beam = 0.35;
 uniform vec3 city_col : source_color = vec3(1.0, 0.6, 0.3);
 uniform float city_glow = 0.12;
+uniform float storm = 0.0;
+uniform float storm_at = 0.4;                        // azimuth of the flash
+uniform vec3 storm_col : source_color = vec3(0.75, 0.8, 1.0);
 uniform float alarm = 0.0;
 uniform float alarm_pulse = 0.0;
 uniform float flash = 0.0;
@@ -48,6 +53,9 @@ void fragment() {
 	float fade = 1.0 / (1.0 + dist * 0.02);
 	// long swell stretched along x (so the glitter breaks into horizontal flecks), plus fine ripples
 	vec2 g = ripple_grad(wpos.xz * vec2(0.6, 1.6), clock) * 0.08;
+	// the swell: long low crests rolling in towards the shore
+	float sw = wpos.z * 0.22 + wpos.x * 0.03 + clock * 0.55 + nw_noise(wpos.xz * 0.02) * 3.0;
+	g += vec2(0.0, cos(sw) * 0.05 + cos(sw * 1.7 + 1.3) * 0.02);
 	g += ripple_grad(wpos.xz * vec2(1.8, 4.5) + 7.0, clock * 1.6) * 0.03;
 	g *= mix(0.35, 1.0, fade);
 	vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
@@ -62,6 +70,11 @@ void fragment() {
 	float path = pow(m, 900.0) * 6.0 + pow(m, 120.0) * 0.9 + pow(m, 18.0) * 0.08;
 	float sparkle = 0.5 + 0.5 * sin(clock * 3.0 + nw_hash(floor(wpos.xz * vec2(1.5, 4.0))) * 40.0);
 	col += moon_col * path * glint * mix(0.6, 1.2, sparkle);
+	// flecks of glitter: bright points that wink on and off in and around the path
+	vec2 fc = floor(wpos.xz * vec2(2.2, 7.0));
+	float fh = nw_hash(fc);
+	float wink = step(0.93, nw_hash(fc + floor(clock * 5.0 + fh * 3.0)));
+	col += moon_col * wink * pow(m, 30.0) * 2.2 * fade;
 	// the lighthouse beam brushing the water
 	vec2 bp = wpos.xz - beam_pos.xz;
 	float bl = length(bp);
@@ -75,6 +88,8 @@ void fragment() {
 	col += city_col * city_glow * near_shore * (0.5 + fr);
 	col += vec3(1.0, 0.06, 0.03) * alarm * (0.3 + 0.7 * alarm_pulse) * near_shore * 0.12;
 	col += flash_col * flash * 0.04 * (0.3 + fr * 3.0);
+	float saz = atan(r.x, -r.z);
+	col += storm_col * storm * exp(-abs(saz - storm_at) * 5.0) * fr * 0.5 * smoothstep(40.0, 150.0, dist);
 	// the rim melts into the horizon
 	col = mix(col, horizon_col, smoothstep(radius * 0.55, radius * 0.99, dist));
 	ALBEDO = col;
