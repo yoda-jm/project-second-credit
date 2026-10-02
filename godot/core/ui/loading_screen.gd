@@ -17,6 +17,7 @@ var _progress := 0.0
 var _time := 0.0
 var _smooth_frames := 0
 var _warm_frames := 0
+var _warm_time := 0.0
 var _game: Node
 var _layer: CanvasLayer
 var _draw: Control
@@ -70,7 +71,9 @@ func _process(delta: float) -> void:
 			else:
 				_smooth_frames = 0
 			_progress = maxf(_progress, 0.6 + 0.4 * clampf(float(_smooth_frames) / 12.0, 0.0, 1.0))
-			if (_warm_frames > 20 and _smooth_frames >= 12) or _warm_frames > 3000:
+			_warm_time += delta
+			# smooth frames, or (a slow machine, a browser on a weak GPU, never under 50 ms a frame) enough time spent
+			if (_warm_frames > 20 and _smooth_frames >= 12) or (_warm_frames > 3 and _warm_time > 8.0) or _warm_frames > 3000:
 				_progress = 1.0
 				_phase = "fade"
 				get_tree().paused = false

@@ -1,0 +1,7 @@
+# The games in the web build (ids from godot/core/game_registry.gd). The others stay in the desktop download.
+# tools/build-web.sh writes the Web export preset's exclude filter from this list.
+tumbletop
+crates
+nightbite
+inkstorm
+hopline

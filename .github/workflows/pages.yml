@@ -3,7 +3,9 @@ name: Website
 on:
   push:
     branches: [main]
-    paths: ["site/**", "godot/core/fonts/**", "tools/build-site.sh", ".github/workflows/pages.yml"]
+    # the site, and the web build of the games played from it (docs/web.md)
+    paths: ["site/**", "godot/**", "tools/build-site.sh", "tools/build-web.sh", "tools/web-games.txt",
+      ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
@@ -21,8 +23,29 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+
+      - name: Cache portable Godot and export templates
+        uses: actions/cache@v6
+        with:
+          path: .tools
+          key: tools-godot-templates-${{ hashFiles('tools/fetch-tools.sh') }}
+
+      - name: Fetch Godot and export templates
+        run: tools/fetch-tools.sh godot templates
+
+      - name: Cache Godot's imported assets
+        uses: actions/cache@v6
+        with:
+          path: godot/.godot
+          key: godot-import-${{ runner.os }}-${{ hashFiles('godot/project.godot', 'godot/**/*.import', 'godot/**/*.jpg', 'godot/**/*.png', 'godot/**/*.glb', 'godot/**/*.obj', 'godot/**/*.wav', 'godot/**/*.ogg', 'godot/**/*.ttf') }}
+          restore-keys: godot-import-${{ runner.os }}-
+
+      - name: Export the web build (played from play/)
+        run: tools/build-web.sh
+
       - name: Build the site
         run: tools/build-site.sh
       - uses: actions/configure-pages@v6

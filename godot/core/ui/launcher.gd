@@ -10,6 +10,7 @@ var _selected := 0
 var _menu_index := 0
 var _buttons: Array[Button] = []
 var _cards: Array[Control] = []
+static var _deep_linked := false   ## the --game= argument has been followed (only once per run)
 var _chip_hint: Label
 var _card_box: HBoxContainer
 var _ui: Control
@@ -52,9 +53,11 @@ func _ready() -> void:
 	for gi in GameRegistry.GAMES.size():
 		if GameRegistry.GAMES[gi]["id"] == Settings.last_game:
 			start = gi
+	if not GameRegistry.available(start):
+		start = _visible_games()[0]  # the web build: the last game played may not be in it
 	_selected = start
 	_previous = start
-	_card_box.position.x = CARD_ROW_X - start * 414.0  # back on the game played last, without sliding
+	_card_box.position.x = CARD_ROW_X - maxi(0, _visible_games().find(start)) * 414.0  # back on the game played last, without sliding
 	# exact once the row has been laid out (only then do the cards know their widths)
 	_card_box.sort_children.connect(func():
 		if _center_tween:
@@ -62,6 +65,15 @@ func _ready() -> void:
 		_card_box.position.x = _row_x(_selected), CONNECT_ONE_SHOT | CONNECT_DEFERRED)
 	_select_game(start, false)
 	_focus_menu(0, false)
+	# "--game=<id>" (a user argument; on the web, ?game=<id> in the page's URL) opens that game straight away, once
+	if not _deep_linked:
+		_deep_linked = true
+		for a in OS.get_cmdline_user_args():
+			if a.begins_with("--game="):
+				var gid := a.get_slice("=", 1)
+				for gi in GameRegistry.GAMES.size():
+					if GameRegistry.GAMES[gi]["id"] == gid and GameRegistry.available(gi) and GameRegistry.GAMES[gi]["scene"] != "":
+						LoadingScreen.go.call_deferred(GameRegistry.GAMES[gi]["scene"], GameRegistry.GAMES[gi]["title"])
 	_fade_from_black()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--select="):  # for captures: change card after a second
@@ -105,7 +117,10 @@ func _build_backdrop() -> void:
 	for i in PROP_COUNT:
 		_seeds.append(Vector4(rng.randf_range(-13, 13), rng.randf_range(-7, 7), rng.randf_range(-17, -4), rng.randf()))
 	# one multimesh per distinct prop of every game; each floating object picks its shape from the selected game
-	for g in GameRegistry.GAMES:
+	for gi in GameRegistry.GAMES.size():
+		if not GameRegistry.available(gi):
+			continue  # a game left out of this build: its models are not in the pack
+		var g: Dictionary = GameRegistry.GAMES[gi]
 		for prop in g.get("props", []):
 			var key: String = prop[0]
 			if not _prop_mm.has(key):
@@ -277,7 +292,7 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	menu.position = Vector2(116, 350)
 	menu.add_theme_constant_override("separation", 14)
 	_ui.add_child(menu)
-	for i in 4:
+	for i in (3 if OS.has_feature("web") else 4):  # in a browser there is nowhere to quit to
 		var name: String = ["PLAY", "SETTINGS", "CREDITS", "QUIT"][i]
 		var b := Button.new()
 		b.text = name
@@ -304,8 +319,10 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		menu.add_child(b)
 		_buttons.append(b)
 
-	var hint := _label("arrows or gamepad to choose    tab or q / e to filter by style    enter to confirm    esc to go back", 22,
-		Color(0.6, 0.65, 0.75))
+	var hint_text := "arrows or gamepad to choose    tab or q / e to filter by style    enter to confirm    esc to go back"
+	if OS.has_feature("web"):
+		hint_text = "arrows or gamepad to choose    enter to confirm    more games in the desktop download"
+	var hint := _label(hint_text, 22, Color(0.6, 0.65, 0.75))
 	hint.position = Vector2(116, 1010)
 	_ui.add_child(hint)
 
@@ -343,6 +360,7 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	window.add_child(_card_box)
 	for i in GameRegistry.GAMES.size():
 		var card := _make_card(GameRegistry.GAMES[i], i)
+		card.visible = GameRegistry.available(i)
 		_card_box.add_child(card)
 		_cards.append(card)
 
@@ -401,7 +419,7 @@ func _make_card(g: Dictionary, index: int) -> Control:
 	pic.custom_minimum_size = Vector2(336, 220)
 	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	if g.get("card", "") != "":
+	if g.get("card", "") != "" and ResourceLoader.exists(g["card"]):
 		pic.texture = load(g["card"])
 	else:
 		var ph := GradientTexture2D.new()
@@ -605,7 +623,7 @@ func _row_x(i: int) -> float:
 func _visible_games() -> Array[int]:
 	var out: Array[int] = []
 	for i in GameRegistry.GAMES.size():
-		if _style == "" or GameRegistry.GAMES[i].get("style", "") == _style:
+		if (_style == "" or GameRegistry.GAMES[i].get("style", "") == _style) and GameRegistry.available(i):
 			out.append(i)
 	return out
 

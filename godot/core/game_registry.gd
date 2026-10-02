@@ -348,11 +348,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/lanternlinks/art/models/flag.glb", "model", 0.35]],
 	},
 ]
-## The styles in collection order (for the launcher's filter).
+## Whether game i is in this build (the web build ships a selection: a game left out has no scene in the pack).
+static func available(i: int) -> bool:
+	var scene: String = GAMES[i]["scene"]
+	return scene == "" or ResourceLoader.exists(scene)
+
+
+## The styles in collection order (for the launcher's filter), among the games in this build.
 static func styles() -> Array[String]:
 	var out: Array[String] = []
-	for g in GAMES:
-		if not out.has(g.get("style", "")):
+	for gi in GAMES.size():
+		var g: Dictionary = GAMES[gi]
+		if available(gi) and not out.has(g.get("style", "")):
 			out.append(g.get("style", ""))
 	return out
 

@@ -7,3 +7,7 @@ rm -rf build/site && mkdir -p build/site/fonts
 cp -r site/. build/site/
 cp godot/core/fonts/*.ttf godot/core/fonts/KENNEY_LICENSE.txt build/site/fonts/
 touch build/site/.nojekyll
+# the web build, when there is one (tools/build-web.sh), is played from play/
+if [ -s build/web/index.pck ]; then
+  mkdir -p build/site/play && cp build/web/* build/site/play/
+fi
