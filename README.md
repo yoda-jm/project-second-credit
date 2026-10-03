@@ -14,8 +14,8 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: twenty-six games are playable, in 3D with sound
-> and music, from **Glimmerdeep** (game 1) to **Lantern Links** (game 26), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> Status: twenty-seven games are playable, in 3D with sound
+> and music, from **Glimmerdeep** (game 1) to **Marble Drift** (game 27), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
 
@@ -52,6 +52,7 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 24 | Blobby Volley (2000): **Jelly Spike** | Jelly-blob beach volleyball, a CPU that reads the ball, two players on one keyboard, a beach from noon to a moonlit luau |
 | 25 | Space Invaders (1978): **Nova Wardens** | The marching fleet (a ripple that quickens), eroding voxel shields, the mothership, a night coast whose alarm rises as the fleet descends |
 | 26 | Mini-Putt (1987), Zany Golf (1988): **Lantern Links** | Nine holes of mini-golf in a lantern garden from golden hour into the night: a windmill, a loop, a jump, glass pipes, bumpers; 1-4 players with CPU seats |
+| 27 | Marble Madness (1984): **Marble Drift** | A glass marble racing the clock down six floating courses: slopes, drops that shatter it, glass and rough floors, acid, a steelie and hoppers, a sky per course |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

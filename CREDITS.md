@@ -211,6 +211,14 @@ Second Credit stands on the work of many people. Everything below is free and op
   the game from the hole files (`godot/games/lanternlinks/view3d/links_course.gd`), the sky adapted from Jelly Spike's;
   sound effects and music by `tools/audio/lanternlinks_sfx.py` and `lanternlinks_music.py`.
 
+## Game 27 (Marble Drift, working title)
+
+- Inspired by *Marble Madness* (Atari Games, 1984). None of its code, graphics, sounds, music or courses are in this
+  repo: the courses (made by `tools/marble_courses.py`), the steelie, the hoppers, the skies and the music are our own.
+- Models by `tools/blender/marbledrift_models.py`; skies and course surfaces written as shaders and code
+  (`godot/games/marbledrift/view3d/drift_sky.gd`, `shaders/`); sound effects and music by
+  `tools/audio/marbledrift_sfx.py` and `marbledrift_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

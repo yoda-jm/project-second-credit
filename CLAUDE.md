@@ -158,9 +158,13 @@ decisions below are settled unless the owner reopens them.
    `docs/games/lanternlinks.md`), arcade 2.5D ball physics (`engine/links_physics.gd`), windmill, loop, jump, pipes,
    bumpers, movers, a turnstile; 1-4 seats, any the CPU (`demo/links_bot.gd`, plans on a worker thread); golden hour
    to night across the round. `--hole=N`, `--players=N`.
-30. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+30. Game 27, **Marble Drift** (Marble Madness-like, `godot/games/marbledrift/`): a marble on height-field courses
+   (`courses/courses.drift`, made by `tools/marble_courses.py` from primitives), flights and shattering falls, glass and
+   rough floors, acid, a steelie and hoppers, checkpoints, time carried over; screen-relative controls and a mouse
+   trackball; a sky per course (`view3d/drift_sky.gd`). `--level=N`.
+31. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-31. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+32. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

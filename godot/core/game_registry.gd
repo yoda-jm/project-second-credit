@@ -347,8 +347,19 @@ const GAMES: Array[Dictionary] = [
 			["res://games/lanternlinks/art/models/lantern_post.glb", "model", 0.3],
 			["res://games/lanternlinks/art/models/flag.glb", "model", 0.35]],
 	},
-]
-## The styles in collection order (for the launcher's filter).
+	{
+		"id": "marbledrift",
+		"style": "Arcade",
+		"title": "Marble Drift",
+		"tagline": "Roll a glass marble down floating courses before the clock runs out.",
+		"inspired_by": "Marble Madness (1984)",
+		"scene": "res://games/marbledrift/scenes/marbledrift_game.tscn",
+		"accent": Color(0.5, 0.85, 1.0),
+		"props": [["res://games/marbledrift/art/models/steelie.glb", "model", 0.4],
+			["res://games/marbledrift/art/models/hopper.glb", "model", 0.3],
+			["res://games/marbledrift/art/models/beacon.glb", "model", 0.3]],
+	},
+]## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
 	var out: Array[String] = []
 	for g in GAMES:
