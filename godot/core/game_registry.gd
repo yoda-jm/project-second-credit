@@ -354,6 +354,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Roll a glass marble down floating courses before the clock runs out.",
 		"inspired_by": "Marble Madness (1984)",
 		"scene": "res://games/marbledrift/scenes/marbledrift_game.tscn",
+		"card": "res://core/ui/cards/marbledrift.png",
 		"accent": Color(0.5, 0.85, 1.0),
 		"props": [["res://games/marbledrift/art/models/steelie.glb", "model", 0.4],
 			["res://games/marbledrift/art/models/hopper.glb", "model", 0.3],
