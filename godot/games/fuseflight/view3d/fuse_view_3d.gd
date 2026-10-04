@@ -40,6 +40,14 @@ var _sweep := 0.0
 var _cam_pos := Vector3.ZERO
 var _cam_look := Vector3.ZERO
 var _mats := {}
+var _ledges: Array[Dictionary] = []   ## {rect, mat (its glowing seam), flash}
+var _was_ground := true
+var _halo: MeshInstance3D            ## the gold ring round the lit firework
+var _arrow: MeshInstance3D           ## the arrow bobbing over it
+var _x2: Label3D
+var _next_ring: MeshInstance3D       ## a faint ring on the one that lights next
+var _thread: MeshInstance3D          ## a fuse thread from the lit one to the next
+var _trail: CPUParticles3D           ## sparkles after the sprite in the air
 
 
 func _ready() -> void:
@@ -103,6 +111,35 @@ func _mat(col: Color, rough := 0.5, emit := 0.0, metal := 0.0) -> StandardMateri
 	return m
 
 
+## Glossy lacquer: a clear coat over a colour, for the ledges and the floor.
+func _lacquer(col: Color, rough: float) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = col
+	m.roughness = rough
+	m.metallic = 0.15
+	m.clearcoat_enabled = true
+	m.clearcoat = 1.0
+	m.clearcoat_roughness = 0.04
+	m.rim_enabled = true
+	m.rim = 0.25
+	return m
+
+
+func _gold() -> StandardMaterial3D:
+	var m := _mat(Color(1.0, 0.76, 0.36), 0.22, 0.25, 1.0)
+	return m
+
+
+func _glow_strip(col: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = col
+	m.emission_enabled = true
+	m.emission = col
+	m.emission_energy_multiplier = 1.2
+	return m
+
+
 func _box(size: Vector3, m: Material, at := Vector3.ZERO) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var b := BoxMesh.new()
@@ -158,18 +195,33 @@ func _on_stage(e: FuseEngine) -> void:
 		_env = _backdrop.call("make_environment", d)
 		_we.environment = _env
 		_backdrop.call("setup_sun", _moon, d)
+		_env.ssr_enabled = true   # the polished floor and the lacquered ledges mirror the lanterns and the fireworks
+		_env.ssr_max_steps = 48
 	else:
 		var ground := _box(Vector3(40, 0.4, 6), _mat(Color(0.12, 0.1, 0.12), 0.9), Vector3(8, -0.2, 0))
 		_stage.add_child(ground)
 	# the arena's floor: polished boards with a lantern rail along the front
-	_stage.add_child(_box(Vector3(16.6, 0.25, 1.6), _mat(Color(0.35, 0.22, 0.14), 0.45), Vector3(8, -0.125, 0)))
+	_stage.add_child(_box(Vector3(16.6, 0.25, 1.6), _lacquer(Color(0.3, 0.17, 0.1), 0.12), Vector3(8, -0.125, 0)))
+	var front := _glow_strip(Color(1.0, 0.6, 0.3))
+	_stage.add_child(_box(Vector3(16.6, 0.04, 0.04), front, Vector3(8, 0.0, 0.8)))
+	_ledges.clear()
+	_ledges.append({"rect": Rect2(0, -1, 16, 1), "mat": front, "flash": 0.0})
 	_lantern_string(Vector3(0, 0.1, 0.75), Vector3(16, 0.1, 0.75), 18)
 	# the ledges: dark wood with gold trim and lanterns under their edge
 	for p in st.platforms:
 		var r: Rect2 = p
 		var c := Vector3(r.get_center().x, r.get_center().y, 0)
-		_stage.add_child(_box(Vector3(r.size.x, r.size.y, 1.0), _mat(Color(0.28, 0.17, 0.1), 0.5), c))
-		_stage.add_child(_box(Vector3(r.size.x + 0.08, 0.05, 1.05), _mat(Color(1.0, 0.75, 0.35), 0.3, 0.6, 0.6), c + Vector3(0, r.size.y * 0.5, 0)))
+		# red lacquer with a gold lip and a glowing seam that flares when the sprite lands
+		var body := _box(Vector3(r.size.x, r.size.y, 1.0), _lacquer(Color(0.36, 0.05, 0.05), 0.15), c)
+		_play_layer(body)
+		_stage.add_child(body)
+		var lip := _box(Vector3(r.size.x + 0.1, 0.06, 1.08), _gold(), c + Vector3(0, r.size.y * 0.5, 0))
+		_play_layer(lip)
+		_stage.add_child(lip)
+		var seam := _glow_strip(Color(1.0, 0.65, 0.3))
+		_stage.add_child(_box(Vector3(r.size.x - 0.1, 0.035, 0.03), seam, c + Vector3(0, -r.size.y * 0.5 + 0.05, 0.51)))
+		_stage.add_child(_box(Vector3(r.size.x + 0.1, 0.02, 0.03), seam, c + Vector3(0, r.size.y * 0.5 + 0.03, 0.55)))
+		_ledges.append({"rect": r, "mat": seam, "flash": 0.0})
 		_lantern_string(Vector3(r.position.x + 0.1, r.position.y - 0.12, 0.52), Vector3(r.end.x - 0.1, r.position.y - 0.12, 0.52), maxi(2, int(r.size.x * 1.5)))
 	# the fireworks
 	for i in st.bombs.size():
@@ -215,6 +267,7 @@ func _on_stage(e: FuseEngine) -> void:
 	_lit_light.light_energy = 0.0
 	_lit_light.omni_range = 2.2
 	_stage.add_child(_lit_light)
+	_build_markers()
 	# the sprite
 	_hero = Node3D.new()
 	var body := _scene("sprite")
@@ -238,6 +291,139 @@ func _on_stage(e: FuseEngine) -> void:
 	_sweep = 0.0
 	if _cam_pos == Vector3.ZERO:
 		_place_camera(1.0, true)
+
+
+## What shows the order: a gold halo, an arrow and "x2" on the lit firework, a faint ring on the one that lights
+## after it and a glowing thread between them; sparkles trail the sprite in the air.
+func _build_markers() -> void:
+	_halo = MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.42
+	tm.outer_radius = 0.5
+	tm.rings = 40
+	_halo.mesh = tm
+	_halo.rotation.x = PI * 0.5
+	_halo.material_override = _glow_strip(Color(1.0, 0.8, 0.3))
+	_stage.add_child(_halo)
+	_next_ring = MeshInstance3D.new()
+	var tn := TorusMesh.new()
+	tn.inner_radius = 0.36
+	tn.outer_radius = 0.39
+	tn.rings = 40
+	_next_ring.mesh = tn
+	_next_ring.rotation.x = PI * 0.5
+	var nm := _glow_strip(Color(1.0, 0.85, 0.5))
+	nm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	nm.albedo_color.a = 0.3
+	_next_ring.material_override = nm
+	_stage.add_child(_next_ring)
+	_arrow = MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.16
+	cone.bottom_radius = 0.0
+	cone.height = 0.3
+	cone.radial_segments = 4
+	_arrow.mesh = cone
+	_arrow.material_override = _glow_strip(Color(1.0, 0.8, 0.3))
+	_stage.add_child(_arrow)
+	_x2 = Label3D.new()
+	_x2.text = "x2"
+	_x2.font = HudKit.font(true)
+	_x2.font_size = 64
+	_x2.pixel_size = 0.005
+	_x2.modulate = Color(1.0, 0.85, 0.4)
+	_x2.outline_size = 12
+	_x2.outline_modulate = Color(0.3, 0.1, 0.0)
+	_x2.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_stage.add_child(_x2)
+	_thread = MeshInstance3D.new()
+	var th := CylinderMesh.new()
+	th.top_radius = 0.018
+	th.bottom_radius = 0.018
+	th.height = 1.0
+	th.radial_segments = 6
+	_thread.mesh = th
+	var tmat := _glow_strip(Color(1.0, 0.7, 0.3))
+	tmat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	tmat.albedo_color.a = 0.35
+	_thread.material_override = tmat
+	_thread.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_stage.add_child(_thread)
+	_trail = CPUParticles3D.new()
+	_trail.amount = 48
+	_trail.lifetime = 0.6
+	_trail.local_coords = false
+	_trail.direction = Vector3(0, -1, 0)
+	_trail.spread = 40.0
+	_trail.initial_velocity_min = 0.2
+	_trail.initial_velocity_max = 0.8
+	_trail.gravity = Vector3(0, -1.5, 0)
+	_trail.scale_amount_min = 0.4
+	_trail.scale_amount_max = 1.0
+	var q := QuadMesh.new()
+	q.size = Vector2(0.07, 0.07)
+	_trail.mesh = q
+	_trail.material_override = Fx.material("glow", Color(1.0, 0.8, 0.45))
+	_trail.emitting = false
+	_stage.add_child(_trail)
+
+
+## The order markers follow the lit firework and the one after it.
+func _place_markers(e: FuseEngine) -> void:
+	var on := e.lit >= 0 and e.lit < _rockets.size() and e.phase == F.Phase.PLAY
+	_halo.visible = on
+	_arrow.visible = on
+	_x2.visible = on
+	var nxt := -1
+	if on:
+		for k in range(1, e.stage.bombs.size()):
+			var j := (e.lit + k) % e.stage.bombs.size()
+			if e.taken[j] == 0:
+				nxt = j
+				break
+	_next_ring.visible = nxt >= 0
+	_thread.visible = nxt >= 0
+	if not on:
+		return
+	var at: Vector3 = _rockets[e.lit].position
+	var pulse := 0.5 + 0.5 * sin(_time * 6.0)
+	_halo.position = at + Vector3(0, 0.0, -0.05)
+	_halo.scale = Vector3.ONE * (1.0 + 0.12 * pulse)
+	_arrow.position = at + Vector3(0, 0.95 + 0.12 * sin(_time * 5.0), 0.1)
+	_arrow.rotation.y = _time * 2.0
+	# "x2" beside it, on the side away from the next one (so the two never overlap)
+	var away := -signf(_rockets[nxt].position.x - at.x) if nxt >= 0 and absf(_rockets[nxt].position.x - at.x) > 0.05 else 1.0
+	_x2.position = at + Vector3(0.62 * away, 0.3, 0.2)
+	_x2.scale = Vector3.ONE * (0.9 + 0.15 * pulse)
+	if nxt >= 0:
+		var b: Vector3 = _rockets[nxt].position
+		_next_ring.position = b + Vector3(0, 0, -0.05)
+		_next_ring.scale = Vector3.ONE * (0.9 + 0.08 * sin(_time * 3.0))
+		var mid := (at + b) * 0.5 + Vector3(0, 0, -0.1)
+		var d := b - at
+		_thread.position = mid
+		_thread.scale = Vector3(1.0, d.length(), 1.0)
+		_thread.basis = Basis(Quaternion(Vector3.UP, d.normalized())) * Basis.from_scale(Vector3(1.0, d.length(), 1.0)) if d.length() > 0.01 else Basis()
+
+
+## The ledge the sprite lands on flares; seams breathe; sparkles follow the sprite through the air.
+func _place_ledges(e: FuseEngine, delta: float) -> void:
+	var h := e.hero
+	var ground: bool = h["ground"]
+	if ground and not _was_ground:
+		var p: Vector2 = h["pos"]
+		for l in _ledges:
+			var r: Rect2 = l["rect"]
+			if absf(r.end.y - p.y) < 0.05 and p.x >= r.position.x - 0.3 and p.x <= r.end.x + 0.3:
+				l["flash"] = 1.0
+	_was_ground = ground
+	for i in _ledges.size():
+		var l: Dictionary = _ledges[i]
+		l["flash"] = maxf(0.0, l["flash"] - delta * 2.0)
+		var m: StandardMaterial3D = l["mat"]
+		m.emission_energy_multiplier = 1.0 + 0.25 * sin(_time * 2.0 + i * 1.3) + 4.0 * l["flash"]
+	_trail.position = _hero.position + Vector3(0, 0.3, 0.05)
+	_trail.emitting = not ground and e.phase == F.Phase.PLAY
 
 
 ## A string of little glowing lanterns between two points (one light for the lot, to keep it cheap).
@@ -345,6 +531,8 @@ func _process(delta: float) -> void:
 			_rockets[i].rotation.z = sin(_time * 1.5 + i) * 0.06
 	_place_enemies(e)
 	_place_pickups(e)
+	_place_markers(e)
+	_place_ledges(e, delta)
 	_shake = maxf(0.0, _shake - delta * 1.6)
 	_punch = maxf(0.0, _punch - delta)
 	_sweep = maxf(0.0, _sweep - delta / 3.0)

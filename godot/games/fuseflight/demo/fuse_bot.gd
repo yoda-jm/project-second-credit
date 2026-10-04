@@ -94,7 +94,7 @@ func _choose(e: FuseEngine) -> Array:
 	return best
 
 
-const REACH := 3.6        ## how far above its feet a held leap lifts the sprite's feet
+const REACH := 6.0        ## how far above its feet a held leap lifts the sprite's feet
 
 
 ## Where to aim on the way to a goal (the sprite's feet): a goal higher than a leap from here goes by the platform
