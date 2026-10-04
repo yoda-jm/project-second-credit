@@ -25,6 +25,7 @@ var fx: LinksFx
 var _ball: MeshInstance3D
 var _ball_light: OmniLight3D
 var _ball_mat: StandardMaterial3D
+var _ball_ghost: MeshInstance3D
 var _trail: MeshInstance3D
 var _trail_mat: StandardMaterial3D
 var _trail_pts: Array[Vector3] = []
@@ -80,6 +81,18 @@ func _build_ball() -> void:
 	sm.radial_segments = 32
 	sm.rings = 16
 	_ball.mesh = sm
+	_ball_ghost = MeshInstance3D.new()
+	_ball_ghost.mesh = sm
+	var gm := StandardMaterial3D.new()
+	gm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	gm.no_depth_test = true
+	gm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	gm.albedo_color = Color(1.0, 0.95, 0.8, 0.55)
+	gm.render_priority = 10
+	_ball_ghost.material_override = gm
+	_ball_ghost.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_ball_ghost.visible = false
+	_ball.add_child(_ball_ghost)
 	_ball_mat = StandardMaterial3D.new()
 	_ball_mat.albedo_color = Color(0.97, 0.97, 0.95)
 	_ball_mat.roughness = 0.25
@@ -293,6 +306,8 @@ func _process(delta: float) -> void:
 	var bpos := _ball_pos()
 	var near := e != null and bpos.distance_to(Vector3(e.hole.cup.x, e.hole.cup_h, e.hole.cup.y)) < 0.9
 	course.update(clock, delta, near)
+	# behind a glassy mill the ball also shows as a soft x-ray outline, drawn over everything
+	_ball_ghost.visible = course.fade_windmills(camera.global_position, bpos, delta) > 0.3 and _ball.visible
 	_update_ball(delta, bpos)
 	_update_guide()
 	_update_putter(delta, bpos)

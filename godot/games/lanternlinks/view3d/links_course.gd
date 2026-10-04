@@ -626,6 +626,7 @@ func _gadget(g: Dictionary) -> Node3D:
 			n.position = Vector3(p.x, hole.base[c.y * hole.w + c.x], p.y)
 			n.rotation.y = atan2(face.x, face.y)
 			_collect_glow(n)
+			_mill_interior(n)
 		"bumper":
 			n = _node("bumper")
 			if n == null:
@@ -887,6 +888,164 @@ static func loop_ball(g: Dictionary, th: float, base: float) -> Vector3:
 
 # --- per frame ---
 
+## The inside of a windmill, seen when the building turns to glass: the millstone on the tower's floor, the upright
+## shaft, the crown wheel and the pinion on the sails' axle (both turn with the sails), flour sacks, and a lantern; a
+## warm lamp lights the tunnel under it too (always on). Local frame: y up, the sails on +z.
+func _mill_interior(n: Node3D) -> void:
+	var inner := Node3D.new()
+	inner.name = "interior"
+	inner.visible = false
+	n.add_child(inner)
+	var wood := _std(Color(0.45, 0.28, 0.14), 0.6)
+	var iron := _std(Color(0.25, 0.24, 0.23), 0.4, 0.8)
+	var stone := MeshInstance3D.new()
+	var sc := CylinderMesh.new()
+	sc.top_radius = 0.15
+	sc.bottom_radius = 0.15
+	sc.height = 0.06
+	stone.mesh = sc
+	stone.material_override = _std(Color(0.6, 0.58, 0.55), 0.85)
+	stone.position = Vector3(0, 0.58, 0)
+	inner.add_child(stone)
+	var shaft := MeshInstance3D.new()
+	var sh := CylinderMesh.new()
+	sh.top_radius = 0.02
+	sh.bottom_radius = 0.02
+	sh.height = 0.44
+	shaft.mesh = sh
+	shaft.material_override = wood
+	shaft.position = Vector3(0, 0.82, 0)
+	inner.add_child(shaft)
+	# the crown wheel: a ring with cogs on its top, turning about the shaft
+	var crown := Node3D.new()
+	crown.name = "crown"
+	crown.position = Vector3(0, 0.97, 0)
+	inner.add_child(crown)
+	var ring := MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.1
+	tm.outer_radius = 0.14
+	ring.mesh = tm
+	ring.material_override = wood
+	crown.add_child(ring)
+	for k in 12:
+		var cog := MeshInstance3D.new()
+		var cb := BoxMesh.new()
+		cb.size = Vector3(0.025, 0.04, 0.03)
+		cog.mesh = cb
+		cog.material_override = iron
+		cog.position = Vector3(0.12, 0.03, 0).rotated(Vector3.UP, k * TAU / 12.0)
+		cog.rotation.y = k * TAU / 12.0
+		crown.add_child(cog)
+	for k in 2:
+		var spoke := MeshInstance3D.new()
+		var sp := BoxMesh.new()
+		sp.size = Vector3(0.24, 0.02, 0.02)
+		spoke.mesh = sp
+		spoke.material_override = wood
+		spoke.rotation.y = k * PI * 0.5
+		crown.add_child(spoke)
+	# the pinion on the sails' axle (the axle runs along z at the hub's height)
+	var pinion := Node3D.new()
+	pinion.name = "pinion"
+	pinion.position = Vector3(0, 1.05, 0.14)
+	inner.add_child(pinion)
+	var disc := MeshInstance3D.new()
+	var dc := CylinderMesh.new()
+	dc.top_radius = 0.07
+	dc.bottom_radius = 0.07
+	dc.height = 0.03
+	disc.mesh = dc
+	disc.material_override = wood
+	disc.rotation.x = PI * 0.5
+	pinion.add_child(disc)
+	for k in 8:
+		var cog := MeshInstance3D.new()
+		var cb := BoxMesh.new()
+		cb.size = Vector3(0.02, 0.03, 0.04)
+		cog.mesh = cb
+		cog.material_override = iron
+		cog.position = Vector3(0.075, 0, 0).rotated(Vector3.BACK, k * TAU / 8.0)
+		cog.rotation.z = k * TAU / 8.0
+		pinion.add_child(cog)
+	var axle := MeshInstance3D.new()
+	var ax := CylinderMesh.new()
+	ax.top_radius = 0.018
+	ax.bottom_radius = 0.018
+	ax.height = 0.5
+	axle.mesh = ax
+	axle.material_override = iron
+	axle.rotation.x = PI * 0.5
+	axle.position = Vector3(0, 1.05, 0.05)
+	inner.add_child(axle)
+	# flour sacks and the lantern
+	for sx in [-0.26, -0.18]:
+		var sack := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = 0.06
+		sm.height = 0.14
+		sack.mesh = sm
+		sack.material_override = _std(Color(0.85, 0.8, 0.68), 0.9)
+		sack.position = Vector3(sx, 0.6, -0.05 + (sx + 0.22) * 0.8)
+		inner.add_child(sack)
+	var lamp := MeshInstance3D.new()
+	var lm := SphereMesh.new()
+	lm.radius = 0.03
+	lm.height = 0.06
+	lamp.mesh = lm
+	lamp.material_override = _std(Color(1.0, 0.7, 0.35), 0.4, 0.0, 4.0)
+	lamp.position = Vector3(0.24, 0.85, -0.05)
+	inner.add_child(lamp)
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.72, 0.4)
+	light.light_energy = 2.2
+	light.omni_range = 1.1
+	light.position = lamp.position
+	inner.add_child(light)
+	# the tunnel's lamp, always lit
+	var tl := OmniLight3D.new()
+	tl.light_color = Color(1.0, 0.75, 0.45)
+	tl.light_energy = 0.8
+	tl.omni_range = 0.8
+	tl.position = Vector3(0, 0.22, 0)
+	n.add_child(tl)
+	n.set_meta("fade", 0.0)
+
+
+## A windmill turns to glass while it stands between the camera and the ball (or the ball is in its tunnel), so the
+## ball is never lost behind it; its inside shows then.
+func fade_windmills(cam: Vector3, ball: Vector3, delta: float) -> float:
+	var most := 0.0
+	for k in hole.gadgets.size():
+		var g: Dictionary = hole.gadgets[k]
+		if g["type"] != "windmill" or gadget_nodes[k] == null:
+			continue
+		var n: Node3D = gadget_nodes[k]
+		var to_local := n.global_transform.affine_inverse()
+		var hidden := false
+		for i in 13:
+			var p := to_local * ball.lerp(cam, i / 12.0 * minf(1.0, 4.0 / maxf(0.01, ball.distance_to(cam))))
+			if absf(p.x) < 0.8 and absf(p.z) < 0.6 and p.y < 1.75 and p.y > -0.1:
+				hidden = true
+				break
+		var f: float = n.get_meta("fade", 0.0)
+		f = move_toward(f, 1.0 if hidden else 0.0, delta * 4.0)
+		n.set_meta("fade", f)
+		most = maxf(most, f)
+		var inner := n.find_child("interior", false, false) as Node3D
+		if inner:
+			inner.visible = f > 0.02
+		for gi in n.find_children("*", "GeometryInstance3D", true, false):
+			var geo := gi as GeometryInstance3D
+			if inner and inner.is_ancestor_of(geo):
+				continue
+			var bl := n.find_child("blades", true, false)
+			if bl and (bl == geo or bl.is_ancestor_of(geo)):
+				continue
+			geo.transparency = 0.9 * f
+	return most
+
+
 func update(clock: float, delta: float, near_cup: bool) -> void:
 	for k in hole.gadgets.size():
 		var g: Dictionary = hole.gadgets[k]
@@ -898,6 +1057,10 @@ func update(clock: float, delta: float, near_cup: bool) -> void:
 				var bl := n.find_child("blades", true, false) as Node3D
 				if bl:
 					bl.rotation.z = -P.windmill_angle(g, clock)
+				var inner := n.find_child("interior", false, false) as Node3D
+				if inner and inner.visible:
+					(inner.get_node("pinion") as Node3D).rotation.z = -P.windmill_angle(g, clock)
+					(inner.get_node("crown") as Node3D).rotation.y = P.windmill_angle(g, clock) * 8.0 / 12.0
 			"mover":
 				var p := P.mover_pos(g, clock)
 				n.position = Vector3(p.x, hole.height(p) - 0.0, p.y)
