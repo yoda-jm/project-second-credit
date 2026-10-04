@@ -3,7 +3,8 @@ extends Node3D
 ## Marble Drift in 3D: the course is a shiny toy track floating in the sky (the DriftSky backdrop for its theme), built
 ## from its height field: a chequered top per cell (the surface shader reads the cell's kind from the vertex colour),
 ## walls rising as blocks, slab sides dropping into the abyss wherever the floor ends, pylons holding it up from
-## below, beacons at the checkpoints, an arch over the goal. The marble is glass with a glowing swirl inside, rolling
+## below, checkpoint gates (a ring on the floor where they count, a beacon either side), an arch across the way into
+## the goal. The marble is glass with a glowing swirl inside, rolling
 ## for real; the steelie is dark steel; hoppers bounce. The camera looks down the course from the classic diagonal,
 ## follows the marble with a little lead, pulls back at speed, watches a fall go down, and swings round at the goal.
 
@@ -28,6 +29,7 @@ var _marble_core: Node3D
 var _marble_light: OmniLight3D
 var _enemy_nodes: Array[Node3D] = []
 var _beacons: Array[Node3D] = []
+var _gate_rings: Array[MeshInstance3D] = []
 var _goal: Node3D
 var _fx: Bursts
 var _time := 0.0
@@ -294,37 +296,76 @@ func _build_props(c: DriftCourse) -> void:
 				py = holder
 			py.position = Vector3(x + 0.5, c.height_at(Vector2(x + 0.5, z + 0.5)) - SLAB, z + 0.5)
 			_stage.add_child(py)
-	for i in c.route.size():
-		if i == c.route.size() - 1:
-			continue
+	# the checkpoints: a glowing ring on the floor shows where the gate counts, a beacon either side of the way
+	_gate_rings.clear()
+	var gates := c.gates()
+	for i in gates:
 		var r: Vector2 = c.route[i]
-		var bn := _scene("beacon")
-		if bn == null:
-			bn = MeshInstance3D.new()
-			var cy := CylinderMesh.new()
-			cy.top_radius = 0.05
-			cy.bottom_radius = 0.08
-			cy.height = 1.0
-			(bn as MeshInstance3D).mesh = cy
-			(bn as MeshInstance3D).material_override = _mat(Color(0.6, 0.8, 1.0), 0.3, 0.0, 0.8)
-		# at the side of the path, not in the way
-		var side := Vector2(1.6, 0.0)
-		var at := r + side
-		if c.kind(int(floor(at.x)), int(floor(at.y))) in ["_", "#"]:
-			at = r - side
-		bn.position = Vector3(at.x, c.height_at(at) if c.height_at(at) > -INF else c.height_at(r), at.y)
-		_stage.add_child(bn)
-		_beacons.append(bn)
-	# the goal: the middle of the goal cells
-	var sum := Vector2.ZERO
-	var n := 0
-	for z in c.h:
-		for x in c.w:
-			if c.kind(x, z) == "G":
-				sum += Vector2(x + 0.5, z + 0.5)
-				n += 1
-	if n > 0:
-		var gp := sum / n
+		var before: Vector2 = c.route[i - 1] if i > 0 else c.start
+		var dir := (c.route[i + 1] - before).normalized()
+		var perp := Vector2(-dir.y, dir.x)
+		var gate := Node3D.new()
+		gate.position = Vector3(r.x, c.height_at(r), r.y)
+		_stage.add_child(gate)
+		var ring := MeshInstance3D.new()
+		var tm := TorusMesh.new()
+		tm.inner_radius = D.GATE_R - 0.12
+		tm.outer_radius = D.GATE_R
+		tm.rings = 48
+		ring.mesh = tm
+		ring.scale = Vector3(1.0, 0.25, 1.0)
+		ring.position.y = 0.04
+		ring.material_override = _mat(Color(0.45, 0.85, 1.0), 0.3, 0.0, 0.9)
+		ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		gate.add_child(ring)
+		_gate_rings.append(ring)
+		var posts := Node3D.new()
+		gate.add_child(posts)
+		for sgn in [-1.0, 1.0]:
+			var at := Vector2.ZERO
+			for dist in [D.GATE_R + 0.2, D.GATE_R - 0.3, 1.0]:
+				var q: Vector2 = r + perp * sgn * dist
+				var k := c.kind(int(floor(q.x)), int(floor(q.y)))
+				if k != "_" and k != "#" and absf(c.height_at(q) - c.height_at(r)) < 0.8:
+					at = q
+					break
+			if at == Vector2.ZERO:
+				continue
+			var bn := _scene("beacon")
+			if bn == null:
+				bn = MeshInstance3D.new()
+				var cy := CylinderMesh.new()
+				cy.top_radius = 0.05
+				cy.bottom_radius = 0.08
+				cy.height = 1.0
+				(bn as MeshInstance3D).mesh = cy
+				(bn as MeshInstance3D).material_override = _mat(Color(0.6, 0.8, 1.0), 0.3, 0.0, 0.8)
+			bn.position = Vector3(at.x - r.x, c.height_at(at) - c.height_at(r), at.y - r.y)
+			posts.add_child(bn)
+		_beacons.append(posts)
+	# the goal arch stands across the way in, where the route first meets the goal, facing the marble's approach
+	var last: Vector2 = c.route[c.route.size() - 1] if not c.route.is_empty() else c.start
+	var from: Vector2 = c.route[c.route.size() - 2] if c.route.size() > 1 else c.start
+	var gdir := (last - from).normalized()
+	var entry := Vector2.INF
+	var q := from
+	for k in int(from.distance_to(last) / 0.1) + 40:
+		if c.kind(int(floor(q.x)), int(floor(q.y))) == "G":
+			entry = q
+			break
+		q += gdir * 0.1
+	if entry != Vector2.INF:
+		# the goal's width across the way, to size the arch
+		var gperp := Vector2(-gdir.y, gdir.x)
+		var span := [0.0, 0.0]
+		for side in 2:
+			var sg := 1.0 if side == 0 else -1.0
+			var t := 0.0
+			while t < 8.0 and c.kind(int(floor(entry.x + gperp.x * sg * (t + 0.1))), int(floor(entry.y + gperp.y * sg * (t + 0.1)))) == "G":
+				t += 0.1
+			span[side] = t
+		var mid: Vector2 = entry + gperp * (span[0] - span[1]) * 0.5
+		var width: float = span[0] + span[1]
 		_goal = _scene("goal_arch")
 		if _goal == null:
 			_goal = MeshInstance3D.new()
@@ -334,15 +375,21 @@ func _build_props(c: DriftCourse) -> void:
 			(_goal as MeshInstance3D).mesh = tm
 			(_goal as MeshInstance3D).material_override = _mat(Color(1.0, 0.85, 0.3), 0.2, 0.3, 1.5)
 			_goal.rotation.x = PI * 0.5
-		_goal.position = Vector3(gp.x, c.height_at(gp), gp.y)
-		_goal.rotation.y = PI * 0.25
-		_stage.add_child(_goal)
+			_goal.position.y = 1.3
+		var holder := Node3D.new()
+		holder.add_child(_goal)
+		holder.position = Vector3(mid.x, c.height_at(mid + gdir * 0.3), mid.y) + Vector3(gdir.x, 0, gdir.y) * 0.3
+		holder.rotation.y = atan2(-gdir.x, -gdir.y)   # the arch's front (+Z) towards the coming marble
+		var k := maxf(1.0, (width + 0.6) / 3.0)
+		holder.scale = Vector3(k, maxf(1.0, k * 0.8), 1.0)
+		_stage.add_child(holder)
 		var gl := OmniLight3D.new()
 		gl.light_color = Color(1.0, 0.85, 0.4)
 		gl.light_energy = 2.0
 		gl.omni_range = 5.0
 		gl.position = Vector3(0, 2.0, 0)
-		_goal.add_child(gl)
+		holder.add_child(gl)
+		_goal = holder
 
 
 func _on_event(kind: String, d: Dictionary) -> void:
@@ -371,14 +418,16 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"checkpoint":
 			var i: int = d["n"] - 1
 			if i >= 0 and i < _beacons.size():
-				var bn := _beacons[i]
-				_fx.burst(bn.position + Vector3(0, 1.0, 0), Color(0.5, 0.9, 1.0), 20, 2.0, 0.6, 0.08, 1.0, 1.0, 1.0, "glow")
-				var l := OmniLight3D.new()
-				l.light_color = Color(0.5, 0.9, 1.0)
-				l.light_energy = 1.5
-				l.omni_range = 2.5
-				l.position = Vector3(0, 1.2, 0)
-				bn.add_child(l)
+				var gate := _beacons[i].get_parent() as Node3D
+				_fx.burst(gate.position + Vector3(0, 0.6, 0), Color(0.5, 0.9, 1.0), 30, 2.5, 0.7, 0.08, 1.0, 1.0, 1.0, "glow")
+				_gate_rings[i].material_override = _mat(Color(0.5, 1.0, 0.75), 0.3, 0.0, 2.5)
+				for bn in _beacons[i].get_children():
+					var l := OmniLight3D.new()
+					l.light_color = Color(0.5, 1.0, 0.8)
+					l.light_energy = 1.5
+					l.omni_range = 2.5
+					l.position = Vector3(0, 1.2, 0)
+					bn.add_child(l)
 		"finish":
 			var p: Vector3 = e.ball["pos"]
 			for i in 6:

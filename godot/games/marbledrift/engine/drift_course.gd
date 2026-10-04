@@ -89,6 +89,26 @@ func _finish(rows: Array[String]) -> void:
 			cells[z * w + x] = rows[z].unicode_at(x)
 
 
+## The checkpoints shown on the course: route points (not the goal, not run-up points with a speed) about GATE_GAP
+## apart along the route. A broken marble comes back at the last one passed.
+const GATE_GAP := 9.0
+
+
+func gates() -> Array[int]:
+	var out: Array[int] = []
+	var prev := start
+	var run := 0.0
+	for i in route.size() - 1:
+		run += prev.distance_to(route[i])
+		prev = route[i]
+		if i < route_speed.size() and route_speed[i] > 0.0:
+			continue
+		if run >= GATE_GAP:
+			out.append(i)
+			run = 0.0
+	return out
+
+
 func kind(x: int, z: int) -> String:
 	if x < 0 or z < 0 or x >= w or z >= h:
 		return "_"

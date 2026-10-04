@@ -4,7 +4,7 @@ extends RefCounted
 ## The marble rolls on the course's height field: slopes pull it along, the player pushes it (screen-relative, turned
 ## into course directions by the game), floors grip more or less (glass is slippery, rough floor holds). It flies off
 ## edges and lands; a fall of more than BREAK_DROP shatters it, acid dissolves it, the void swallows it: it comes back
-## at the last checkpoint (the route's points double as checkpoints) and the clock keeps running. Walls bounce it.
+## at the last checkpoint passed (gates on some of the route's points) and the clock keeps running. Walls bounce it.
 ## The black steelie hunts the marble and knocks it about; hoppers patrol and bump it. Reach the goal before the
 ## clock runs out: the time left carries over to the next course (and scores).
 ## Events: "bump" {speed}, "land" {drop}, "shatter" {pos}, "fall" {pos}, "acid" {pos}, "respawn", "checkpoint" {n},
@@ -20,6 +20,7 @@ const PUSH := 10.0           ## how hard the player pushes (units/s² at full st
 const DRAG := 0.55           ## rolling resistance, per second
 const MAX_SPEED := 15.0
 const BREAK_DROP := 3.2      ## a fall from higher than this shatters the marble
+const GATE_R := 1.6          ## a route point counts as reached within this distance (the gate's ring on the floor)
 const STEP := 0.45           ## a rise sharper than this is a wall
 const GRIP := {".": 1.0, "G": 1.0, "=": 0.45, "^": 1.5, "~": 1.0, "#": 1.0}
 const DRAGS := {".": 1.0, "G": 1.0, "=": 0.35, "^": 2.2, "~": 1.0, "#": 1.0}
@@ -33,6 +34,8 @@ var score := 0
 var ball := {}
 var input := Vector2.ZERO      ## the push, in course directions (x, z), length <= 1
 var checkpoint := 0            ## the furthest route point reached
+var gate := 0                  ## checkpoints (course.gates()) passed
+var gates: Array[int] = []
 var enemies: Array[Dictionary] = []
 var death := ""
 var _warned := false
@@ -51,6 +54,7 @@ func _init(c: DriftCourse, carried := 0.0, score_ := 0) -> void:
 		d["t"] = 0.0
 		d["gone"] = 0.0
 		enemies.append(d)
+	gates = c.gates()
 	_place(c.start)
 
 
@@ -62,13 +66,10 @@ func ball_xz() -> Vector2:
 	return Vector2(ball["pos"].x, ball["pos"].z)
 
 
-## Where a broken marble comes back: the last checkpoint reached, skipping run-up points (a route point with a speed:
-## coming back there at a standstill, with no room to gather speed, would only lead to the same fall).
+## Where a broken marble comes back: the last checkpoint passed (never a run-up point: coming back there at a
+## standstill, with no room to gather speed, would only lead to the same fall).
 func respawn_point() -> Vector2:
-	for i in range(mini(checkpoint, course.route.size()) - 1, -1, -1):
-		if i >= course.route_speed.size() or course.route_speed[i] <= 0.0:
-			return course.route[i]
-	return course.start
+	return course.route[gates[gate - 1]] if gate > 0 else course.start
 
 
 # ------------------------------------------------------------------ the tick
@@ -192,9 +193,11 @@ func _roll(b: Dictionary, push: Vector2, player: bool) -> void:
 func _checkpoints() -> void:
 	var r := course.route
 	for i in range(checkpoint, r.size()):
-		if ball_xz().distance_to(r[i]) < 1.6 and not ball["air"]:
+		if ball_xz().distance_to(r[i]) < GATE_R and not ball["air"]:
 			checkpoint = i + 1
-			event.emit("checkpoint", {"n": checkpoint})
+	while gate < gates.size() and gates[gate] < checkpoint:
+		gate += 1
+		event.emit("checkpoint", {"n": gate})
 
 
 func _enemies() -> void:

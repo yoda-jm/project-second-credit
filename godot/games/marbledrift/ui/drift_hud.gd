@@ -51,9 +51,9 @@ func _draw() -> void:
 	HudKit.panel(self, Rect2(vp.x * 0.5 - 110, 14, 220, 92), ACCENT)
 	HudKit.text(self, Vector2(vp.x * 0.5, 36), "TIME", 16, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
 	HudKit.text(self, Vector2(vp.x * 0.5, 92), "%d" % ceili(maxf(0.0, e.clock)), 54, col, HudKit.font(true), HudKit.CENTER)
-	var n := e.course.route.size()
-	if n > 1:
-		HudKit.text(self, Vector2(vp.x * 0.5, 130), "CHECKPOINT %d / %d" % [mini(e.checkpoint, n - 1), n - 1], 16,
+	var n := e.gates.size()
+	if n > 0:
+		HudKit.text(self, Vector2(vp.x * 0.5, 130), "CHECKPOINT %d / %d" % [e.gate, n], 16,
 			ACCENT if _cp > 0.0 else HudKit.INK, HudKit.label_font(), HudKit.CENTER)
 	if e.phase == DriftEngine.Phase.READY:
 		HudKit.banner(self, vp, vp.y * 0.36, "COURSE %d" % (game.index + 1), e.course.name.to_upper(), ACCENT, clampf(e.phase_t * 2.0, 0.0, 1.0))
