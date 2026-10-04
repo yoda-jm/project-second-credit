@@ -361,6 +361,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/marbledrift/art/models/beacon.glb", "model", 0.3]],
 	},
 	{
+		"id": "fuseflight",
+		"style": "Platform",
+		"title": "Fuseflight",
+		"tagline": "Leap and glide over festival nights, taking the fireworks in fuse order.",
+		"inspired_by": "Bomb Jack (1984)",
+		"scene": "res://games/fuseflight/scenes/fuseflight_game.tscn",
+		"accent": Color(1.0, 0.55, 0.75),
+		"props": [["res://games/fuseflight/art/models/sprite.glb", "model", 0.5],
+			["res://games/fuseflight/art/models/rocket.glb", "model", 0.35],
+			["res://games/fuseflight/art/models/flyer.glb", "model", 0.4]],
+	},
+	{
 		"id": "brassflow",
 		"style": "Puzzle",
 		"title": "Brassflow",

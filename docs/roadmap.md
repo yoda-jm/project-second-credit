@@ -55,6 +55,8 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 25 | Space Invaders (1978) | *Nova Wardens* | The ripple march, per-pixel shields as voxels, an autopilot that leads its targets, a reactive night backdrop |
 | 26 | Mini-Putt (1987), Zany Golf (1988) | *Lantern Links* | 2.5D ball physics on a height field (ramps, bumps, jumps), gadgets as functions of time, a CPU that plans shots on a worker thread, a time-of-day progression across a round |
 | 27 | Marble Madness (1984) | *Marble Drift* | Ball physics on a height field with flights and breaking falls, screen-relative controls (and a mouse trackball), courses from primitives, checkpoints |
+| 28 | Bomb Jack (1984) | *Fuseflight* | Leaping and gliding on a fixed screen, the lit-fuse order, an autopilot that looks ahead on copies of the engine |
+| 29 | Pipe Mania (1989) | *Brassflow* | A grid flow that advances on a timer, a piece queue, a route-planning autopilot that walks the cursor like a player |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own

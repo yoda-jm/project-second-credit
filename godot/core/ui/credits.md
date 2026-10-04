@@ -219,6 +219,21 @@ Second Credit stands on the work of many people. Everything below is free and op
   (`godot/games/marbledrift/view3d/drift_sky.gd`, `shaders/`); sound effects and music by
   `tools/audio/marbledrift_sfx.py` and `marbledrift_music.py`.
 
+## Game 28 (Fuseflight, working title)
+
+- Inspired by *Bomb Jack* (Tehkan, 1984). None of its code, graphics, sounds, music or stages are in this repo: the
+  five festival stages (`godot/games/fuseflight/stages/festival.fuse`), the hero, the enemies and the music are our own.
+- Models and backdrops by `tools/blender/fuseflight_models.py` and `fuseflight_backdrops.py`; skies and fireworks
+  written as shaders (`godot/games/fuseflight/shaders/`); sound effects and music by `tools/audio/fuseflight_sfx.py`
+  and `fuseflight_music.py`.
+
+## Game 29 (Brassflow, working title)
+
+- Inspired by *Pipe Mania* (The Assembly Line, 1989). None of its code, graphics, sounds, music or levels are in this
+  repo: the pieces, the workshop, the rules' tuning and the music are our own.
+- Models by `tools/blender/brassflow_models.py`; the glow written as a shader (`godot/games/brassflow/shaders/`);
+  sound effects and music by `tools/audio/brassflow_sfx.py` and `brassflow_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

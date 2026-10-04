@@ -162,9 +162,17 @@ decisions below are settled unless the owner reopens them.
    (`courses/courses.drift`, made by `tools/marble_courses.py` from primitives), flights and shattering falls, glass and
    rough floors, acid, a steelie and hoppers, checkpoints, time carried over; screen-relative controls and a mouse
    trackball; a sky per course (`view3d/drift_sky.gd`). `--level=N`.
-31. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+31. Game 28, **Fuseflight** (Bomb Jack-like, `godot/games/fuseflight/`): leap, glide and collect the fireworks on
+   five festival stages (`stages/festival.fuse`), the lit fuse to follow, walkers that take wing, orbs, the power star,
+   B and E letters; a backdrop per stage (`view3d/fuse_backdrop.gd`); the autopilot looks ahead on copies of the
+   engine (`demo/fuse_bot.gd`). `--level=N`.
+32. Game 29, **Brassflow** (Pipe Mania-like, `godot/games/brassflow/`): lay brass pipe from the dispenser before the
+   glow flows, levels that grow longer and quicker with blocked cells, crosses for loop bonuses, fast flow; a steam
+   workshop at night (`view3d/brass_workshop.gd`); the autopilot plans a winding route (`demo/flow_bot.gd`).
+   `--level=N`.
+33. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-32. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+34. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

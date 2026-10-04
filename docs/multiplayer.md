@@ -47,6 +47,8 @@ level, apart in time or space, racing the clock and each other's shadow), **Spli
 | 25 | **Nova Wardens** (Space Invaders) | Alternating turns (the original two-player mode) | Co-op: two cannons defend together; versus: the second player steers the mothership | Ghost / co-op |
 | 26 | **Lantern Links** (Mini-Putt, Zany Golf) | Hot seat for 1-4, any seat the CPU (done) | Everyone putting at once on the same hole (ghost balls), match play, a ghost of your best round | Ghost / turns |
 | 27 | **Marble Drift** (Marble Madness) | Two marbles racing down the same course (the original's two-player race), knocking each other off | Ghost race against your best run | Race, lockstep |
+| 28 | **Fuseflight** (Bomb Jack) | Alternating turns (the original two-player mode) | Co-op: two heroes on one stage, the lit-fuse bonus shared | Co-op / turns |
+| 29 | **Brassflow** (Pipe Mania) | Two players on one board, each with a cursor, sharing one dispenser (the original's co-op) | Versus: two boards side by side, a leak sends blocks to the rival | Co-op, lockstep |
 
 ## Suggested order
 
