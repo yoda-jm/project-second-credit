@@ -27,6 +27,8 @@ var flag: Node3D
 var felt_mat: ShaderMaterial
 var water_mat: ShaderMaterial
 var glow_mats: Array[StandardMaterial3D] = []   ## lamps on the gadgets, brighter at night
+var _pipe_arrows: Array[MeshInstance3D] = []
+var _mist: Array[CPUParticles3D] = []
 var bounds := AABB()
 var _flag_lift := 0.0
 
@@ -465,6 +467,68 @@ func _water_and_ravine() -> void:
 	if any_c:
 		_mesh(rocks, Pbr.material("rock", Color(0.6, 0.58, 0.55), 1.0))
 		_mesh(stream, water_mat, false).name = "stream"
+		_ravine_marks()
+
+
+## A ravine has to read as a drop from the tee: glowing amber strips along its lips, a cool light down in it, and
+## mist rising from its stream.
+func _ravine_marks() -> void:
+	var lip := StandardMaterial3D.new()
+	lip.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	lip.albedo_color = Color(1.0, 0.62, 0.2)
+	lip.emission_enabled = true
+	lip.emission = Color(1.0, 0.62, 0.2)
+	lip.emission_energy_multiplier = 2.2
+	var sum := Vector3.ZERO
+	var n := 0
+	for y in hole.h:
+		for x in hole.w:
+			if hole.kind[y * hole.w + x] != H.CHASM:
+				continue
+			var c := hole.centre(x, y)
+			sum += Vector3(c.x, RAVINE, c.y)
+			n += 1
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nk := _kind(x + d.x, y + d.y)
+				if not _open(nk):
+					continue
+				var edge := c + Vector2(d) * H.CELL * 0.5
+				var top := hole.height(edge + Vector2(d) * 0.03)
+				var strip := MeshInstance3D.new()
+				var bm := BoxMesh.new()
+				bm.size = Vector3(H.CELL if d.y != 0 else 0.035, 0.02, H.CELL if d.x != 0 else 0.035)
+				strip.mesh = bm
+				strip.material_override = lip
+				strip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				strip.position = Vector3(edge.x, top + 0.01, edge.y) + Vector3(d.x, 0, d.y) * 0.02
+				add_child(strip)
+	if n == 0:
+		return
+	var mid := sum / n
+	var light := OmniLight3D.new()
+	light.light_color = Color(0.45, 0.8, 1.0)
+	light.light_energy = 2.0
+	light.omni_range = 2.4
+	light.position = mid + Vector3(0, 0.5, 0)
+	add_child(light)
+	var mist := CPUParticles3D.new()
+	mist.amount = 40
+	mist.lifetime = 3.0
+	mist.position = mid + Vector3(0, 0.2, 0)
+	mist.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	mist.emission_box_extents = Vector3(maxf(0.3, n * 0.05), 0.1, maxf(0.3, n * 0.05))
+	mist.direction = Vector3.UP
+	mist.spread = 15.0
+	mist.initial_velocity_min = 0.3
+	mist.initial_velocity_max = 0.6
+	mist.gravity = Vector3.ZERO
+	mist.scale_amount_min = 0.6
+	mist.scale_amount_max = 1.2
+	var q := QuadMesh.new()
+	q.size = Vector2(0.5, 0.5)
+	mist.mesh = q
+	mist.material_override = Fx.material("smoke", Color(0.7, 0.85, 1.0, 0.35))
+	add_child(mist)
 
 
 # --- the cup, the tee, boosters ---
@@ -722,20 +786,17 @@ func _pipe(g: Dictionary) -> Node3D:
 		for s in sides + 1:
 			var a := TAU * s / sides
 			ring.append([p + (side * cos(a) + up * sin(a)) * rad, (side * cos(a) + up * sin(a))])
+		for s in sides + 1:
+			ring[s].append(Vector2(float(k) / (pts.size() - 1), float(s) / sides))
 		if not prev.is_empty():
 			for s in sides:
 				for v in [prev[s], ring[s], ring[s + 1], prev[s], ring[s + 1], prev[s + 1]]:
 					st.set_normal(v[1])
+					st.set_uv(v[2])
 					st.add_vertex(v[0])
 		prev = ring
-	var glass := StandardMaterial3D.new()
-	glass.albedo_color = Color(0.75, 0.9, 1.0, 0.1)
-	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass.roughness = 0.05
-	glass.metallic_specular = 0.6
-	glass.rim_enabled = true
-	glass.rim = 0.25
-	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var glass := ShaderMaterial.new()
+	glass.shader = load(SH + "links_pipe.gdshader")
 	var tube := MeshInstance3D.new()
 	tube.mesh = st.commit()
 	tube.material_override = glass
@@ -760,8 +821,24 @@ func _pipe(g: Dictionary) -> Node3D:
 		hole_d.material_override = _std(Color(0.05, 0.05, 0.06), 0.9)
 		hole_d.position = Vector3(e.x, hole.height(e) - 0.065, e.y)
 		n.add_child(hole_d)
-		var lamp := _std(Color(0.4, 0.9, 1.0), 0.3, 0.0, 1.5)
+		var mouth: bool = end == g["a"]
+		var lamp := _std(Color(1.0, 0.65, 0.25) if mouth else Color(0.4, 0.9, 1.0), 0.3, 0.0, 1.8 if mouth else 1.2)
 		glow_mats.append(lamp)
+		if mouth:
+			# an arrow bobs over the way in
+			var arrow := MeshInstance3D.new()
+			var cone := CylinderMesh.new()
+			cone.top_radius = 0.07
+			cone.bottom_radius = 0.0
+			cone.height = 0.16
+			cone.radial_segments = 4
+			arrow.mesh = cone
+			arrow.material_override = lamp
+			arrow.name = "pipe_arrow"
+			arrow.position = Vector3(e.x, hole.height(e) + 0.35, e.y)
+			arrow.set_meta("base_y", arrow.position.y)
+			n.add_child(arrow)
+			_pipe_arrows.append(arrow)
 		var glow_ring := MeshInstance3D.new()
 		var tm2 := TorusMesh.new()
 		tm2.inner_radius = H.PIPE_R + 0.03
@@ -1047,6 +1124,9 @@ func fade_windmills(cam: Vector3, ball: Vector3, delta: float) -> float:
 
 
 func update(clock: float, delta: float, near_cup: bool) -> void:
+	for a in _pipe_arrows:
+		a.position.y = float(a.get_meta("base_y")) + 0.05 * sin(clock * 4.0)
+		a.rotation.y = clock * 1.5
 	for k in hole.gadgets.size():
 		var g: Dictionary = hole.gadgets[k]
 		var n: Node3D = gadget_nodes[k]

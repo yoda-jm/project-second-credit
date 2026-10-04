@@ -6,6 +6,21 @@ extends Control
 ## between holes and at the end, with the winner.
 
 const E = preload("res://games/lanternlinks/engine/links_engine.gd")
+const HL = preload("res://games/lanternlinks/engine/links_hole.gd")
+## What each feature of a hole does, in a line (shown on the hole card and while the first stroke is aimed).
+const TIPS := {
+	"chasm": "RAVINE: drive up the ramp hard enough to jump it",
+	"water": "WATER: a stroke penalty, the ball comes back",
+	"sand": "SAND slows the ball",
+	"ice": "ICE: the ball hardly slows",
+	"boost": "ARROWS push the ball their way",
+	"pipe": "GLASS PIPE: roll into the amber mouth, out at the blue end",
+	"windmill": "WINDMILL: time the putt between the sails",
+	"loop": "LOOP: hit it firmly to go round",
+	"mover": "SLIDING GATES open and close",
+	"spinner": "TURNSTILE: it knocks the ball aside",
+	"bumper": "BUMPERS kick the ball back",
+}
 const ACCENT := Color(1.0, 0.72, 0.38)
 const GREEN := Color(0.45, 0.95, 0.55)
 
@@ -57,6 +72,38 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
+## The features of a hole, worst hazards first.
+func _features(h: LinksHole) -> Array[String]:
+	var out: Array[String] = []
+	var kinds := {}
+	for k in h.kind:
+		kinds[k] = true
+	if kinds.has(HL.CHASM): out.append("chasm")
+	if kinds.has(HL.WATER): out.append("water")
+	for g in h.gadgets:
+		if not out.has(g["type"]): out.append(g["type"])
+	if not h.boost.is_empty(): out.append("boost")
+	if kinds.has(HL.ICE): out.append("ice")
+	if kinds.has(HL.SAND): out.append("sand")
+	return out
+
+
+func _draw_tips(vp: Vector2, h: LinksHole, a: float) -> void:
+	var lines: Array[String] = []
+	for f in _features(h):
+		if TIPS.has(f) and lines.size() < 3:
+			lines.append(TIPS[f])
+	if lines.is_empty():
+		return
+	var y := vp.y * 0.72 + 100.0 if game.engine.phase == E.Phase.INTRO else 140.0
+	var w := 0.0
+	for l in lines:
+		w = maxf(w, HudKit.width(l, 18, HudKit.label_font()))
+	HudKit.panel(self, Rect2(vp.x * 0.5 - w * 0.5 - 24, y - 6, w + 48, lines.size() * 26 + 14), ACCENT, 12, a)
+	for i in lines.size():
+		HudKit.text(self, Vector2(vp.x * 0.5, y + 18 + i * 26), lines[i], 18, Color(HudKit.INK, a), HudKit.label_font(), HudKit.CENTER)
+
+
 func _draw() -> void:
 	var vp := size
 	if game.setup:
@@ -106,6 +153,9 @@ func _draw() -> void:
 	if e.phase == E.Phase.INTRO:
 		var a := clampf(e.phase_t * 3.0, 0.0, 1.0) * clampf((E.INTRO_T - e.phase_t) * 2.5, 0.0, 1.0)
 		HudKit.banner(self, vp, vp.y * 0.72, h.name.to_upper(), "HOLE %d   -   PAR %d" % [e.hole_i + 1, h.par], ACCENT, a)
+		_draw_tips(vp, h, a)
+	elif e.phase == E.Phase.AIM and e.strokes == 0 and e.player_index() == 0:
+		_draw_tips(vp, h, 0.85)
 	if not _banner.is_empty():
 		var bt: float = _banner["t"]
 		var life: float = _banner["life"]
