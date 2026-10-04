@@ -440,7 +440,7 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_shake = maxf(_shake, 0.25)
 		"flow_start":
 			var p := _cell_pos(e.source) + Vector3(0, 1.0, 0)
-			_fx.burst(p, Color(0.9, 0.9, 0.85), 12, 1.2, 1.2, 0.22, 0.0, 1.0, 1.0, "smoke")
+			_fx.burst(p, Color(0.9, 0.9, 0.85), 10, 1.0, 1.0, 0.1, 0.0, 1.0, 1.0, "smoke")
 			_fx.flash(_cell_pos(e.source), GLOW, 2.0)
 			_shake = maxf(_shake, 0.3)
 		"fill":
