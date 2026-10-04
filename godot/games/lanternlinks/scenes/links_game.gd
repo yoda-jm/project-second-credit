@@ -39,6 +39,9 @@ var _bot: LinksBot
 var _task := -1
 var _cpu_at := 0.0           ## the hole clock the CPU strikes at
 var _cpu_ready := false
+var _lead := LEAD             ## how far ahead this turn's plan is made (it grows if a plan comes too late)
+var _plan_started := 0        ## when the plan began (ms), to see how long the thinking took
+var _took := 0.0              ## how long the last plan took (s)
 var _games := 0
 var _cpu_turn := false
 var _line := 0.0              ## the default aim of this turn (the CPU looks along it while it thinks)
@@ -77,6 +80,7 @@ func _on_event(kind: String, _d: Dictionary) -> void:
 			aim_angle = _line
 			_cpu_turn = demo or bool(engine.player()["cpu"])
 			if _cpu_turn:
+				_lead = maxf(LEAD, _took * 1.4 + 0.3)   # as long as the last plan needed, with a margin
 				_plan()
 		"tee":
 			aim_angle = default_aim()
@@ -136,7 +140,8 @@ static func _clear(h: LinksHole, a: Vector2, b: Vector2) -> bool:
 func _plan() -> void:
 	_wait_task()
 	_bot.skill = 0.8 if demo else 0.9
-	_cpu_at = engine.clock + LEAD
+	_cpu_at = engine.clock + _lead
+	_plan_started = Time.get_ticks_msec()
 	_cpu_ready = false
 	cpu_thinking = true
 	_bot.plan(engine.ball, _cpu_at)
@@ -155,8 +160,12 @@ func _drive_cpu(delta: float) -> void:
 			_wait_task()
 			_cpu_ready = true
 			cpu_thinking = false
+			_took = (Time.get_ticks_msec() - _plan_started) / 1000.0
 			if engine.clock > _cpu_at + TICK and engine.hole.moving():
-				_plan()   # too late for the plan's moment: the gadgets have moved on
+				# too late for the plan's moment (the gadgets have moved on): plan again further ahead, as far as the
+				# thinking took twice over, so a slow machine or a long hole never keeps the golfer waiting for ever
+				_lead = maxf(_lead * 1.5, _took * 2.0 + 0.3)
+				_plan()
 				return
 		else:
 			# lining up: look along the green while thinking
