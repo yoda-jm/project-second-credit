@@ -166,9 +166,10 @@ decisions below are settled unless the owner reopens them.
    five festival stages (`stages/festival.fuse`), the lit fuse to follow, walkers that take wing, orbs, the power star,
    B and E letters; a backdrop per stage (`view3d/fuse_backdrop.gd`); the autopilot looks ahead on copies of the
    engine (`demo/fuse_bot.gd`). `--level=N`.
-32. Game 29, **Brassflow** (Pipe Mania-like, `godot/games/brassflow/`): lay brass pipe from the dispenser before the
-   glow flows, levels that grow longer and quicker with blocked cells, crosses for loop bonuses, fast flow; a steam
-   workshop at night (`view3d/brass_workshop.gd`); the autopilot plans a winding route (`demo/flow_bot.gd`).
+32. Game 29, **Brassflow** (Pipe Mania-like, `godot/games/brassflow/`): lead the glow from the boiler to the engine
+   with brass pipe from the dispenser (pieces turn: R, right click, wheel) before it flows; the engine further, the
+   glow quicker and more blocked cells each level, crosses for loop bonuses, fast flow; a map of the board in the HUD;
+   a steam workshop at night (`view3d/brass_workshop.gd`); the autopilot follows the shortest way (`demo/flow_bot.gd`).
    `--level=N`.
 33. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a

@@ -65,6 +65,13 @@ var _cogs: Array = []          ## [node, rad/s]
 var _tank: Node3D
 var _outlet: GeometryInstance3D
 var _cursor_mats: Array = []   ## [mesh, surface] of the cursor's glowing parts
+var _exit_tank: Node3D
+var _exit_port: GeometryInstance3D
+var _flywheel: Node3D
+var _fly_speed := 0.0
+var _inlet_arrow: MeshInstance3D
+var _inlet_base := Vector3.ZERO
+var _twist := 0.0              ## the front piece's quarter turn, easing out
 
 
 func _ready() -> void:
@@ -390,6 +397,7 @@ func _build_level(e: FlowEngine) -> void:
 	if _outlet:
 		_outlet.material_override = _glow_mat
 		_outlet.set_instance_shader_parameter("fill", 0.0)
+	_build_engine(e)
 	# the cursor
 	_cursor = _model("cursor")
 	if _cursor == null:
@@ -405,6 +413,78 @@ func _build_level(e: FlowEngine) -> void:
 	_ghost_piece = ""
 	if _cam_pos == Vector3.ZERO:
 		_place_camera(1.0, true)
+
+
+## The engine the glow must reach: a second boiler, empty, its port turned to the inlet, a flywheel that spins up
+## when the glow arrives, a glowing arrow on the floor into the inlet and its name over it.
+func _build_engine(e: FlowEngine) -> void:
+	var holder := Node3D.new()
+	holder.position = _cell_pos(e.exit_cell)
+	_board.add_child(holder)
+	var body := _model("source")
+	if body == null:
+		body = Node3D.new()
+		var tank := _cyl(0.35, 1.0, COPPER)
+		tank.position.y = 0.5
+		body.add_child(tank)
+	body.rotation.y = posmod(1 - e.exit_dir, 4) * PI * 0.5
+	holder.add_child(body)
+	_exit_tank = body.find_child("tank_glow", true, false) as Node3D
+	if _exit_tank:
+		_exit_tank.scale.y = 0.06
+	var og := body.find_child("outlet_glow", true, false) as GeometryInstance3D
+	if og:
+		og.material_override = _glow_mat
+		og.set_instance_shader_parameter("fill", 0.0)
+		_exit_port = og
+	# the flywheel on top, copper with brass spokes
+	_flywheel = Node3D.new()
+	_flywheel.position = Vector3(0, 1.35, 0)
+	_flywheel.rotation.x = PI * 0.5
+	var rim := MeshInstance3D.new()
+	var tm := TorusMesh.new()
+	tm.inner_radius = 0.3
+	tm.outer_radius = 0.38
+	rim.mesh = tm
+	rim.material_override = _mat(COPPER, 0.25, 1.0)
+	_flywheel.add_child(rim)
+	for k in 3:
+		var sp := _box(Vector3(0.62, 0.04, 0.05), BRASS, 0.3, 1.0)
+		sp.rotation.y = k * PI / 3.0
+		_flywheel.add_child(sp)
+	holder.add_child(_flywheel)
+	_fly_speed = 0.0
+	# the arrow into the inlet, on the feed cell's side of the engine
+	var d: Vector2i = F.DIRS[e.exit_dir]
+	_inlet_arrow = MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0
+	cone.bottom_radius = 0.22
+	cone.height = 0.4
+	cone.radial_segments = 3
+	_inlet_arrow.mesh = cone
+	_inlet_arrow.material_override = _mat(Color(1.0, 0.75, 0.3), 0.3, 0.0, 2.5)
+	_inlet_arrow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# the cone's tip points into the engine, flat on the floor
+	_inlet_arrow.basis = Basis.looking_at(Vector3(-d.x, 0, -d.y), Vector3.UP) * Basis(Vector3.RIGHT, -PI * 0.5)
+	_inlet_base = Vector3(d.x, 0.08, d.y) * 0.62
+	holder.add_child(_inlet_arrow)
+	var tag := Label3D.new()
+	tag.text = "ENGINE"
+	tag.font = HudKit.font(true)
+	tag.font_size = 48
+	tag.pixel_size = 0.006
+	tag.outline_size = 10
+	tag.outline_modulate = Color(0.2, 0.08, 0.0)
+	tag.modulate = Color(1.0, 0.8, 0.4)
+	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	tag.position = Vector3(0, 1.95, 0)
+	holder.add_child(tag)
+	var src := tag.duplicate() as Label3D
+	src.text = "BOILER"
+	src.modulate = Color(0.55, 1.0, 0.75)
+	src.position = _cell_pos(e.source) + Vector3(0, 1.75, 0)
+	_board.add_child(src)
 
 
 func _push_queue(piece: String, slot: int, drop: bool) -> void:
@@ -434,6 +514,16 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_pieces[c] = {"node": n, "piece": d["piece"], "t": 0.0, "from": from}
 			_push_queue(e.queue[e.queue.size() - 1], _queue.size(), true)
 			_feed_spin = 1.0
+		"rotate":
+			if not _queue.is_empty():
+				var old: Node3D = _queue[0]["node"]
+				var n := _piece_node(d["piece"])
+				n.scale = old.scale
+				n.position = old.position
+				_board.add_child(n)
+				old.queue_free()
+				_queue[0] = {"node": n, "piece": d["piece"]}
+			_twist = PI * 0.5
 		"replace":
 			var p := _cell_pos(d["cell"]) + Vector3(0, 0.3, 0)
 			_fx.burst(p, Color(1.0, 0.7, 0.3), 24, 4.0, 0.5, 0.06, 1.0, -9.0, 1.0, "glow")
@@ -480,6 +570,15 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_punch_at = p
 			_head_light.position = p + Vector3(0, 0.5, 0)
 		"passed":
+			_fly_speed = 14.0
+			if _exit_tank:
+				create_tween().tween_property(_exit_tank, "scale:y", 1.0, 0.8)
+			var xp := _cell_pos(e.exit_cell) + Vector3(0, 1.2, 0)
+			_fx.burst(xp, Color(0.9, 0.95, 0.9), 16, 1.6, 1.4, 0.18, 0.0, 2.0, 1.0, "smoke")
+			_fx.burst(xp, Color(1.0, 0.85, 0.35), 50, 5.0, 1.0, 0.08, 1.0, -6.0, 1.0, "glow")
+			_fx.flash(xp, GLOW, 4.0)
+			_punch = 0.8
+			_punch_at = xp
 			_sweep = 1.0
 			_celebrate = 3.0
 			if _shop:
@@ -548,7 +647,8 @@ func _place_queue(delta: float) -> void:
 	for i in _queue.size():
 		var n: Node3D = _queue[i]["node"]
 		n.position = n.position.lerp(_slot_pos(i), minf(1.0, delta * 12.0))
-		n.rotation.y = sin(_time * 1.5 + i) * 0.06 if i == 0 else 0.0
+		if i > 0:
+			n.rotation.y = 0.0
 
 
 ## The cogs on blocked cells turn, the dispenser's feed gear spins as the queue moves, the tank drains as the glow goes.
@@ -561,6 +661,20 @@ func _place_machinery(e: FlowEngine, delta: float) -> void:
 	if _tank:
 		var left := 1.0 - 0.75 * clampf(float(e.filled) / e.length, 0.0, 1.0) if e.flowing else 1.0
 		_tank.scale.y = lerpf(_tank.scale.y, left, minf(1.0, delta * 3.0))
+	if _flywheel:
+		_fly_speed = maxf(0.6, _fly_speed - delta * 1.5) if e.reached else 0.6
+		_flywheel.rotate_object_local(Vector3.UP, _fly_speed * delta)
+	if _inlet_arrow:
+		_inlet_arrow.position = _inlet_base * (1.0 + 0.12 * sin(_time * 5.0))
+		_inlet_arrow.visible = not e.reached
+	if _exit_port:
+		_exit_port.set_instance_shader_parameter("fill", 1.0 if e.reached else 0.0)
+		_exit_port.set_instance_shader_parameter("reverse", 1.0)
+	_twist = lerpf(_twist, 0.0, minf(1.0, delta * 14.0))
+	if not _queue.is_empty():
+		(_queue[0]["node"] as Node3D).rotation.y = _twist
+	if _ghost:
+		_ghost.rotation.y = _twist
 	if _outlet:
 		var f := 0.0
 		if e.flowing:
@@ -708,8 +822,9 @@ func _place_camera(delta: float, snap := false) -> void:
 	var e := game.engine
 	var aspect := get_viewport().get_visible_rect().size.aspect()
 	var half_v := tan(deg_to_rad(camera.fov * 0.5))
-	var dist := maxf(4.6 / half_v, 7.2 / (half_v * aspect)) * 1.02
-	var look := Vector3(4.35, 0.0, 3.75)
+	# the board a little left of centre: the map of the board sits at the bottom right
+	var dist := maxf(4.7 / half_v, 7.9 / (half_v * aspect)) * 1.02
+	var look := Vector3(5.4, 0.0, 3.85)
 	var lean := Vector3.ZERO
 	if e and e.flowing and e.phase == F.Phase.PLAY:
 		lean = (_head_point(e) - look) * 0.08

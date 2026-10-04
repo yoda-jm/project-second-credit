@@ -1,15 +1,16 @@
 class_name FlowEngine
 extends RefCounted
 ## Brassflow rules (a pipe-laying race in the Pipe Mania tradition; our own tuning), 60 Hz ticks. The board is a grid
-## (10 x 7); a source sits on it, its outlet facing one way; some cells are blocked. A dispenser holds the next five
-## pieces (straights, corners, crosses), drawn at random. The player puts the front piece on the cursor's cell (on an
-## empty cell, or over a piece the flow has not reached yet: that one is scrapped, for a small cost and a pause).
-## After a countdown the glow starts to flow from the source, filling one piece every so often: it must enter each
-## piece by one of its openings and leave by the matching one. When it runs out (an empty cell, a blocked one, a piece
-## that does not take it, the board's edge), the level ends: passed if it filled at least the level's length, else a
-## chance is lost. A cross filled both ways scores a loop bonus. Fast flow (a key) sends it on quickly once you're done.
-## Events: "place" {cell, piece}, "replace" {cell}, "flow_start", "fill" {cell, n, cross_twice}, "spill" {cell, why},
-## "passed" {length, bonus}, "failed", "game_over", "fast".
+## (10 x 7); a source (the boiler) sits on it, its outlet facing one way, and an exit (the engine) with one inlet;
+## some cells are blocked. A dispenser holds the next five pieces (straights, corners, crosses), drawn at random; the
+## front one can be turned a quarter at a time. The player puts it on the cursor's cell (on an empty cell, or over a
+## piece the flow has not reached yet: that one is scrapped, for a small cost and a pause). After a countdown the glow
+## flows from the source, filling one piece every so often: it must enter each piece by one of its openings and leave
+## by the matching one. Reaching the engine by its inlet passes the level (every piece filled scores, a bonus on top);
+## running out anywhere else (an empty cell, a blocked one, a piece that does not take it, the edge) costs a chance.
+## A cross filled both ways scores a loop bonus. Fast flow (a key) sends it on quickly once the pipe is done.
+## Events: "place" {cell, piece}, "replace" {cell}, "rotate" {piece}, "flow_start", "fill" {cell, n, cross_twice},
+## "spill" {cell, why}, "passed" {length, bonus}, "failed", "game_over", "fast".
 
 signal event(kind: String, data: Dictionary)
 
@@ -23,6 +24,9 @@ const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
 ## pieces and their openings (as direction sets)
 const PIECES := {"h": [1, 3], "v": [0, 2], "ne": [0, 1], "nw": [0, 3], "se": [2, 1], "sw": [2, 3], "x": [0, 1, 2, 3]}
 const DRAW := ["h", "v", "ne", "nw", "se", "sw", "h", "v", "x"]   ## the dispenser's odds (straights a little likelier)
+## a quarter turn clockwise (seen from above, up being -row)
+const TURN := {"h": "v", "v": "h", "ne": "se", "se": "sw", "sw": "nw", "nw": "ne", "x": "x"}
+const EXIT_BONUS := 1000
 
 var level := 0
 var phase := Phase.READY
@@ -30,13 +34,17 @@ var phase_t := 1.0
 var time := 0.0
 var score := 0
 var chances := 3
-var length := 12              ## pieces the flow must fill to pass
+var length := 0               ## the shortest way from the boiler to the engine, in pieces (for the score and the HUD)
 var countdown := 18.0         ## seconds before the flow starts
 var step_time := 2.0          ## seconds the flow takes through one piece
 var grid := {}                ## cell -> {piece, filled: [dirs entered], }
 var blocked := {}             ## cell -> true
 var source := Vector2i(1, 3)
 var source_dir := 1
+var exit_cell := Vector2i(8, 3)
+var exit_dir := 3             ## the side of the exit cell the flow must come in by
+var reached := false
+var rotate_pressed := false
 var queue: Array[String] = []
 var cursor := Vector2i(4, 3)
 var place_pressed := false
@@ -56,7 +64,6 @@ func _init(level_ := 0, score_ := 0, chances_ := 3, seed_ := 1) -> void:
 	score = score_
 	chances = chances_
 	rng.seed = seed_ * 7919 + level_ * 31
-	length = 10 + level * 2
 	countdown = maxf(8.0, 18.0 - level * 1.2)
 	step_time = maxf(0.7, 2.0 - level * 0.15)
 	_layout()
@@ -68,23 +75,62 @@ func _draw() -> String:
 	return DRAW[rng.randi() % DRAW.size()]
 
 
-## The source somewhere along the left half, facing into the board, and a few blocked cells from level 2 on.
+## The source somewhere in the left part facing into the board, the engine in the right part with its inlet facing
+## any way but the edge, a few blocked cells from level 2 on; always with a way through, the longer the later the level.
 func _layout() -> void:
-	source = Vector2i(rng.randi_range(1, 3), rng.randi_range(1, ROWS - 2))
-	source_dir = [1, 2, 0][rng.randi() % 3]
-	if source.y <= 1 and source_dir == 0:
-		source_dir = 1
-	if source.y >= ROWS - 2 and source_dir == 2:
-		source_dir = 1
-	var n := 0 if level < 1 else mini(2 + level, 7)
-	var tries := 0
-	while blocked.size() < n and tries < 100:
-		tries += 1
-		var c := Vector2i(rng.randi_range(0, COLS - 1), rng.randi_range(0, ROWS - 1))
-		if c == source or c == source + DIRS[source_dir] or (c - source).length() < 2.0:
-			continue
-		blocked[c] = true
+	for attempt in 200:
+		blocked.clear()
+		source = Vector2i(rng.randi_range(1, 3), rng.randi_range(1, ROWS - 2))
+		source_dir = [1, 2, 0][rng.randi() % 3]
+		if source.y <= 1 and source_dir == 0:
+			source_dir = 1
+		if source.y >= ROWS - 2 and source_dir == 2:
+			source_dir = 1
+		exit_cell = Vector2i(rng.randi_range(COLS - 4, COLS - 2), rng.randi_range(1, ROWS - 2))
+		exit_dir = [3, 0, 2, 1][rng.randi() % 4]
+		if not inside(exit_cell + DIRS[exit_dir]):
+			exit_dir = 3
+		var n := 0 if level < 1 else mini(2 + level, 9)
+		var tries := 0
+		while blocked.size() < n and tries < 100:
+			tries += 1
+			var c := Vector2i(rng.randi_range(0, COLS - 1), rng.randi_range(0, ROWS - 1))
+			if c == source or c == exit_cell or c == feed() or c == source + DIRS[source_dir] or (c - source).length() < 2.0:
+				continue
+			blocked[c] = true
+		length = shortest()
+		if length >= mini(6 + level, 12):
+			break
 	cursor = source + (DIRS[source_dir] as Vector2i)
+
+
+## The cell that feeds the engine (outside its inlet).
+func feed() -> Vector2i:
+	return exit_cell + (DIRS[exit_dir] as Vector2i)
+
+
+## Free for a pipe: on the board, not blocked, not the boiler or the engine.
+func open_cell(c: Vector2i) -> bool:
+	return inside(c) and not blocked.has(c) and c != source and c != exit_cell
+
+
+## The fewest pieces from the boiler's outlet to the engine's feed cell (a breadth-first search), or 0 if none.
+func shortest() -> int:
+	var start: Vector2i = source + DIRS[source_dir]
+	if not open_cell(start) or not open_cell(feed()):
+		return 0
+	var dist := {start: 1}
+	var q: Array[Vector2i] = [start]
+	while not q.is_empty():
+		var c: Vector2i = q.pop_front()
+		if c == feed():
+			return dist[c]
+		for d in DIRS:
+			var n: Vector2i = c + d
+			if open_cell(n) and not dist.has(n):
+				dist[n] = dist[c] + 1
+				q.append(n)
+	return 0
 
 
 static func inside(c: Vector2i) -> bool:
@@ -111,7 +157,7 @@ static func exit_of(piece: String, d: int) -> int:
 
 
 func can_place(c: Vector2i) -> bool:
-	if not inside(c) or blocked.has(c) or c == source:
+	if not open_cell(c):
 		return false
 	var g: Dictionary = grid.get(c, {})
 	return g.is_empty() or g["filled"].is_empty()
@@ -127,11 +173,16 @@ func tick() -> void:
 			if phase_t <= 0.0:
 				phase = Phase.PLAY
 			place_pressed = false
+			rotate_pressed = false
 			return
 		Phase.DONE, Phase.OVER:
 			phase_t -= TICK
 			return
 	cool = maxf(0.0, cool - TICK)
+	if rotate_pressed:
+		queue[0] = TURN[queue[0]]
+		event.emit("rotate", {"piece": queue[0]})
+	rotate_pressed = false
 	if place_pressed and cool <= 0.0:
 		_place()
 	place_pressed = false
@@ -179,7 +230,12 @@ func _advance() -> void:
 	var nxt: Vector2i = head + DIRS[out]
 	var enter := opposite(out)
 	var why := ""
-	if not inside(nxt):
+	if nxt == exit_cell:
+		if enter == exit_dir:
+			_reach()
+			return
+		why = "wrong"
+	elif not inside(nxt):
 		why = "edge"
 	elif blocked.has(nxt):
 		why = "blocked"
@@ -206,22 +262,24 @@ func _advance() -> void:
 	event.emit("fill", {"cell": nxt, "n": filled, "cross_twice": twice})
 
 
+func _reach() -> void:
+	reached = true
+	var bonus := EXIT_BONUS + maxi(0, filled - length) * 50
+	score += bonus
+	phase = Phase.DONE
+	phase_t = 3.0
+	event.emit("passed", {"length": filled, "bonus": bonus})
+
+
 func _end() -> void:
-	if filled >= length:
-		var bonus := (filled - length) * 100
-		score += bonus
-		phase = Phase.DONE
-		phase_t = 3.0
-		event.emit("passed", {"length": filled, "bonus": bonus})
-	else:
-		chances -= 1
-		phase = Phase.DONE if chances > 0 else Phase.OVER
-		phase_t = 3.0
-		event.emit("failed", {})
-		if chances <= 0:
-			event.emit("game_over", {})
+	chances -= 1
+	phase = Phase.DONE if chances > 0 else Phase.OVER
+	phase_t = 3.0
+	event.emit("failed", {})
+	if chances <= 0:
+		event.emit("game_over", {})
 
 
 ## Whether the level was passed (once it is done).
 func passed() -> bool:
-	return phase == Phase.DONE and filled >= length
+	return phase == Phase.DONE and reached

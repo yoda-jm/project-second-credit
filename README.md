@@ -54,7 +54,7 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 26 | Mini-Putt (1987), Zany Golf (1988): **Lantern Links** | Nine holes of mini-golf in a lantern garden from golden hour into the night: a windmill, a loop, a jump, glass pipes, bumpers; 1-4 players with CPU seats |
 | 27 | Marble Madness (1984): **Marble Drift** | A glass marble racing the clock down six floating courses: slopes, drops that shatter it, glass and rough floors, acid, a steelie and hoppers, a sky per course |
 | 28 | Bomb Jack (1984): **Fuseflight** | Leap and glide over five festival stages at night collecting fireworks, the lit fuse in order for double, walkers that take wing, the power star |
-| 29 | Pipe Mania (1989): **Brassflow** | Lay brass pipe from the dispenser before the glow flows through, in a steam workshop at night: longer lines, blocked cells, crosses for loops, fast flow |
+| 29 | Pipe Mania (1989): **Brassflow** | Lead the glow from the boiler to the engine with brass pipe, in a steam workshop at night: pieces to turn, blocked cells, crosses for loops, fast flow |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

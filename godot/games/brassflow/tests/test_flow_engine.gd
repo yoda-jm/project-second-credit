@@ -1,6 +1,6 @@
 extends GdUnitTestSuite
-## Brassflow: pieces and their openings, placing and replacing, the flow filling a laid pipe, spilling at an open end,
-## the length to pass, the cross's loop bonus, and the autopilot passing levels.
+## Brassflow: pieces and their openings, turning and placing and replacing, the flow filling a laid pipe, spilling at
+## an open end, reaching the engine, the cross's loop bonus, layouts with a way through, and the autopilot passing levels.
 
 const F = preload("res://games/brassflow/engine/flow_engine.gd")
 
@@ -40,7 +40,27 @@ func test_replacing_costs_and_pauses() -> void:
 	assert_float(e.cool).is_greater(0.0)
 
 
-func test_the_flow_spills_at_an_open_end_and_a_short_pipe_fails() -> void:
+func test_turning_the_front_piece() -> void:
+	var e := _engine()
+	e.queue[0] = "ne"
+	e.rotate_pressed = true
+	e.tick()
+	assert_str(e.queue[0]).is_equal("se")
+	e.queue[0] = "h"
+	e.rotate_pressed = true
+	e.tick()
+	assert_str(e.queue[0]).is_equal("v")
+
+
+func test_every_layout_has_a_way_through() -> void:
+	for lv in 8:
+		for sd in 6:
+			var e := FlowEngine.new(lv, 0, 3, sd + 1)
+			assert_int(e.shortest()).is_greater(0)
+			assert_bool(e.open_cell(e.feed())).is_true()
+
+
+func test_the_flow_spills_at_an_open_end_and_fails() -> void:
 	var e := _engine()
 	e.countdown = 0.05
 	e.step_time = 0.05
@@ -52,22 +72,38 @@ func test_the_flow_spills_at_an_open_end_and_a_short_pipe_fails() -> void:
 	assert_int(e.chances).is_equal(2)
 
 
-func test_a_laid_pipe_passes() -> void:
+func test_a_pipe_into_the_engine_passes() -> void:
 	var e := _engine()
-	e.length = 3
-	# a straight run out of the source
-	var c := e.source
-	var piece := "h" if e.source_dir == 1 else "v"
-	for i in 4:
-		c += F.DIRS[e.source_dir]
-		if FlowEngine.inside(c):
-			e.grid[c] = {"piece": piece, "filled": []}
+	e.blocked.clear()
+	e.source = Vector2i(1, 3)
+	e.source_dir = 1
+	e.exit_cell = Vector2i(6, 3)
+	e.exit_dir = 3
+	for x in range(2, 6):
+		e.grid[Vector2i(x, 3)] = {"piece": "h", "filled": []}
 	e.countdown = 0.05
 	e.step_time = 0.05
 	for i in 200:
 		e.tick()
-	assert_bool(e.filled >= 3).is_true()
+	assert_int(e.filled).is_equal(4)
 	assert_bool(e.passed()).is_true()
+
+
+func test_the_engine_refuses_the_wrong_side() -> void:
+	var e := _engine()
+	e.blocked.clear()
+	e.source = Vector2i(1, 3)
+	e.source_dir = 1
+	e.exit_cell = Vector2i(4, 3)
+	e.exit_dir = 0
+	for x in range(2, 4):
+		e.grid[Vector2i(x, 3)] = {"piece": "h", "filled": []}
+	e.countdown = 0.05
+	e.step_time = 0.05
+	for i in 200:
+		e.tick()
+	assert_bool(e.passed()).is_false()
+	assert_int(e.chances).is_equal(2)
 
 
 func test_a_cross_filled_both_ways_scores_the_loop() -> void:
@@ -93,7 +129,7 @@ func test_autopilot_passes_levels() -> void:
 			e.tick()
 			if e.phase == F.Phase.DONE or e.phase == F.Phase.OVER:
 				break
-		prints("autopilot level", lv + 1, "passed", e.passed(), "filled", e.filled, "of", e.length, "route", bot.route.size(), "time", snappedf(e.time, 0.1))
+		prints("autopilot level", lv + 1, "passed", e.passed(), "filled", e.filled, "shortest", e.length, "route", bot.route.size(), "time", snappedf(e.time, 0.1))
 		if e.passed():
 			passed += 1
 	assert_int(passed).is_greater_equal(4)

@@ -1,9 +1,10 @@
 class_name FlowGame
 extends Node
-## Runs Brassflow: level after level (longer pipes, quicker glow, more blocked cells); a level that spills short costs
-## one of three chances and is tried again on a new board. 60 Hz ticks. Arrows, W A S D or the stick move the cursor
-## (held, it repeats); space, enter or the pad's A places the dispenser's front piece; F or the pad's Y sends the glow
-## on quickly once you are done. The mouse works too: point at a cell, click to place. "--level=N" starts at a level.
+## Runs Brassflow: level after level (the engine further away, quicker glow, more blocked cells); a leak costs one of
+## three chances and the level is tried again on a new board. 60 Hz ticks. Arrows, W A S D or the stick move the cursor
+## (held, it repeats); space, enter or the pad's A lays the dispenser's front piece; R, the pad's X, a right click or
+## the wheel turns it; F or the pad's Y sends the glow on quickly once you are done. The mouse works too: point at a
+## cell, click to lay. "--level=N" starts at a level.
 
 signal level_started(engine: FlowEngine)
 signal game_over()
@@ -110,6 +111,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		or (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_Y)
 	if fast:
 		engine.fast_pressed = true
+	var turn: bool = (event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_R) \
+		or (event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_X) \
+		or (event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN])
+	if turn:
+		engine.rotate_pressed = true
 	# the mouse: point at a cell, click to place
 	var cam := get_viewport().get_camera_3d()
 	if cam and (event is InputEventMouseMotion or (event is InputEventMouseButton and event.pressed)):

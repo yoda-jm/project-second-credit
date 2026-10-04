@@ -1,10 +1,10 @@
 class_name FlowBot
 extends RefCounted
-## The Brassflow autopilot (the demo). It plans a long winding route from the source over the free cells (a depth-first
-## search that prefers the cells with fewest ways on, so the route hugs the walls and fills the board), which says the
-## piece each route cell needs. Then, with each piece the dispenser gives it, it walks the cursor (a cell at a time,
-## like a player) to the first route cell needing that piece (a cross fits any straight), or, if none does, to a spare
-## cell off the route. Once the route is laid well past the length it presses fast flow.
+## The Brassflow autopilot (the demo). It plans the way from the boiler to the engine (a breadth-first search over the
+## free cells), which says the piece each cell of it needs. With each piece the dispenser gives it, it walks the cursor
+## (a cell at a time, like a player) to the first cell of the way that piece can fill once turned (a cross fits any
+## straight), turns it to fit and lays it; a piece nothing wants goes on a spare cell off the way. Once the whole way
+## is laid it presses fast flow.
 
 const F = preload("res://games/brassflow/engine/flow_engine.gd")
 const MOVE_EVERY := 5
@@ -18,29 +18,36 @@ var _planned := false
 func drive(e: FlowEngine) -> void:
 	e.place_pressed = false
 	e.fast_pressed = false
+	e.rotate_pressed = false
 	if e.phase != F.Phase.PLAY:
 		return
 	if not _planned:
 		_plan(e)
 		_planned = true
+	if not route.is_empty() and _laid(e) >= route.size():
+		e.fast_pressed = true
+		return
 	var goal := _goal(e)
-	if goal == Vector2i(-1, -1):
+	if goal[0] == Vector2i(-1, -1):
 		return
 	_t -= 1
 	if _t > 0:
 		return
 	_t = MOVE_EVERY
-	if e.cursor != goal:
-		var d := goal - e.cursor
+	var at: Vector2i = goal[0]
+	if e.cursor != at:
+		var d := at - e.cursor
 		if d.x != 0:
 			e.cursor.x += signi(d.x)
 		else:
 			e.cursor.y += signi(d.y)
 		return
+	var want: Array = goal[1]
+	if not want.is_empty() and not _fits(e.queue[0], want):
+		e.rotate_pressed = true
+		return
 	if e.cool <= 0.0:
 		e.place_pressed = true
-	if _laid(e) >= e.length + 3 or _laid(e) >= route.size():
-		e.fast_pressed = true
 
 
 ## Route cells laid with the right piece, from the start, unbroken.
@@ -61,7 +68,18 @@ static func _fits(piece: String, sides: Array) -> bool:
 	return o.has(sides[0]) and o.has(sides[1])
 
 
-func _goal(e: FlowEngine) -> Vector2i:
+## Whether some turn of the piece fits.
+static func _fits_turned(piece: String, sides: Array) -> bool:
+	var p := piece
+	for k in 4:
+		if _fits(p, sides):
+			return true
+		p = F.TURN[p]
+	return false
+
+
+## [the cell to go to, the sides it must open (empty for a spare cell)].
+func _goal(e: FlowEngine) -> Array:
 	var piece: String = e.queue[0]
 	for i in route.size():
 		var c := route[i]
@@ -70,8 +88,8 @@ func _goal(e: FlowEngine) -> Vector2i:
 			continue
 		if not g.is_empty() and not (g["filled"] as Array).is_empty():
 			continue
-		if _fits(piece, need[i]):
-			return c
+		if _fits_turned(piece, need[i]):
+			return [c, need[i]]
 	# no route cell wants it: a spare cell off the route, near the cursor
 	var best := Vector2i(-1, -1)
 	var bd := 1 << 20
@@ -84,60 +102,35 @@ func _goal(e: FlowEngine) -> Vector2i:
 			if d < bd:
 				bd = d
 				best = c
-	if best != Vector2i(-1, -1):
-		return best
-	# nowhere spare: the furthest unfilled route cell (it can be replaced later)
-	for i in range(route.size() - 1, -1, -1):
-		if e.can_place(route[i]):
-			return route[i]
-	return Vector2i(-1, -1)
+	return [best, []]
 
 
 func _plan(e: FlowEngine) -> void:
-	var start: Vector2i = e.source + F.DIRS[e.source_dir]
-	var best: Array[Vector2i] = []
-	var path: Array[Vector2i] = [start]
-	var seen := {start: true}
-	var budget := [20000]
-	_dfs(e, path, seen, best, budget, e.length + 8)
-	route = best
+	route.clear()
 	need.clear()
+	var start: Vector2i = e.source + F.DIRS[e.source_dir]
+	var prev := {start: start}
+	var q: Array[Vector2i] = [start]
+	while not q.is_empty():
+		var c: Vector2i = q.pop_front()
+		if c == e.feed():
+			break
+		for d in F.DIRS:
+			var n: Vector2i = c + d
+			if e.open_cell(n) and not prev.has(n):
+				prev[n] = c
+				q.append(n)
+	if not prev.has(e.feed()):
+		return
+	var c := e.feed()
+	while true:
+		route.push_front(c)
+		if c == start:
+			break
+		c = prev[c]
 	for i in route.size():
-		var c := route[i]
-		var prev := e.source if i == 0 else route[i - 1]
-		var into := F.DIRS.find(prev - c)
-		var outd := F.DIRS.find(route[i + 1] - c) if i + 1 < route.size() else F.opposite(into)
-		need.append([into, outd])
-	# the last cell: whatever continues it if it can, else straight on (the flow ends there anyway)
-
-
-func _dfs(e: FlowEngine, path: Array[Vector2i], seen: Dictionary, best: Array[Vector2i], budget: Array, want: int) -> bool:
-	budget[0] -= 1
-	if path.size() > best.size():
-		best.assign(path)
-	if path.size() >= want or budget[0] <= 0:
-		return true
-	var c := path.back() as Vector2i
-	var nexts := []
-	for d in F.DIRS:
-		var n: Vector2i = c + d
-		if F.inside(n) and not e.blocked.has(n) and n != e.source and not seen.has(n):
-			nexts.append(n)
-	nexts.sort_custom(func(a, b): return _onward(e, a, seen) < _onward(e, b, seen))
-	for n in nexts:
-		path.append(n)
-		seen[n] = true
-		if _dfs(e, path, seen, best, budget, want):
-			return true
-		path.pop_back()
-		seen.erase(n)
-	return false
-
-
-static func _onward(e: FlowEngine, c: Vector2i, seen: Dictionary) -> int:
-	var k := 0
-	for d in F.DIRS:
-		var n: Vector2i = c + d
-		if F.inside(n) and not e.blocked.has(n) and n != e.source and not seen.has(n):
-			k += 1
-	return k
+		var cell := route[i]
+		var back := e.source if i == 0 else route[i - 1]
+		var into := F.DIRS.find(back - cell)
+		var onto := e.exit_cell if i == route.size() - 1 else route[i + 1]
+		need.append([into, F.DIRS.find(onto - cell)])
