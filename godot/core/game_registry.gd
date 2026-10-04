@@ -360,7 +360,20 @@ const GAMES: Array[Dictionary] = [
 			["res://games/marbledrift/art/models/hopper.glb", "model", 0.3],
 			["res://games/marbledrift/art/models/beacon.glb", "model", 0.3]],
 	},
-]## The styles in collection order (for the launcher's filter).
+	{
+		"id": "brassflow",
+		"style": "Puzzle",
+		"title": "Brassflow",
+		"tagline": "Lay brass pipe ahead of the glow before it spills.",
+		"inspired_by": "Pipe Mania (1989)",
+		"scene": "res://games/brassflow/scenes/brassflow_game.tscn",
+		"accent": Color(0.95, 0.7, 0.3),
+		"props": [["res://games/brassflow/art/models/source.glb", "model", 0.5],
+			["res://games/brassflow/art/models/pipe_cross.glb", "model", 0.45],
+			["res://games/brassflow/art/models/pipe_corner.glb", "model", 0.45]],
+	},
+]
+## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
 	var out: Array[String] = []
 	for g in GAMES:
