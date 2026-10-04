@@ -386,6 +386,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/brassflow/art/models/pipe_cross.glb", "model", 0.45],
 			["res://games/brassflow/art/models/pipe_corner.glb", "model", 0.45]],
 	},
+	{
+		"id": "tinplate",
+		"style": "Racing",
+		"title": "Tinplate Turbo",
+		"tagline": "Race wind-up tin cars round tabletop tracks, sliding through every bend.",
+		"inspired_by": "Super Sprint (1986)",
+		"scene": "res://games/tinplate/scenes/tinplate_game.tscn",
+		"accent": Color(0.95, 0.35, 0.25),
+		"props": [["res://games/tinplate/art/models/car.glb", "model", 0.6],
+			["res://games/tinplate/art/models/trophy.glb", "model", 0.4],
+			["res://games/tinplate/art/models/cone.glb", "model", 0.3]],
+	},
 ]
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:

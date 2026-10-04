@@ -1,0 +1,57 @@
+; Tinplate Turbo tracks: our own designs, CC BY-SA 4.0 (made by tools/tinplate_tracks.py).
+; Board 48 x 28 m, x right, z down the screen; points x,z[,height].
+
+[track]
+name=Garden Party
+theme=0
+laps=5
+width=4.6
+points=8,5 24,4 40,5 44.5,10 43.5,19.5 37.5,23.5 31,22.5 27,16.5 21,16.5 17,22.5 10,23.5 4,19 3.5,10
+puddle=36,5.2
+
+[track]
+name=Canyon Eight
+theme=1
+laps=5
+width=4.4
+points=10,23.4 17,20 24,14,0 31,8 38,4.6 44,8 44.5,14 44,20 38,23.4 31,20 24,14,2.4 17,8 10,4.6 4,8 3.5,14 4,20
+oil=5,16
+ramp=44.4,14
+
+[track]
+name=Snowdrift Bends
+theme=2
+laps=5
+width=4.6
+points=6,5 20,4.2 27,8 34,4.5 43,6 44.5,13 38,16 40,22.5 30,24 22,19.5 14,24 5,21 3.8,13
+oil=39.5,16.5
+puddle=24,21
+
+[track]
+name=Harbour Lights
+theme=3
+laps=5
+width=4.6
+points=6,5 26,4.5 42,5 43.8,10 39.5,11.5 38,14.5 39.5,17.5 43.8,19 42,23.5 24,23.5 6,23.5 4.2,19 8.5,17.5 10,14.5 8.5,11.5 4.2,10
+puddle=16,4.9
+puddle=32,23.5
+ramp=24,23.5
+
+[track]
+name=Neon Crossing
+theme=4
+laps=6
+width=4.2
+points=6,4.8 18,4.8 24,8 30,14,0 36,20 42,23.5 45.2,17 43,6.5 36,8,1 30,14,2.4 24,20,1 18,23.5 6,23.5 3.5,14
+oil=40,4.9
+oil=8,23.4
+
+[track]
+name=Autumn Woods
+theme=5
+laps=5
+width=4.6
+points=6,6 14,4 22,8 30,4 40,5 44.5,12 40,17 44,23 32,24 26,19 18,24 8,23 4,15
+puddle=22.2,8.5
+puddle=26.2,19.5
+ramp=35,4.4
