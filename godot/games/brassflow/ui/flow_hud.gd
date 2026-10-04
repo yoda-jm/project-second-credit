@@ -17,6 +17,10 @@ var _pops: Array[Dictionary] = []
 var _t := 0.0
 var _placed := false
 var _turn := 0.0
+## one-time tips: the cross (the first time one is next), loose ends (the first time the glow flows)
+var _tip := ""
+var _tip_t := 0.0
+var _seen := {}
 
 
 func _ready() -> void:
@@ -45,6 +49,17 @@ func _on_event(kind: String, d: Dictionary) -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	_turn = maxf(0.0, _turn - delta * 6.0)
+	_tip_t = maxf(0.0, _tip_t - delta)
+	var e := game.engine
+	if e and not game.demo and e.phase == FlowEngine.Phase.PLAY and _tip_t <= 0.0:
+		if e.queue[0] == "x" and not _seen.has("x"):
+			_seen["x"] = true
+			_tip = "A CROSS IS A BRIDGE: THE GLOW GOES STRAIGHT THROUGH|it never turns there; through both ways for a loop bonus"
+			_tip_t = 6.0
+		elif e.flowing and not _seen.has("ends"):
+			_seen["ends"] = true
+			_tip = "ONLY THE GLOW'S WAY MATTERS|loose ends elsewhere never leak: it ends at the engine, or where its way runs out"
+			_tip_t = 6.0
 	for p in _pops:
 		p["t"] += delta
 	_pops = _pops.filter(func(p): return p["t"] < 1.1)
@@ -98,6 +113,12 @@ func _draw() -> void:
 	elif e.phase == FlowEngine.Phase.DONE:
 		HudKit.banner(self, vp, vp.y * 0.36, "LEAK!", "THE GLOW NEVER REACHED THE ENGINE  -  TRY AGAIN", HudKit.BAD,
 			clampf((3.0 - e.phase_t) * 3.0, 0.0, 1.0))
+	if _tip_t > 0.0:
+		var a := clampf(_tip_t, 0.0, 1.0) * clampf((6.0 - _tip_t) * 3.0, 0.0, 1.0)
+		var parts := _tip.split("|")
+		HudKit.panel(self, Rect2(vp.x * 0.42 - 340, vp.y - 190, 680, 70), ACCENT, 14, a)
+		HudKit.text(self, Vector2(vp.x * 0.42, vp.y - 160), parts[0], 21, Color(HudKit.GOLD, a), HudKit.font(true), HudKit.CENTER)
+		HudKit.text(self, Vector2(vp.x * 0.42, vp.y - 133), parts[1], 16, Color(HudKit.INK, a), HudKit.label_font(), HudKit.CENTER)
 	if game.over:
 		HudKit.banner(self, vp, vp.y * 0.42, "GAME OVER", "PRESS ENTER" if not game.demo else "", HudKit.BAD, 1.0)
 	elif not _placed and not game.demo and e.phase == FlowEngine.Phase.PLAY:
@@ -163,8 +184,17 @@ func _draw_map(e: FlowEngine, at: Vector2) -> void:
 		_piece(pc, e.queue[i], 26.0, BRASS, 4.0)
 
 
-## A piece drawn from above: a line from the middle to each opening (a cross is two straight lines).
+## A piece drawn from above: a line from the middle to each opening; a cross is a bridge (the up-down run passes
+## over the left-right one, which breaks under it), since the glow goes straight through it, never round a corner.
 func _piece(mid: Vector2, piece: String, s: float, col: Color, w: float) -> void:
+	if piece == "x":
+		var gap := w * 1.1
+		draw_line(mid + Vector2(-s * 0.5, 0), mid + Vector2(-gap, 0), col, w)
+		draw_line(mid + Vector2(gap, 0), mid + Vector2(s * 0.5, 0), col, w)
+		draw_line(mid + Vector2(0, -s * 0.5), mid + Vector2(0, s * 0.5), col, w)
+		draw_line(mid + Vector2(-gap * 0.9, -gap * 0.7), mid + Vector2(-gap * 0.9, gap * 0.7), col.darkened(0.4), maxf(1.0, w * 0.35))
+		draw_line(mid + Vector2(gap * 0.9, -gap * 0.7), mid + Vector2(gap * 0.9, gap * 0.7), col.darkened(0.4), maxf(1.0, w * 0.35))
+		return
 	for d in FlowEngine.PIECES[piece]:
 		var v: Vector2i = FlowEngine.DIRS[d]
 		draw_line(mid, mid + Vector2(v.x, v.y) * s * 0.5, col, w)
