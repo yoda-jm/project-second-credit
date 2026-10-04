@@ -71,4 +71,15 @@ func _draw() -> void:
 	if game.demo:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 30), "DEMO  -  PRESS ANY KEY TO PLAY", 20, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
 	elif e.time < 6.0 and game.index == 0:
-		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["ARROWS / STICK", "roll (screen directions)"], ["MOUSE", "trackball"]])
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["ARROWS / STICK", "roll (screen directions)"], ["CLICK + DRAG", "roll"]])
+	# the floating stick, while held: its base ring and the knob, an arrow showing the push
+	if game.stick_on:
+		var b := game.stick_base
+		var k := b + (game.stick_at - b).limit_length(DriftGame.STICK_R)
+		draw_circle(b, DriftGame.STICK_R, Color(0.05, 0.08, 0.15, 0.35))
+		draw_arc(b, DriftGame.STICK_R, 0.0, TAU, 64, Color(ACCENT, 0.7), 3.0, true)
+		draw_arc(b, DriftGame.STICK_R * 0.12, 0.0, TAU, 24, Color(1, 1, 1, 0.35), 2.0, true)
+		draw_line(b, k, Color(ACCENT, 0.6), 4.0, true)
+		draw_circle(k, 30.0, Color(ACCENT, 0.85))
+		draw_circle(k, 18.0, Color(1, 1, 1, 0.9))
+

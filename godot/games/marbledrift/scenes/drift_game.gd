@@ -2,8 +2,9 @@ class_name DriftGame
 extends Node
 ## Runs Marble Drift: course after course, the time left on one carried over to the next, until the clock runs out
 ## or the last course is done. 60 Hz ticks. The controls are screen-relative, like the arcade's: up pushes the marble
-## up the screen. Arrows, W A S D or a gamepad's stick (proportional) push it; the mouse works as a trackball (move it
-## and the marble rolls that way, faster for a quicker flick). "--level=N" (user argument) starts at a course.
+## up the screen. Arrows, W A S D or a gamepad's stick (proportional) push it; the mouse or a finger is a floating
+## stick: press anywhere and drag, the push growing with the distance from where you pressed (the base follows a drag
+## past its rim); let go and it stops pushing. "--level=N" (user argument) starts at a course.
 
 signal course_started(engine: DriftEngine)
 signal game_over()
@@ -24,7 +25,10 @@ var won := false
 var high := 0
 var _acc := 0.0
 var _bot: DriftBot
-var _ball := Vector2.ZERO   ## the trackball: mouse motion, fading
+const STICK_R := 110.0       ## the floating stick's radius, in pixels: a drag this far is a full push
+var stick_on := false        ## the floating stick (the HUD draws it while it is held)
+var stick_base := Vector2.ZERO
+var stick_at := Vector2.ZERO
 
 
 func start(at := 0) -> void:
@@ -36,6 +40,7 @@ func start(at := 0) -> void:
 
 
 func _load(carried: float, score: int) -> void:
+	stick_on = false
 	var c: DriftCourse = DriftCourse.parse_file(FileAccess.get_file_as_string(FILE))[index]
 	engine = DriftEngine.new(c, carried, score)
 	engine.event.connect(_on_event)
@@ -70,7 +75,6 @@ func _process(delta: float) -> void:
 		else:
 			engine.input = _steer()
 		engine.tick()
-	_ball = _ball.lerp(Vector2.ZERO, 1.0 - exp(-delta * 10.0))
 
 
 func _end() -> void:
@@ -91,7 +95,10 @@ func _steer() -> Vector2:
 	var stick := Vector2(Input.get_joy_axis(0, JOY_AXIS_LEFT_X), -Input.get_joy_axis(0, JOY_AXIS_LEFT_Y))
 	if stick.length() > 0.15:
 		s += stick
-	s += _ball
+	if stick_on:
+		var v := (stick_at - stick_base) / STICK_R
+		if v.length() > 0.12:
+			s += Vector2(v.x, -v.y)   # screen y grows downwards
 	s = s.limit_length(1.0)
 	return SCREEN_RIGHT * s.x + SCREEN_UP * s.y
 
@@ -109,7 +116,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if over and event.is_action_pressed("ui_accept"):
 		start(0)
 		return
-	# the trackball: mouse motion rolls the marble (screen y grows downwards)
-	if event is InputEventMouseMotion:
-		var m: Vector2 = event.relative
-		_ball = (_ball + Vector2(m.x, -m.y) * 0.02).limit_length(1.0)
+	# the floating stick: press, drag, let go (a mouse's left button, or a finger)
+	var press: bool = (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT) or event is InputEventScreenTouch
+	if press:
+		stick_on = event.pressed
+		stick_base = event.position
+		stick_at = event.position
+	elif stick_on and (event is InputEventMouseMotion or event is InputEventScreenDrag):
+		stick_at = event.position
+		var off := stick_at - stick_base
+		if off.length() > STICK_R:
+			stick_base = stick_at - off.normalized() * STICK_R
