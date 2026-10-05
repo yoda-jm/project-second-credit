@@ -53,6 +53,8 @@ level, apart in time or space, racing the clock and each other's shadow), **Spli
 | 31 | **Tinplate Turbo** (Super Sprint) | Two players on one screen (done, F2), CPUs fill the grid | Four players on pads; ghost laps | Race, lockstep |
 | 32 | **Tunnel Pop** (Dig Dug) | Alternating turns (the original two-player mode) | Co-op: two diggers in one garden | Turns / co-op |
 | 33 | **Bloomwand** (Rod Land) | Two fairies at once (done, F2) | Versus: who bursts more | Co-op, lockstep |
+| 34 | **Biosurge** (Xenon 2) | Alternating turns | Two ships at once, shared credits | Co-op, lockstep |
+| 35 | **Four Torches** (Gauntlet) | Four heroes at once on one screen, any the CPU (done, F2-F4) | Online co-op, drop in and out | Co-op, lockstep |
 
 ## Suggested order
 

@@ -263,6 +263,21 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Models and backdrops by `tools/blender/bloomwand_models.py` and `bloomwand_backdrops.py`; shaders in
   `godot/games/bloomwand/shaders/`; sound effects and music by `tools/audio/bloomwand_sfx.py` and `bloomwand_music.py`.
 
+## Game 34 (Biosurge, working title)
+
+- Inspired by *Xenon 2: Megablast* (The Bitmap Brothers, 1989). None of its code, graphics, sounds, music or levels
+  are in this repo: the ship, the creatures, the bosses, the caverns (generated) and the music are our own.
+- Models and the cavern kit by `tools/blender/biosurge_models.py` and `biosurge_world.py`; the caverns written as
+  shaders and code (`godot/games/biosurge/view3d/bio_world.gd`, `shaders/`); sound effects and music by
+  `tools/audio/biosurge_sfx.py` and `biosurge_music.py`.
+
+## Game 35 (Four Torches, working title)
+
+- Inspired by *Gauntlet* (Atari Games, 1985). None of its code, graphics, sounds, music, characters or mazes are in
+  this repo: the four heroes, the monsters, the dungeons (generated) and the music are our own.
+- Models by `tools/blender/fourtorches_models.py`; floors and walls from the shared CC0 textures; sound effects and
+  music by `tools/audio/fourtorches_sfx.py` and `fourtorches_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

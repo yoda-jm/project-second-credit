@@ -14,8 +14,8 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: thirty-three games are playable, in 3D with sound
-> and music, from **Glimmerdeep** (game 1) to **Bloomwand** (game 33), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> Status: thirty-five games are playable, in 3D with sound
+> and music, from **Glimmerdeep** (game 1) to **Four Torches** (game 35), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
 
@@ -59,6 +59,8 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 31 | Super Sprint (1986): **Tinplate Turbo** | Tin toy cars drifting round six tabletop tracks, a bridge, ramps, oil, wrenches for upgrades, a championship for 1-2 players |
 | 32 | Dig Dug (1982): **Tunnel Pop** | Dig a garden's earth in four layers and pump the burrow creatures till they pop, drop rocks on them, the vegetable bonus, eyes drifting through the earth |
 | 33 | Rod Land (1990): **Bloomwand** | A fairy's wand catches creatures and slams them to bits; rainbow ladders, flowers, E X T R A letters, six storybook levels, two players |
+| 34 | Xenon 2 (1989): **Biosurge** | A vertical shooter through living caverns: waves, wall turrets, worms, a boss per level, a trader's shop of weapons between levels |
+| 35 | Gauntlet (1985): **Four Torches** | A dungeon crawl for one to four heroes, any of them CPU: generators, ghosts and imps, keys and doors, food against the draining health, potions |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

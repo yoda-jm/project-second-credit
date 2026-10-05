@@ -438,6 +438,30 @@ const GAMES: Array[Dictionary] = [
 			["res://games/bloomwand/art/models/bopper.glb", "model", 0.5],
 			["res://games/bloomwand/art/models/flower.glb", "model", 0.4]],
 	},
+	{
+		"id": "biosurge",
+		"style": "Arcade",
+		"title": "Biosurge",
+		"tagline": "Fly up through living caverns, blast what lives there, and shop for bigger guns.",
+		"inspired_by": "Xenon 2 (1989)",
+		"scene": "res://games/biosurge/scenes/biosurge_game.tscn",
+		"accent": Color(0.3, 1.0, 0.85),
+		"props": [["res://games/biosurge/art/models/ship.glb", "model", 0.5],
+			["res://games/biosurge/art/models/drifter.glb", "model", 0.4],
+			["res://games/biosurge/art/models/credit.glb", "model", 0.3]],
+	},
+	{
+		"id": "fourtorches",
+		"style": "Action",
+		"title": "Four Torches",
+		"tagline": "Four heroes, one dungeon: smash the generators, keep eating, find the stairs.",
+		"inspired_by": "Gauntlet (1985)",
+		"scene": "res://games/fourtorches/scenes/fourtorches_game.tscn",
+		"accent": Color(1.0, 0.6, 0.25),
+		"props": [["res://games/fourtorches/art/models/knight.glb", "model", 0.5],
+			["res://games/fourtorches/art/models/ghost.glb", "model", 0.4],
+			["res://games/fourtorches/art/models/chest.glb", "model", 0.35]],
+	},
 ]
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
