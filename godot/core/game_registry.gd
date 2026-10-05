@@ -387,6 +387,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/brassflow/art/models/pipe_corner.glb", "model", 0.45]],
 	},
 	{
+		"id": "ridgefire",
+		"style": "Strategy",
+		"title": "Ridgefire",
+		"tagline": "Lob shells across the hills in turn, read the wind, and bring the ground down.",
+		"inspired_by": "Scorched Earth (1991)",
+		"scene": "res://games/ridgefire/scenes/ridgefire_game.tscn",
+		"accent": Color(1.0, 0.55, 0.25),
+		"props": [["res://games/ridgefire/art/models/tank.glb", "model", 0.45],
+			["res://games/ridgefire/art/models/nuke.glb", "model", 0.4],
+			["res://games/ridgefire/art/models/crate.glb", "model", 0.3]],
+	},
+	{
 		"id": "tinplate",
 		"style": "Racing",
 		"title": "Tinplate Turbo",

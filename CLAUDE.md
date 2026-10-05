@@ -171,9 +171,17 @@ decisions below are settled unless the owner reopens them.
    glow quicker and more blocked cells each level, crosses for loop bonuses, fast flow; a map of the board in the HUD;
    a steam workshop at night (`view3d/brass_workshop.gd`); the autopilot follows the shortest way (`demo/flow_bot.gd`).
    `--level=N`.
-33. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+33. Game 30, **Ridgefire** (Scorched Earth-like, `godot/games/ridgefire/`): turn-based artillery for 2-4 tanks, any seat
+   the CPU (`demo/ridge_bot.gd` aims by flying test shells, on a worker thread); ground as a height per column (blasts
+   carve and the earth above slumps), wind, falls, shields, a shop between rounds (heavy, MIRV, roller, dirt ball, digger,
+   nuke); a landscape per round (`view3d/ridge_backdrop.gd`). `--players=N`, `--humans=N`, `--rounds=N`, `--land=N`.
+34. Game 31, **Tinplate Turbo** (Super Sprint-like, `godot/games/tinplate/`): tin toy cars on six tabletop tracks
+   (`tracks/tracks.tin`, made and checked by `tools/tinplate_tracks.py`), drifting arcade physics, a bridge, ramps, oil,
+   puddles, wrenches for upgrades, a championship; CPU drivers on a racing line (`demo/tin_bot.gd`); 1-2 players (F2).
+   `--track=N`, `--players=2`.
+35. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-34. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+36. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.

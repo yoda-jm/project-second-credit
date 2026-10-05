@@ -49,6 +49,8 @@ level, apart in time or space, racing the clock and each other's shadow), **Spli
 | 27 | **Marble Drift** (Marble Madness) | Two marbles racing down the same course (the original's two-player race), knocking each other off | Ghost race against your best run | Race, lockstep |
 | 28 | **Fuseflight** (Bomb Jack) | Alternating turns (the original two-player mode) | Co-op: two heroes on one stage, the lit-fuse bonus shared | Co-op / turns |
 | 29 | **Brassflow** (Pipe Mania) | Two players on one board, each with a cursor, sharing one dispenser (the original's co-op) | Versus: two boards side by side, a leak sends blocks to the rival | Co-op, lockstep |
+| 30 | **Ridgefire** (Scorched Earth) | Hot seat for 2-4 tanks, any seat the CPU (done) | Teams; online turns | Turns |
+| 31 | **Tinplate Turbo** (Super Sprint) | Two players on one screen (done, F2), CPUs fill the grid | Four players on pads; ghost laps | Race, lockstep |
 
 ## Suggested order
 

@@ -57,6 +57,8 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 27 | Marble Madness (1984) | *Marble Drift* | Ball physics on a height field with flights and breaking falls, screen-relative controls (and a mouse trackball), courses from primitives, checkpoints |
 | 28 | Bomb Jack (1984) | *Fuseflight* | Leaping and gliding on a fixed screen, the lit-fuse order, an autopilot that looks ahead on copies of the engine |
 | 29 | Pipe Mania (1989) | *Brassflow* | A grid flow that advances on a timer, a piece queue, a route-planning autopilot that walks the cursor like a player |
+| 30 | Scorched Earth (1991) | *Ridgefire* | A column-height ground that blasts carve and slump, turn-based play with a shop, CPU gunners that fly test shells |
+| 31 | Super Sprint (1986) | *Tinplate Turbo* | Spline tracks with a bridge (cars follow their own road), drifting arcade cars, CPU drivers on a racing line, tilt-shift |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own

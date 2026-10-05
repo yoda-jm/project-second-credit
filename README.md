@@ -14,8 +14,8 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: twenty-nine games are playable, in 3D with sound
-> and music, from **Glimmerdeep** (game 1) to **Brassflow** (game 29), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> Status: thirty-one games are playable, in 3D with sound
+> and music, from **Glimmerdeep** (game 1) to **Tinplate Turbo** (game 31), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
 
@@ -55,6 +55,8 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 27 | Marble Madness (1984): **Marble Drift** | A glass marble racing the clock down six floating courses: slopes, drops that shatter it, glass and rough floors, acid, a steelie and hoppers, a sky per course |
 | 28 | Bomb Jack (1984): **Fuseflight** | Leap and glide over five festival stages at night collecting fireworks, the lit fuse in order for double, walkers that take wing, the power star |
 | 29 | Pipe Mania (1989): **Brassflow** | Lead the glow from the boiler to the engine with brass pipe, in a steam workshop at night: pieces to turn, blocked cells, crosses for loops, fast flow |
+| 30 | Scorched Earth (1991): **Ridgefire** | Turn-based artillery for 2-4 tanks on ground that blasts carve and slump, wind, a weapon shop, a new landscape each round |
+| 31 | Super Sprint (1986): **Tinplate Turbo** | Tin toy cars drifting round six tabletop tracks, a bridge, ramps, oil, wrenches for upgrades, a championship for 1-2 players |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

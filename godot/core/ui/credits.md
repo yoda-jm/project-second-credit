@@ -234,6 +234,21 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Models by `tools/blender/brassflow_models.py`; the glow written as a shader (`godot/games/brassflow/shaders/`);
   sound effects and music by `tools/audio/brassflow_sfx.py` and `brassflow_music.py`.
 
+## Game 30 (Ridgefire, working title)
+
+- Inspired by *Scorched Earth* (Wendell Hicks, 1991). None of its code, graphics, sounds or music are in this repo:
+  the tanks, the weapons, the landscapes and the music are our own.
+- Models and landscapes by `tools/blender/ridgefire_models.py` and `ridgefire_backdrops.py`; the ground written as a
+  shader (`godot/games/ridgefire/shaders/`); sound effects and music by `tools/audio/ridgefire_sfx.py` and
+  `ridgefire_music.py`.
+
+## Game 31 (Tinplate Turbo, working title)
+
+- Inspired by *Super Sprint* (Atari Games, 1986). None of its code, graphics, sounds, music or tracks are in this
+  repo: the six tracks (`tools/tinplate_tracks.py`), the tin cars, the dioramas and the music are our own.
+- Models by `tools/blender/tinplate_models.py`; the road and barriers written as shaders
+  (`godot/games/tinplate/shaders/`); sound effects and music by `tools/audio/tinplate_sfx.py` and `tinplate_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture
