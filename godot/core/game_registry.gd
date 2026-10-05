@@ -412,6 +412,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/tinplate/art/models/trophy.glb", "model", 0.4],
 			["res://games/tinplate/art/models/cone.glb", "model", 0.3]],
 	},
+	{
+		"id": "tunnelpop",
+		"style": "Arcade",
+		"title": "Tunnel Pop",
+		"tagline": "Dig through the garden's earth and pump the burrow creatures till they pop.",
+		"inspired_by": "Dig Dug (1982)",
+		"scene": "res://games/tunnelpop/scenes/tunnelpop_game.tscn",
+		"accent": Color(0.95, 0.65, 0.3),
+		"props": [["res://games/tunnelpop/art/models/digger.glb", "model", 0.6],
+			["res://games/tunnelpop/art/models/puffer.glb", "model", 0.5],
+			["res://games/tunnelpop/art/models/veg_carrot.glb", "model", 0.4]],
+	},
 ]
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:
