@@ -111,7 +111,9 @@ func _build_backdrop() -> void:
 			if not ResourceLoader.exists(key):
 				continue   # a model not made yet: the game floats its other props
 			if not _prop_mm.has(key):
-				_prop_mm[key] = _multimesh(key, PROP_COUNT, _prop_material(prop[1]))
+				var mmi := _multimesh(key, PROP_COUNT, _prop_material(prop[1]))
+				if mmi:
+					_prop_mm[key] = mmi
 
 
 func _prop_material(kind: String) -> Material:
@@ -168,7 +170,10 @@ func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	if path.ends_with(".glb"):  # a game model: its first mesh, with the materials made in Blender
-		var root := (load(path) as PackedScene).instantiate()
+		var ps := load(path) as PackedScene
+		if ps == null:
+			return null   # there but not imported yet
+		var root := ps.instantiate()
 		for n in root.find_children("*", "MeshInstance3D", true, false):
 			mm.mesh = (n as MeshInstance3D).mesh
 			break
