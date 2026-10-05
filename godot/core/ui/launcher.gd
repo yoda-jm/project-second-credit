@@ -1,9 +1,11 @@
 extends Node
 ## The collection's front door: a 3D backdrop of drifting gems, the title, the game cards and the main menu
-## (Play, Settings, Credits, Quit). Keyboard, gamepad and mouse all work. Games return here from their pause
+## (Play, Library, Settings, Credits, Quit). Games not downloaded yet show it on their card (floppy disks and clouds
+## float behind them) and download on Enter; the library (LibraryUI, U) updates them (docs/updater.md). Keyboard, gamepad and mouse all work. Games return here from their pause
 ## menu. Pass "--game=<id>" (user argument) to jump straight into a game.
 
 const GOLD := Color(1.0, 0.83, 0.35)
+const MENU := ["PLAY", "LIBRARY", "SETTINGS", "CREDITS", "QUIT"]
 const PANEL := Color(0.05, 0.05, 0.09, 0.72)
 
 var _selected := 0
@@ -36,6 +38,15 @@ var _hovered_card := -1
 const CARD_ROW_X := 395.0  ## places the selected card in the middle of the card window
 const WINDOW_W := 1170.0
 var _center_tween: Tween
+var _card_status: Array[Label] = []
+var _card_chip: Array[Label] = []
+var _card_bar: Array[ProgressBar] = []
+var _library: LibraryUI
+var _play_when_ready := ""  ## the game to start as soon as its download is done
+var _from_keys: Array[String] = []  ## the prop each floating object showed before the current morph
+## what floats behind a game that isn't on this computer yet
+const DOWNLOAD_PROPS := [["res://core/art/props/floppy_teal.glb", "model", 0.28], ["res://core/art/props/floppy_pink.glb", "model", 0.28],
+	["res://core/art/props/cloud.glb", "model", 0.3], ["res://core/art/props/download_arrow.glb", "model", 0.2]]
 
 
 func _ready() -> void:
@@ -66,6 +77,8 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--select="):  # for captures: change card after a second
 			get_tree().create_timer(1.0).timeout.connect(_select_game.bind(int(arg.substr(9))))
+		if arg == "--open-library":  # for captures: the library panel after two seconds
+			get_tree().create_timer(2.0).timeout.connect(_library.open_panel)
 
 
 # ------------------------------------------------------------------ backdrop
@@ -105,15 +118,21 @@ func _build_backdrop() -> void:
 	for i in PROP_COUNT:
 		_seeds.append(Vector4(rng.randf_range(-13, 13), rng.randf_range(-7, 7), rng.randf_range(-17, -4), rng.randf()))
 	# one multimesh per distinct prop of every game; each floating object picks its shape from the selected game
+	_add_props(DOWNLOAD_PROPS)
 	for g in GameRegistry.GAMES:
-		for prop in g.get("props", []):
-			var key: String = prop[0]
-			if not ResourceLoader.exists(key):
-				continue   # a model not made yet: the game floats its other props
-			if not _prop_mm.has(key):
-				var mmi := _multimesh(key, PROP_COUNT, _prop_material(prop[1]))
-				if mmi:
-					_prop_mm[key] = mmi
+		_add_props(g.get("props", []))
+	_from_keys.resize(PROP_COUNT)
+
+
+func _add_props(props: Array) -> void:
+	for prop in props:
+		var key: String = prop[0]
+		if not ResourceLoader.exists(key):
+			continue   # a model not made yet, or a game not downloaded: it floats other props
+		if not _prop_mm.has(key):
+			var mmi := _multimesh(key, PROP_COUNT, _prop_material(prop[1]))
+			if mmi:
+				_prop_mm[key] = mmi
 
 
 func _prop_material(kind: String) -> Material:
@@ -157,6 +176,8 @@ func _prop_material(kind: String) -> Material:
 ## The prop mesh (key) that floating object i uses for game g: shares follow the game's "share" values.
 func _prop_for(g: int, i: int) -> String:
 	var props: Array = GameRegistry.GAMES[g].get("props", [])
+	if not _has_props(g):
+		props = DOWNLOAD_PROPS
 	var x := float((i * 7919) % 100) / 100.0
 	var acc := 0.0
 	for prop in props:
@@ -164,6 +185,21 @@ func _prop_for(g: int, i: int) -> String:
 		if x < acc:
 			return prop[0]
 	return props.back()[0]
+
+
+## Whether game g is on this computer with its models loaded (otherwise the download props float behind it).
+func _has_props(g: int) -> bool:
+	var props: Array = GameRegistry.GAMES[g].get("props", [])
+	if props.is_empty() or not Library.state(GameRegistry.GAMES[g]) in [LibraryCatalog.READY, LibraryCatalog.UPDATE, LibraryCatalog.IN_DEVELOPMENT]:
+		return false
+	return props.any(func(p): return _prop_mm.has(p[0]))
+
+
+## The floating objects change shape from what they show now to what the selected game shows.
+func _begin_morph() -> void:
+	for i in PROP_COUNT:
+		_from_keys[i] = _prop_for(_selected, i)
+	_morph_t = 0.0
 
 
 func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
@@ -193,6 +229,8 @@ func _multimesh(path: String, count: int, mat: Material) -> MultiMeshInstance3D:
 
 func _process(delta: float) -> void:
 	_time += delta
+	if Library.busy() and Engine.get_process_frames() % 12 == 0:
+		_refresh_cards()  # the progress bar
 	for key in _prop_mm:
 		_prop_count[key] = 0
 	_morph_t += delta
@@ -204,7 +242,7 @@ func _process(delta: float) -> void:
 		var edge := smoothstep(0.0, 2.5, 9.0 - absf(rise))
 		# morph: each object shrinks, swaps shape and pops back, with a small stagger between objects
 		var k := clampf((_morph_t - s.w * 0.45) / 0.35, 0.0, 1.0)
-		var key := _prop_for(_selected, i) if k >= 0.5 else _prop_for(_previous, i)
+		var key := _prop_for(_selected, i) if k >= 0.5 or _from_keys[i] == "" else _from_keys[i]
 		var grow := absf(k * 2.0 - 1.0)
 		grow = 1.0 - pow(1.0 - grow, 3.0)
 		var spin := _time * (0.3 + s.w) + k * TAU
@@ -286,8 +324,8 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	menu.position = Vector2(116, 350)
 	menu.add_theme_constant_override("separation", 14)
 	_ui.add_child(menu)
-	for i in 4:
-		var name: String = ["PLAY", "SETTINGS", "CREDITS", "QUIT"][i]
+	for i in (MENU.size() - 1 if OS.has_feature("web") else MENU.size()):  # in a browser there is nowhere to quit to
+		var name: String = MENU[i]
 		var b := Button.new()
 		b.text = name
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -308,12 +346,12 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 		b.add_theme_stylebox_override("focus", focus)
 		b.pressed.connect(_on_menu.bind(i))
 		b.mouse_entered.connect(func():
-			if not _settings.visible and not _credits.visible:
+			if not _settings.visible and not _credits.visible and not _library.is_open():
 				_focus_menu(i))
 		menu.add_child(b)
 		_buttons.append(b)
 
-	var hint := _label("arrows or gamepad to choose    tab or q / e to filter by style    enter to confirm    esc to go back", 22,
+	var hint := _label("arrows or gamepad to choose    tab or q / e to filter    u for the library    enter to confirm", 22,
 		Color(0.6, 0.65, 0.75))
 	hint.position = Vector2(116, 1010)
 	_ui.add_child(hint)
@@ -380,6 +418,12 @@ void fragment() { vec2 d = UV - 0.5; COLOR = vec4(0.0, 0.0, 0.0, smoothstep(0.35
 	_credits = _build_credits()
 	_credits.visible = false
 	_ui.add_child(_credits)
+	_library = LibraryUI.new(self)
+	_ui.add_child(_library)
+	_library.play_requested.connect(_play_game)
+	Library.changed.connect(_refresh_cards)
+	Library.finished.connect(_on_downloaded)
+	_refresh_cards()
 
 	_fade = ColorRect.new()
 	_fade.color = Color.BLACK
@@ -422,15 +466,99 @@ func _make_card(g: Dictionary, index: int) -> Control:
 		ph.fill_from = Vector2(0.5, 0.4)
 		pic.texture = ph
 	v.add_child(pic)
+	var chip := _label("", 18, Color.WHITE)
+	var chip_box := PanelContainer.new()
+	var csb := StyleBoxFlat.new()
+	csb.bg_color = Color(0.03, 0.03, 0.06, 0.85)
+	csb.set_corner_radius_all(14)
+	csb.set_border_width_all(2)
+	csb.content_margin_left = 12
+	csb.content_margin_right = 12
+	csb.content_margin_top = 3
+	csb.content_margin_bottom = 3
+	chip_box.add_theme_stylebox_override("panel", csb)
+	chip_box.position = Vector2(10, 10)
+	chip_box.add_child(chip)
+	pic.add_child(chip_box)
+	_card_chip.append(chip)
 	v.add_child(_label(g["title"].to_upper(), 38, accent if playable else Color(0.75, 0.75, 0.8), false))
 	var tag := _label(g["tagline"], 22, Color(0.85, 0.87, 0.92))
 	tag.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tag.custom_minimum_size = Vector2(336, 0)
 	v.add_child(tag)
 	v.add_child(_label("inspired by " + g["inspired_by"], 18, Color(0.6, 0.63, 0.72)))
-	v.add_child(_label("PRESS ENTER TO PLAY" if playable else "IN DEVELOPMENT", 20,
-		GOLD if playable else Color(0.55, 0.55, 0.62)))
+	var status := _label("PRESS ENTER TO PLAY" if playable else "IN DEVELOPMENT", 20,
+		GOLD if playable else Color(0.55, 0.55, 0.62))
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status.custom_minimum_size = Vector2(336, 0)
+	v.add_child(status)
+	_card_status.append(status)
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(336, 10)
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = Color(1, 1, 1, 0.1)
+	bg.set_corner_radius_all(5)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = LibraryUI.TEAL
+	fill.set_corner_radius_all(5)
+	bar.add_theme_stylebox_override("background", bg)
+	bar.add_theme_stylebox_override("fill", fill)
+	bar.visible = false
+	v.add_child(bar)
+	_card_bar.append(bar)
 	return card
+
+
+## Each card says where its game stands: here, new version, to download (and how big), downloading...
+func _refresh_cards() -> void:
+	for i in _cards.size():
+		var g: Dictionary = GameRegistry.GAMES[i]
+		var id: String = g["id"]
+		var st := Library.state(g)
+		var words := LibraryUI.status_text(id)
+		var text: String = words[0]
+		var color: Color = words[1]
+		var chip := ""
+		var chip_color := Color.WHITE
+		match st:
+			LibraryCatalog.READY:
+				text = "PRESS ENTER TO PLAY"
+				color = GOLD
+				if Library.fresh(id):
+					chip = "UPDATED"
+					chip_color = LibraryUI.LEAF
+			LibraryCatalog.UPDATE:
+				text = "PRESS ENTER TO PLAY  ·  NEW VERSION OUT"
+				color = GOLD
+				chip = "NEW VERSION"
+				chip_color = GOLD
+			LibraryCatalog.MISSING:
+				text = ("DIDN'T DOWNLOAD (%s): ENTER TO RETRY" % Library.error(id)).to_upper() if Library.error(id) != "" \
+					else "PRESS ENTER TO DOWNLOAD  ·  %s" % Library.size_text(id)
+				chip = "NOT DOWNLOADED"
+				chip_color = LibraryUI.TEAL
+			LibraryCatalog.DOWNLOADING:
+				chip = "DOWNLOADING"
+				chip_color = LibraryUI.TEAL
+			LibraryCatalog.NEEDS_LAUNCHER:
+				text = "UPDATE THE LAUNCHER TO GET IT (U)"
+				chip = "NOT DOWNLOADED"
+				chip_color = LibraryUI.AMBER
+			LibraryCatalog.OFFLINE, LibraryCatalog.UNAVAILABLE:
+				chip = "NOT DOWNLOADED"
+				chip_color = LibraryUI.MUTED
+		_card_status[i].text = text
+		_card_status[i].add_theme_color_override("font_color", color)
+		_card_chip[i].text = chip
+		_card_chip[i].add_theme_color_override("font_color", chip_color)
+		var box := _card_chip[i].get_parent() as PanelContainer
+		box.visible = chip != ""
+		(box.get_theme_stylebox("panel") as StyleBoxFlat).border_color = chip_color
+		_card_bar[i].visible = st == LibraryCatalog.DOWNLOADING and Library._queue.find(id) == 0
+		if _card_bar[i].visible:
+			var p := Library.progress(id)
+			_card_bar[i].value = 100.0 * p[0] / maxf(1.0, p[1])
 
 
 ## A round glass button with a chevron; gold when hovered, dimmed when there is nothing more that way.
@@ -495,6 +623,13 @@ func _build_settings() -> Control:
 	_toggle_row(v, "Vertical sync", Settings.vsync, func(x): Settings.vsync = x; Settings.apply())
 	_toggle_row(v, "Camera shake", Settings.camera_shake, func(x): Settings.camera_shake = x; Settings.apply())
 	_toggle_row(v, "Show frame rate", Settings.show_fps, func(x): Settings.show_fps = x; Settings.apply())
+	if not OS.has_feature("web"):  # the page is always the latest
+		_toggle_row(v, "Look for updates at start", Settings.update_check, func(x): Settings.update_check = x; Settings.save_settings())
+		_toggle_row(v, "Stable releases only (not every change)", Settings.channel == "stable", func(x):
+			Settings.channel = "stable" if x else "latest"
+			Settings.save_settings()
+			Library.manifest = {}
+			Library.check())
 	var back := Button.new()
 	back.text = "BACK"
 	back.add_theme_font_override("font", _font(false))
@@ -585,7 +720,7 @@ func _select_game(i: int, sound: bool = true) -> void:
 		_play("ui_move")
 	if i != _selected:
 		_previous = _selected
-		_morph_t = 0.0
+		_begin_morph()
 	_selected = i
 	if Settings.last_game != GameRegistry.GAMES[i]["id"]:
 		Settings.last_game = GameRegistry.GAMES[i]["id"]
@@ -662,6 +797,11 @@ func _style_chips() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _launching or not event.is_pressed():
 		return
+	if _library.is_open():
+		if event.is_action("ui_cancel"):
+			_library.close()
+			get_viewport().set_input_as_handled()
+		return
 	if _settings.visible or _credits.visible:
 		if event.is_action("ui_cancel"):
 			_close_panels()
@@ -675,23 +815,27 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cycle_style(-1 if event.shift_pressed else 1)
 	elif event is InputEventKey and event.keycode in [KEY_Q, KEY_PAGEUP]:
 		_cycle_style(-1)
+	elif event is InputEventKey and event.keycode == KEY_U:
+		_library.open_panel()
 	elif event.is_action("ui_cancel"):
 		_play("ui_back")
-		_focus_menu(3)
+		_focus_menu(_buttons.size() - 1)
 	else:
 		return
 	get_viewport().set_input_as_handled()
 
 
 func _on_menu(i: int) -> void:
-	match i:
-		0:
+	match MENU[i]:
+		"PLAY":
 			_launch()
-		1:
+		"LIBRARY":
+			_library.open_panel()
+		"SETTINGS":
 			_open_panel(_settings)
-		2:
+		"CREDITS":
 			_open_panel(_credits)
-		3:
+		"QUIT":
 			_play("ui_back")
 			Settings.save_settings()
 			get_tree().quit()
@@ -717,6 +861,7 @@ func _close_panels() -> void:
 	Settings.save_settings()
 	_settings.visible = false
 	_credits.visible = false
+	_library.panel.visible = false
 	_show_cards(true)
 	for b in _buttons:
 		b.focus_mode = Control.FOCUS_ALL
@@ -739,20 +884,71 @@ func _show_cards(show: bool) -> void:
 
 func _launch() -> void:
 	var g: Dictionary = GameRegistry.GAMES[_selected]
-	if g["scene"] == "":
-		_play("ui_back")
-		var c := _cards[_selected]
-		var tw := create_tween()
-		tw.tween_property(c, "rotation", 0.05, 0.05)
-		tw.tween_property(c, "rotation", -0.05, 0.08)
-		tw.tween_property(c, "rotation", 0.0, 0.05)
-		return
+	var id: String = g["id"]
+	match Library.state(g):
+		LibraryCatalog.READY:
+			if Library._played.has(id) and Library.restart_needed() and Library.fresh(id):
+				_play("ui_select")
+				_library.ask_restart(id)
+			else:
+				_start(g)
+		LibraryCatalog.UPDATE:
+			_play("ui_select")
+			_library.ask_update(id)
+		LibraryCatalog.MISSING:
+			_download_then_play(id)
+		LibraryCatalog.NEEDS_LAUNCHER:
+			_library.open_panel()
+		_:  # in development, downloading, offline, not offered here: the card shakes
+			_play("ui_back")
+			var c := _cards[_selected]
+			var tw := create_tween()
+			tw.tween_property(c, "rotation", 0.05, 0.05)
+			tw.tween_property(c, "rotation", -0.05, 0.08)
+			tw.tween_property(c, "rotation", 0.0, 0.05)
+
+
+func _start(g: Dictionary) -> void:
 	_launching = true
 	_play("ui_start")
+	Library.played(g["id"])
 	var tw := create_tween()
 	tw.tween_property(_fade, "color:a", 1.0, 0.6)
 	tw.parallel().tween_property(_music, "volume_db", -40.0, 0.6)
 	tw.tween_callback(func(): LoadingScreen.go(g["scene"], g["title"]))
+
+
+## Starts a game from the library panel or the update question (the version on this computer).
+func _play_game(id: String) -> void:
+	_select_game(GameRegistry.GAMES.find(GameRegistry.find(id)), false)
+	if Library.state_of(id) in [LibraryCatalog.READY, LibraryCatalog.UPDATE] and not _launching:
+		_start(GameRegistry.find(id))
+
+
+## Downloads the game (first install or update) and starts it when it's ready, if its card is still selected.
+func _download_then_play(id: String) -> void:
+	_play("ui_select")
+	_play_when_ready = id
+	Library.download(id)
+	_refresh_cards()
+
+
+func _on_downloaded(id: String) -> void:
+	var gi := GameRegistry.GAMES.find(GameRegistry.find(id))
+	_add_props(GameRegistry.GAMES[gi].get("props", []))
+	if gi == _selected:
+		_begin_morph()  # the floppies and clouds turn into the game's own things
+	if id == _play_when_ready:
+		_play_when_ready = ""
+		if gi == _selected and not _library.is_open() and not _settings.visible and not _credits.visible and not _launching:
+			get_tree().create_timer(0.9).timeout.connect(func():
+				if _selected == gi and not _launching and not _library.is_open():
+					_launch())
+
+
+## Back from the update question: keyboard focus returns to the menu.
+func _cards_focus_back() -> void:
+	_focus_menu(_menu_index, false)
 
 
 func _fade_from_black() -> void:

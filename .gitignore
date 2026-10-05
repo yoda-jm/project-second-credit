@@ -25,3 +25,5 @@ godot/reports/
 
 # Screenshots from tools/capture.sh
 captures/
+# Written by the export scripts (the build's version, core serial and bundled games)
+godot/core/library/build.json

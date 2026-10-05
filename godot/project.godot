@@ -19,6 +19,7 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 [autoload]
 
 Settings="*res://core/settings.gd"
+Library="*res://core/library/library.gd"
 
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 

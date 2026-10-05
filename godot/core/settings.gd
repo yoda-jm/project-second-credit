@@ -13,6 +13,8 @@ var vsync := true
 var camera_shake := true  ## explosions shake the camera (turn off to reduce motion)
 var show_fps := false
 var last_game := ""  ## the game selected in the launcher, so it comes back selected
+var update_check := true  ## look for new versions of the launcher and the games at start (never installs by itself)
+var channel := "latest"  ## "latest" (every change) or "stable" (tagged releases)
 
 var _fps_label: Label
 var _fonts: Array[Font] = []  ## kept alive for the whole session (see _warm_fonts)
@@ -108,6 +110,8 @@ func save_settings() -> void:
 	cf.set_value("display", "show_fps", show_fps)
 	cf.set_value("comfort", "camera_shake", camera_shake)
 	cf.set_value("launcher", "last_game", last_game)
+	cf.set_value("updates", "check", update_check)
+	cf.set_value("updates", "channel", channel)
 	cf.save(PATH)
 
 
@@ -122,3 +126,5 @@ func load_settings() -> void:
 	show_fps = cf.get_value("display", "show_fps", show_fps)
 	camera_shake = cf.get_value("comfort", "camera_shake", camera_shake)
 	last_game = cf.get_value("launcher", "last_game", last_game)
+	update_check = cf.get_value("updates", "check", update_check)
+	channel = cf.get_value("updates", "channel", channel)
