@@ -393,6 +393,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Lob shells across the hills in turn, read the wind, and bring the ground down.",
 		"inspired_by": "Scorched Earth (1991)",
 		"scene": "res://games/ridgefire/scenes/ridgefire_game.tscn",
+		"card": "res://core/ui/cards/ridgefire.png",
 		"accent": Color(1.0, 0.55, 0.25),
 		"props": [["res://games/ridgefire/art/models/tank.glb", "model", 0.45],
 			["res://games/ridgefire/art/models/nuke.glb", "model", 0.4],
