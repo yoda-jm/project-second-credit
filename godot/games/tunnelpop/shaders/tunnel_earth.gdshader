@@ -8,6 +8,8 @@ uniform vec4 layer0 : source_color = vec4(0.85, 0.62, 0.3, 1.0);
 uniform vec4 layer1 : source_color = vec4(0.78, 0.45, 0.22, 1.0);
 uniform vec4 layer2 : source_color = vec4(0.62, 0.3, 0.2, 1.0);
 uniform vec4 layer3 : source_color = vec4(0.45, 0.22, 0.25, 1.0);
+uniform sampler2D grain_tex : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D normal_tex : hint_normal, filter_linear_mipmap, repeat_enable;
 
 varying vec3 wpos;
 varying float face;
@@ -33,12 +35,19 @@ void fragment() {
 	float seam = smoothstep(0.18, 0.0, abs(fract((l + 0.0) / 3.0 + 0.5) - 0.5) * 3.0) * step(1.0, l);
 	col *= 1.0 - seam * 0.18;
 	col *= 0.85 + 0.25 * noise(wpos.xy * 6.0);
+	// the soil's grain from a real texture, its relief in the normal map
+	vec2 tuv = (face > 0.5 ? wpos.xy : vec2(wpos.x + wpos.z, wpos.y + wpos.z)) * 0.35;
+	vec3 grain = texture(grain_tex, tuv).rgb;
+	col *= mix(vec3(1.0), pow(grain / max(dot(grain, vec3(0.333)), 0.05), vec3(1.6)), 0.8);
+	NORMAL_MAP = texture(normal_tex, tuv).rgb;
+	NORMAL_MAP_DEPTH = 1.8;
 	float peb = smoothstep(0.86, 0.93, noise(wpos.xy * 3.3 + 7.0));
 	col = mix(col, col * 1.35 + vec3(0.05), peb * 0.6);
 	col = mix(col, vec3(0.35, 0.22, 0.12), smoothstep(0.75, 0.9, noise(vec2(wpos.x * 2.0, depth * 0.7))) * step(depth, 2.0) * 0.5);
 	// inside a tunnel: damper and darker, deeper towards the back
 	if (face < 0.5) {
-		col *= 0.7 + 0.25 * smoothstep(-0.5, 0.5, wpos.z);
+		// darker deep in, a soft rim of light at the mouth
+		col *= 0.45 + 0.5 * smoothstep(-0.5, 0.45, wpos.z);
 	}
 	ALBEDO = col;
 	ROUGHNESS = 0.95;

@@ -16,7 +16,7 @@ const FRONT := 0.5
 const BACK := -0.5
 ## layer colours per level (cycling): top to bottom
 const PALETTES := [
-	[Color(0.88, 0.66, 0.32), Color(0.8, 0.46, 0.22), Color(0.62, 0.3, 0.2), Color(0.42, 0.2, 0.26)],
+	[Color(0.8, 0.62, 0.36), Color(0.72, 0.45, 0.26), Color(0.56, 0.3, 0.22), Color(0.38, 0.21, 0.25)],
 	[Color(0.75, 0.72, 0.4), Color(0.55, 0.62, 0.32), Color(0.38, 0.45, 0.3), Color(0.25, 0.3, 0.32)],
 	[Color(0.8, 0.55, 0.6), Color(0.62, 0.4, 0.55), Color(0.45, 0.3, 0.5), Color(0.28, 0.22, 0.42)],
 	[Color(0.62, 0.7, 0.78), Color(0.45, 0.55, 0.68), Color(0.32, 0.4, 0.58), Color(0.2, 0.25, 0.42)],
@@ -49,6 +49,7 @@ var _punch_at := Vector3.ZERO
 var _cam_pos := Vector3.ZERO
 var _cam_look := Vector3.ZERO
 var _dirty := true
+var _decor: Array[MeshInstance3D] = []
 var _last_hero := Vector2(-9, -9)
 
 
@@ -65,7 +66,7 @@ func _ready() -> void:
 	sky.sky_material = sm
 	_env.sky = sky
 	_env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	_env.ambient_light_energy = 0.55
+	_env.ambient_light_energy = 0.38
 	_env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	_env.glow_enabled = true
 	_env.glow_intensity = 0.7
@@ -76,7 +77,7 @@ func _ready() -> void:
 	_we.environment = _env
 	add_child(_we)
 	_sun = DirectionalLight3D.new()
-	_sun.rotation_degrees = Vector3(-40, -25, 0)
+	_sun.rotation_degrees = Vector3(-35, -62, 0)   # raking across the face, so the soil shows its relief
 	_sun.light_energy = 1.25
 	_sun.light_color = Color(1.0, 0.95, 0.85)
 	_sun.shadow_enabled = true
@@ -91,6 +92,9 @@ func _ready() -> void:
 	add_child(_fx)
 	_earth_mat = ShaderMaterial.new()
 	_earth_mat.shader = EARTH_SHADER
+	var soil := Pbr.material("soil")
+	_earth_mat.set_shader_parameter("grain_tex", soil.albedo_texture)
+	_earth_mat.set_shader_parameter("normal_tex", soil.normal_texture)
 	game.level_started.connect(_on_level)
 	if game.engine:
 		_on_level(game.engine)
@@ -145,6 +149,7 @@ func _on_level(e: DigEngine) -> void:
 	_stage.add_child(_earth)
 	_dirty = true
 	_build_surface(e)
+	_build_face_decor(e)
 	_build_frame()
 	# the hero, his lamp and his hose
 	_hero = Node3D.new()
@@ -201,10 +206,10 @@ func _on_level(e: DigEngine) -> void:
 func _build_surface(e: DigEngine) -> void:
 	var grass := MeshInstance3D.new()
 	var bm := BoxMesh.new()
-	bm.size = Vector3(D.COLS + 30.0, 0.18, 6.0)
+	bm.size = Vector3(D.COLS + 60.0, 0.22, 6.2)
 	grass.mesh = bm
 	grass.material_override = Pbr.material("grass_lush", Color(0.8, 1.0, 0.6), 0.25)
-	grass.position = Vector3(D.COLS * 0.5 - 0.5, -1.55, -2.5)
+	grass.position = Vector3(D.COLS * 0.5 - 0.5, -1.53, -2.48)   # its front a lip of turf just proud of the face (z 0.62)
 	_stage.add_child(grass)
 	var far := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
@@ -238,6 +243,21 @@ func _build_surface(e: DigEngine) -> void:
 			n.position = Vector3(D.COLS - 0.5 - i * 0.7, -1.46, -0.7)
 			n.scale = Vector3.ONE * 0.8
 			_stage.add_child(n)
+	# clouds over the garden
+	for k in 9:
+		var cl := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = 2.4
+		sm.height = 2.2
+		cl.mesh = sm
+		var cm := _mat(Color(1, 1, 1), 0.9)
+		cm.emission_enabled = true
+		cm.emission = Color(1, 1, 1)
+		cm.emission_energy_multiplier = 0.25
+		cl.material_override = cm
+		cl.scale = Vector3(rng.randf_range(1.6, 3.0), rng.randf_range(0.5, 0.8), 1.0)
+		cl.position = Vector3(-20.0 + k * 7.0 + rng.randf_range(-2, 2), rng.randf_range(4.0, 8.0), -40.0 - rng.randf_range(0, 15))
+		_stage.add_child(cl)
 	# the earth runs on beyond the field to either side (not to be dug: the frame marks the field)
 	for side in [-1.0, 1.0]:
 		var slab := MeshInstance3D.new()
@@ -250,7 +270,7 @@ func _build_surface(e: DigEngine) -> void:
 	# and on below it
 	var under := MeshInstance3D.new()
 	var b3 := BoxMesh.new()
-	b3.size = Vector3(D.COLS + 2.0, 12.0, 1.0)
+	b3.size = Vector3(D.COLS, 12.0, 1.0)
 	under.mesh = b3
 	under.material_override = _earth_mat
 	under.position = Vector3(D.COLS * 0.5 - 0.5, -float(D.ROWS) + 0.5 - 6.0, 0.0)
@@ -265,6 +285,49 @@ func _build_surface(e: DigEngine) -> void:
 			n.scale = Vector3.ONE * rng.randf_range(1.8, 3.2)
 			_stage.add_child(n)
 		tx += rng.randf_range(2.0, 4.0)
+
+
+## Things in the earth's face where it is not dug: pebbles and shards, old roots near the top, a bone or two deep down.
+## (Only on solid earth, and gone with it when a tunnel is dug there.)
+func _build_face_decor(e: DigEngine) -> void:
+	_decor.clear()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 991 + e.level
+	var stone := _mat(Color(0.62, 0.58, 0.55), 0.8)
+	var root := _mat(Color(0.32, 0.2, 0.12), 0.9)
+	var bone := _mat(Color(0.9, 0.86, 0.75), 0.6)
+	for k in 70:
+		var c := Vector2(rng.randf_range(-0.4, D.COLS - 0.6), rng.randf_range(2.0, D.ROWS - 0.6))
+		var mi := MeshInstance3D.new()
+		var depth := c.y - 1.5
+		if depth < 2.5 and rng.randf() < 0.5:
+			var cy := CylinderMesh.new()
+			cy.top_radius = 0.02
+			cy.bottom_radius = 0.045
+			cy.height = rng.randf_range(0.5, 1.2)
+			mi.mesh = cy
+			mi.material_override = root
+			mi.rotation.z = rng.randf_range(-0.9, 0.9)
+		elif depth > 8.0 and rng.randf() < 0.15:
+			var cap := CapsuleMesh.new()
+			cap.radius = 0.05
+			cap.height = 0.5
+			mi.mesh = cap
+			mi.material_override = bone
+			mi.rotation.z = PI * 0.5 + rng.randf_range(-0.4, 0.4)
+		else:
+			var sp := SphereMesh.new()
+			sp.radius = rng.randf_range(0.05, 0.13)
+			sp.height = sp.radius * 1.4
+			sp.radial_segments = 8
+			sp.rings = 4
+			mi.mesh = sp
+			mi.material_override = stone
+		mi.position = Vector3(c.x, -c.y, 0.5)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.set_meta("cell", c)
+		_stage.add_child(mi)
+		_decor.append(mi)
 
 
 ## A wooden frame round the earth's face, like a cut-away display.
@@ -486,6 +549,9 @@ func _process(delta: float) -> void:
 	var hp: Vector2 = e.hero["pos"]
 	if _dirty or (e.hero["digging"] and hp.distance_to(_last_hero) > 0.06):
 		_build_earth(e)
+		for dm in _decor:
+			var c: Vector2 = dm.get_meta("cell")
+			dm.visible = not _carved(e, c.x, c.y)
 		_dirty = false
 		_last_hero = hp
 	_place_hero(e, delta)
