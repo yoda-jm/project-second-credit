@@ -25,6 +25,8 @@ Second Credit stands on the work of many people. Everything below is free and op
   gardens are our own (`godot/games/fruitburrow/gardens/`, CC BY-SA 4.0).
 - The gardener, fruit and monsters are built by scripts in `tools/blender/` (the gardener is the collection's first
   rigged and animated character); sound effects and the garden theme are synthesised by `tools/audio/`.
+- The trees, pines, bushes and grass round the garden (`art/models/decor/`) are copies of Bastion Coast's, made by
+  `tools/blender/bastion_models.py` (CC BY-SA 4.0): each game ships as its own download.
 
 ## Game 4 (Whisker Alley, working title)
 

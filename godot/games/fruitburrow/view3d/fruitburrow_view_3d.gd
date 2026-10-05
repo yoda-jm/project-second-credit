@@ -7,7 +7,7 @@ extends Node3D
 const E = preload("res://games/fruitburrow/engine/fruitburrow_engine.gd")
 const T = preload("res://games/fruitburrow/engine/garden_map.gd").Terrain
 const MODELS := "res://games/fruitburrow/art/models/"
-const DECOR := "res://games/bastion/art/models/"
+const DECOR := "res://games/fruitburrow/art/models/decor/"  # copies of Bastion Coast's (each game ships alone)
 const FRUIT_COLORS: Array[Color] = [Color(0.85, 0.08, 0.12), Color(1.0, 0.85, 0.2), Color(0.7, 0.85, 0.25),
 	Color(0.45, 0.15, 0.6), Color(0.95, 0.15, 0.2)]
 ## sky top, horizon, sun colour, sun energy, sun pitch for gardens 1, 2, 3 (then it loops)

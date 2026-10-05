@@ -125,7 +125,7 @@ func _prop_material(kind: String) -> Material:
 		return st
 	if kind == "gem":
 		var m := ShaderMaterial.new()
-		m.shader = load("res://games/glimmerdeep/shaders/gem.gdshader")
+		m.shader = load("res://core/art/shaders/gem.gdshader")  # a copy of Glimmerdeep's: the launcher ships without the games
 		return m
 	var s := StandardMaterial3D.new()
 	match kind:
