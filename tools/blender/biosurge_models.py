@@ -63,11 +63,12 @@ turret.glb    root "turret_root": "turret" (a fleshy mound 1.0 across with bone 
               +Z, tilted up 55 degrees so the camera sees the iris). Child of head: "muzzle" at the pupil (0, 0.79,
               0.36 at rest). turret_flesh, turret_bone, turret_dark, turret_vein_glow, turret_eye, turret_iris_glow,
               turret_pupil, turret_lid.
-worm_head.glb mesh "worm_head": 1.52 across the side spikes, z -0.52 .. +0.91 (the mandibles reach forward), a domed
+worm_head.glb mesh "worm_head": 1.52 across the side spikes, z -0.54 .. +0.93 (the mandibles reach forward), a domed
               skull, eye cluster, glowing toothed maw. Chain behind it:
-worm_seg.glb  mesh "worm_seg": 1.44 across the spikes, 0.80 long (z -0.40 .. 0.40), three overlapping plates over a
-              glowing seam; space the links about 0.62 apart (head to first segment too).
-worm_tail.glb mesh "worm_tail": the last link, z -0.75 (the stinger, behind) .. +0.34.
+worm_seg.glb  mesh "worm_seg": 1.48 across the spikes, 0.84 long (z -0.42 .. 0.42), 0.75 tall: a broad chitin shell
+              crossed by two glowing grooves, a bone crest, flank spikes and pores, over a glowing seam of flesh;
+              space the links about 0.62 apart (head to first segment too), so each shell overlaps the next.
+worm_tail.glb mesh "worm_tail": the last link, z -0.75 (the stinger, behind) .. +0.39.
               The worm shares worm_plate (dark crimson chitin), worm_ridge, worm_tooth, worm_seam_glow, worm_glow,
               worm_eye_glow, worm_maw_glow (flash worm_plate or the seams on hits).
 pod.glb       root "pod_root": "sac" (the central sac and its roots, 2.0 across the roots, 0.95 tall), "mouth" (the

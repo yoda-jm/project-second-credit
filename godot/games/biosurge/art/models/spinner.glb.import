@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cnufcxivvnipg"
-valid=false
+path="res://.godot/imported/spinner.glb-d1cfb1920d1188c8e73323e474d7521d.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/spinner.glb"
+dest_files=["res://.godot/imported/spinner.glb-d1cfb1920d1188c8e73323e474d7521d.scn"]
 
 [params]
 

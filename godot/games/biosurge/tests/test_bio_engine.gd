@@ -1,6 +1,6 @@
 extends GdUnitTestSuite
 ## Biosurge: the cavern always leaves a way through, walls and enemy shots hurt, the gun widens with its level, the shop
-## sells and refuses, and the autopilot flies a whole level and kills its boss.
+## sells and refuses, and the autopilot flies a whole level and kills its boss, no enemy ever hiding in the rock.
 
 const B = preload("res://games/biosurge/engine/bio_engine.gd")
 
@@ -56,13 +56,21 @@ func test_the_autopilot_beats_a_level() -> void:
 		var bot := BioBot.new()
 		var deaths := [0]
 		e.event.connect(func(k, d): if k == "die": deaths[0] += 1)
+		var outside := 0
 		for n in 60 * 400:
 			bot.drive(e)
 			e.tick()
+			# nothing alive hides in the rock where the ship can't reach it (worms come out of it first)
+			for f in e.foes:
+				if not f["dead"] and f["kind"] != "worm":
+					var i := clampi(int(f["pos"].y), 0, e.left.size() - 1)
+					if f["pos"].x < e.left[i] - 0.01 or f["pos"].x > e.right[i] + 0.01:
+						outside += 1
 			if e.phase == B.Phase.CLEARED or e.phase == B.Phase.OVER:
 				break
 		prints("biosurge level", lv + 1, "phase", e.phase, "deaths", deaths[0], "score", e.score, "credits", e.credits, "time", snappedf(e.time, 0.1),
 			"boss hp", e.boss.get("hp", -1))
+		assert_int(outside).is_equal(0)
 		if e.phase == B.Phase.CLEARED:
 			beaten += 1
 	assert_int(beaten).is_greater_equal(1)

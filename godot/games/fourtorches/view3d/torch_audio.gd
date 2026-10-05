@@ -115,6 +115,7 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"food": play("food", -4.0)
 		"blast": play("potion", 0.0)
 		"exit": play("exit", -2.0)
+		"rejoin": play("join", -8.0)
 		"low": play("health_low", -5.0)
 		"monster_shot": if d["kind"] == "imp": play("imp_fire", -11.0)
 		"game_over": play("game_over", -2.0)

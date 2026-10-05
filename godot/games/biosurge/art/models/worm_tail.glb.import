@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://cl4irova87se8"
-valid=false
+path="res://.godot/imported/worm_tail.glb-1c0fb6bb33b89e46ebfeed3209e62127.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/worm_tail.glb"
+dest_files=["res://.godot/imported/worm_tail.glb-1c0fb6bb33b89e46ebfeed3209e62127.scn"]
 
 [params]
 

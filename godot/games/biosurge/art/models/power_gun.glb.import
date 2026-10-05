@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bm13rc5nu64de"
-valid=false
+path="res://.godot/imported/power_gun.glb-0a7047e9c27a7b92ac1f1721e94d79f6.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/power_gun.glb"
+dest_files=["res://.godot/imported/power_gun.glb-0a7047e9c27a7b92ac1f1721e94d79f6.scn"]
 
 [params]
 

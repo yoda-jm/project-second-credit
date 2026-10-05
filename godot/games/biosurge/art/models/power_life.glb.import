@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://caissv3ltas6p"
-valid=false
+path="res://.godot/imported/power_life.glb-09474298e9c6ca94d4662eea570db5a0.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/power_life.glb"
+dest_files=["res://.godot/imported/power_life.glb-09474298e9c6ca94d4662eea570db5a0.scn"]
 
 [params]
 

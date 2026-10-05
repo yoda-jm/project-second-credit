@@ -18,8 +18,8 @@ enum Phase { READY, PLAY, DYING, BOSS, CLEARED, OVER }
 const TICK := 1.0 / 60.0
 const W := 16.0
 const SCREEN := 15.0
-const SCROLL := 2.4
-const SPEED := 7.0
+const SCROLL := 3.4
+const SPEED := 8.6
 const SHOT := 26.0
 const R := 0.45                 ## the ship's radius
 const NAMES := ["SPAWNING GROUNDS", "CORAL ABYSS", "CRYSTAL HIVE", "FURNACE GUT", "THE HEART"]
@@ -65,7 +65,7 @@ func _init(level_ := 0, carry := {}, seed_ := 1) -> void:
 	lives = carry.get("lives", 3)
 	if carry.has("loadout"):
 		loadout = carry["loadout"].duplicate()
-	length = 300.0 + level * 30.0
+	length = 380.0 + level * 40.0
 	_cavern()
 	_plan_waves()
 	ship = {"pos": Vector2(W * 0.5, 3.0), "vel": Vector2.ZERO, "bank": 0.0, "hurt": 0.0, "drone": 0.0}
@@ -131,6 +131,20 @@ func wall_hit(p: Vector2, r: float) -> bool:
 		if isl.grow(r).has_point(p):
 			return true
 	return false
+
+
+## `p` moved into the open cavern (between the walls at its row, and out of any island), `r` from the rock.
+func inside(p: Vector2, r: float) -> Vector2:
+	var i := clampi(int(p.y), 0, left.size() - 1)
+	var lo := left[i] + r
+	var hi := right[i] - r
+	p.x = clampf(p.x, lo, hi) if lo < hi else (left[i] + right[i]) * 0.5
+	for isl in islands:
+		var g := isl.grow(r)
+		if g.has_point(p):
+			p.x = g.position.x if p.x - g.position.x < g.end.x - p.x else g.end.x
+			p.x = clampf(p.x, lo, hi)
+	return p
 
 
 func _id() -> int:
@@ -343,11 +357,12 @@ func _spawn() -> void:
 		match k:
 			"drifter", "dart", "spinner":
 				for j in w["n"]:
-					_add(k, Vector2(clampf(w["x"] + (j - w["n"] * 0.5) * 1.3, 1.5, W - 1.5), top + j * (0.9 if k == "dart" else 1.6)), {"phase": j * 0.7})
+					var q := Vector2(w["x"] + (j - w["n"] * 0.5) * 1.3, top + j * (0.9 if k == "dart" else 1.6))
+					_add(k, inside(q, RADIUS[k]), {"phase": j * 0.7})
 			"turret", "crab":
 				var i := clampi(int(top), 0, left.size() - 1)
 				var side := 1.0 if rng.randf() < 0.5 else -1.0
-				var x := left[i] + 0.4 if side < 0.0 else right[i] - 0.4
+				var x := left[i] + 0.75 if side < 0.0 else right[i] - 0.75   # on the wall's face, in reach
 				_add(k, Vector2(x, top), {"side": side})
 			"worm":
 				var i := clampi(int(top - 3.0), 0, left.size() - 1)
@@ -384,11 +399,16 @@ func _foes() -> void:
 					f["vel"] = (f["vel"] as Vector2).lerp(to * 9.0, minf(1.0, TICK * 3.0))
 					p += f["vel"] * TICK
 			"spinner":
-				p += Vector2(sign(sin(f["t"] * 1.2 + f["phase"])) * 3.0, -1.6) * TICK
+				var sx := signf(sin(f["t"] * 1.2 + f["phase"])) * 3.0
+				if inside(p + Vector2(sx * 0.2, 0), RADIUS["spinner"]) != p + Vector2(sx * 0.2, 0):
+					f["phase"] += PI   # bounces off a wall
+				p += Vector2(sx, -1.6) * TICK
 			"turret":
 				pass
 			"crab":
 				p.y += sin(f["t"] * 0.8) * 1.0 * TICK
+				var ci := clampi(int(p.y), 0, left.size() - 1)
+				p.x = left[ci] + 0.75 if f["side"] < 0.0 else right[ci] - 0.75
 			"worm":
 				# the lead snakes out from the wall; the segments follow its trail
 				if f["lead"]:
@@ -409,6 +429,9 @@ func _foes() -> void:
 				if f["hatch"] <= 0.0 and p.y < scroll + SCREEN - 1.0:
 					f["hatch"] = 2.2
 					_add("drifter", p + Vector2(rng.randf_range(-0.8, 0.8), -0.8), {"phase": rng.randf() * TAU})
+		# everything that flies keeps to the cavern, where the ship can reach it (worms only once out of the wall)
+		if f["kind"] in ["drifter", "dart", "spinner", "pod"] or (f["kind"] == "worm" and f["t"] > 1.2):
+			p = inside(p, RADIUS[f["kind"]])
 		f["pos"] = p
 		# shooting at the ship
 		if f["kind"] in ["turret", "crab", "drifter", "pod"] and p.y < scroll + SCREEN and p.y > sp.y:

@@ -3,7 +3,8 @@ extends RefCounted
 ## A Four Torches autopilot for one hero (the demo, and the CPU companions). Each moment: shoot the nearest monster or
 ## generator lying along one of the eight directions within reach (turning to it); drink a potion when crowded; then
 ## head over the tile map (a breadth-first route) for food when weak, treasure, keys and potions close by, a door it
-## holds a key for, and otherwise the exit, keeping near the others.
+## holds a key for, and otherwise the exit, keeping near the others. As a companion to a human player it never leads:
+## it picks things up only near that player, leaves the exit and the doors to them, and otherwise walks at their side.
 
 const T = preload("res://games/fourtorches/engine/torch_engine.gd")
 const DIRS := [Vector2(1, 0), Vector2(1, 1), Vector2(0, 1), Vector2(-1, 1), Vector2(-1, 0), Vector2(-1, -1), Vector2(0, -1), Vector2(1, -1)]
@@ -112,12 +113,15 @@ func _pick_goal(e: TorchEngine, h: Dictionary) -> Vector2i:
 	var here := Vector2i(floori(p.x), floori(p.y))
 	_dist = e._bfs(here)
 	_door = []
+	var lead := _leader(e, p)
 	var best := e.exit_cell
 	var bd := INF
 	for it in e.items:
 		var c: Vector2i = it["cell"]
 		var d: int = _dist[e.idx(c)]
 		if d >= 1 << 20 or d > 16:
+			continue
+		if lead.x > -1000.0 and (Vector2(c) + Vector2(0.5, 0.5)).distance_to(lead) > 6.0:
 			continue
 		var want := 0.0
 		match it["kind"]:
@@ -128,6 +132,10 @@ func _pick_goal(e: TorchEngine, h: Dictionary) -> Vector2i:
 		if want > 0.0 and d / want < bd:
 			bd = d / want
 			best = c
+	if bd == INF and lead.x > -1000.0:
+		# a companion: stay at the player's side
+		_door = []
+		return here if p.distance_to(lead) < 2.5 else Vector2i(floori(lead.x), floori(lead.y))
 	if bd == INF and h["keys"] > 0:
 		# a door beside a reachable floor
 		for y in T.H:
@@ -142,6 +150,15 @@ func _pick_goal(e: TorchEngine, h: Dictionary) -> Vector2i:
 						return n
 	if bd == INF and me > 0 and p.distance_to(e.centre()) > 5.0:
 		return Vector2i(floori(e.centre().x), floori(e.centre().y))
+	return best
+
+
+## The nearest living human hero, or far away (-INF) when there is none (the demo).
+func _leader(e: TorchEngine, p: Vector2) -> Vector2:
+	var best := Vector2(-INF, -INF)
+	for o in e.alive():
+		if not o["cpu"] and (best.x == -INF or p.distance_to(o["pos"]) < p.distance_to(best)):
+			best = o["pos"]
 	return best
 
 

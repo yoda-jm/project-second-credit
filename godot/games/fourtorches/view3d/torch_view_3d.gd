@@ -40,8 +40,8 @@ func _ready() -> void:
 	_env.background_mode = Environment.BG_COLOR
 	_env.background_color = Color(0.01, 0.01, 0.015)
 	_env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	_env.ambient_light_color = Color(0.35, 0.38, 0.5)
-	_env.ambient_light_energy = 0.42
+	_env.ambient_light_color = Color(0.5, 0.45, 0.45)
+	_env.ambient_light_energy = 0.85
 	_env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	_env.glow_enabled = true
 	_env.glow_intensity = 0.9
@@ -58,7 +58,7 @@ func _ready() -> void:
 	_moon = DirectionalLight3D.new()
 	_moon.rotation_degrees = Vector3(-60, -30, 0)
 	_moon.light_color = Color(0.55, 0.6, 0.85)
-	_moon.light_energy = 0.25
+	_moon.light_energy = 0.55
 	_moon.shadow_enabled = true
 	add_child(_moon)
 	camera = Camera3D.new()
@@ -153,6 +153,7 @@ func _on_level(e: TorchEngine) -> void:
 		ring.position.y = 0.03
 		ring.scale = Vector3(1, 0.2, 1)
 		n.add_child(ring)
+		n.scale = Vector3.ONE * 1.25   # heroes read at a glance, as the classic's did
 		_stage.add_child(n)
 		_heroes.append({"node": n, "anim": n.find_child("AnimationPlayer", true, false), "last": ""})
 	for g in e.gens:
@@ -328,6 +329,8 @@ func _on_event(kind: String, d: Dictionary) -> void:
 		"exit":
 			for h in e.heroes:
 				_fx.burst(w(h["pos"]) + Vector3(0, 0.5, 0), Color(0.5, 0.85, 1.0), 30, 3.0, 1.0, 0.08, 1.0, 2.0, 1.0, "glow")
+		"rejoin":
+			_fx.burst(w(d["pos"]) + Vector3(0, 0.5, 0), TEAM[d["h"] % 4], 24, 2.5, 0.7, 0.08, 1.0, 1.0, 1.0, "glow")
 		"spawn":
 			_fx.burst(w(d["pos"]) + Vector3(0, 0.4, 0), Color(0.6, 0.4, 0.8), 8, 1.5, 0.5, 0.15, 0.0, 1.0, 1.0, "smoke")
 
@@ -479,10 +482,10 @@ func _place_lights(e: TorchEngine) -> void:
 		var l := _lights[k]
 		l.position = w(h["pos"]) + Vector3(0, 1.2, 0.2)
 		l.light_color = Color(1.0, 0.7, 0.4).lerp(TEAM[h["i"] % 4], 0.15)
-		l.light_energy = 1.35 + 0.18 * sin(_time * 11.0 + h["i"] * 2.0)
-		l.omni_range = 6.0
+		l.light_energy = 2.0 + 0.25 * sin(_time * 11.0 + h["i"] * 2.0)
+		l.omni_range = 7.5
 		k += 1
-	var c := w(e.centre())
+	var c := w(e.anchor())
 	var near := _sconces.duplicate()
 	near.sort_custom(func(a, b): return a.distance_squared_to(c) < b.distance_squared_to(c))
 	for s in near:
@@ -500,11 +503,9 @@ func _place_lights(e: TorchEngine) -> void:
 
 
 func _place_camera(e: TorchEngine, delta: float, snap := false) -> void:
-	var look := w(e.centre())
-	var spread := 0.0
-	for h in e.alive():
-		spread = maxf(spread, (h["pos"] as Vector2).distance_to(e.centre()))
-	var dist := 15.0 + spread * 0.9
+	# the screen sits on the human players (the engine keeps everyone inside VIEW round this point)
+	var look := w(e.anchor())
+	var dist := 13.0
 	var el := deg_to_rad(58.0)
 	var pos := look + Vector3(0, sin(el), cos(el)) * dist
 	var j := Vector3(sin(_time * 47.0), 0, cos(_time * 41.0)) * _shake * _shake * (0.3 if Settings.camera_shake else 0.0)

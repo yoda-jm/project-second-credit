@@ -11,7 +11,7 @@ extends RefCounted
 ## Treasure scores. Any hero on the exit takes everyone down to the next level. The heroes stay together on one screen.
 ## Events: "shoot" {h}, "melee" {h}, "hit" {pos, kind}, "kill" {pos, kind, points}, "gen_hit" {pos, state}, "gen_break"
 ## {pos}, "hurt" {h, damage}, "die" {h}, "food" {h}, "key" {h}, "door" {cells}, "treasure" {h, points}, "potion"
-## {h} (picked up), "blast" {h, pos}, "exit" {h}, "low" {h}, "spawn" {pos, kind}, "monster_shot" {pos, kind}.
+## {h} (picked up), "blast" {h, pos}, "exit" {h}, "rejoin" {h, pos}, "low" {h}, "spawn" {pos, kind}, "monster_shot" {pos, kind}.
 
 signal event(kind: String, data: Dictionary)
 
@@ -20,7 +20,8 @@ const TICK := 1.0 / 60.0
 const W := 44
 const H := 30
 const R := 0.34
-const VIEW := Vector2(21.0, 12.5)        ## the screen's half-size in tiles (heroes must stay on it)
+const VIEW := Vector2(8.0, 4.6)          ## the screen's half-size in tiles round anchor() (every hero stays on it)
+const STRAY := 2.0                       ## seconds a CPU companion may spend off the screen before it rejoins
 const CLASSES := {
 	"knight": {"speed": 3.1, "armor": 0.45, "shot": 2.0, "shot_speed": 9.0, "melee": 3.0, "magic": 1.0, "name": "KNIGHT"},
 	"shieldmaiden": {"speed": 3.5, "armor": 0.35, "shot": 1.6, "shot_speed": 10.5, "melee": 2.0, "magic": 1.4, "name": "SHIELDMAIDEN"},
@@ -279,6 +280,17 @@ func alive() -> Array[Dictionary]:
 	return out
 
 
+## Where the screen is: the middle of the living human heroes (the CPU companions follow them), else of everyone.
+func anchor() -> Vector2:
+	var c := Vector2.ZERO
+	var n := 0
+	for h in alive():
+		if not h["cpu"]:
+			c += h["pos"]
+			n += 1
+	return c / n if n > 0 else centre()
+
+
 func centre() -> Vector2:
 	var al := alive()
 	if al.is_empty():
@@ -374,12 +386,29 @@ func _hero(h: Dictionary, c: Vector2) -> void:
 		h["face"] = Vector2(signf(roundf(mv.x * 1.3)), signf(roundf(mv.y * 1.3))).normalized() if mv.length() > 0.1 else h["face"]
 	var p: Vector2 = h["pos"]
 	var np := _slide(p, mv.limit_length(1.0) * cls["speed"] * TICK, R)
-	# stay on the screen with the others
-	if alive().size() > 1:
+	# stay on the screen: a human may not push past the edge the other humans hold; a CPU companion keeps to the
+	# screen round them, and one left off it (stuck behind a wall) rejoins beside the leader after a moment
+	var humans := alive().filter(func(o): return not o["cpu"])
+	if not h["cpu"] and humans.size() > 1:
+		var oc := Vector2.ZERO
+		for o in humans:
+			if o != h:
+				oc += o["pos"]
+		oc /= humans.size() - 1
+		var k := float(humans.size()) / (humans.size() - 1)
+		np = _keep(p, np, oc, VIEW * k)
+	elif h["cpu"] and not humans.is_empty():
+		var a := anchor()
+		np = _keep(p, np, a, VIEW * 0.92)
+		var off := absf(np.x - a.x) > VIEW.x or absf(np.y - a.y) > VIEW.y
+		h["stray"] = h.get("stray", 0.0) + TICK if off else 0.0
+		if h["stray"] > STRAY:
+			h["stray"] = 0.0
+			np = _beside(humans[0]["pos"])
+			event.emit("rejoin", {"h": h["i"], "pos": np})
+	elif h["cpu"] and alive().size() > 1:
 		var others := c * alive().size() - p
-		var oc := others / (alive().size() - 1)
-		np.x = clampf(np.x, oc.x - VIEW.x * 1.6, oc.x + VIEW.x * 1.6)
-		np.y = clampf(np.y, oc.y - VIEW.y * 1.6, oc.y + VIEW.y * 1.6)
+		np = _keep(p, np, others / (alive().size() - 1), VIEW * 1.6)
 	# doors: a key opens the whole door it touches
 	var cc := Vector2i(floori(np.x + (h["face"] as Vector2).x * 0.5), floori(np.y + (h["face"] as Vector2).y * 0.5))
 	if tile(cc) == 2 and h["keys"] > 0:
@@ -415,12 +444,32 @@ func _hero(h: Dictionary, c: Vector2) -> void:
 					var pts := 100 if it["kind"] == "chest" else 50
 					h["score"] += pts
 					event.emit("treasure", {"h": h["i"], "points": pts})
-	if tile(here) == 3:
+	# the exit is the players' choice: a CPU companion on it waits (unless everyone is CPU, as in the demo)
+	if tile(here) == 3 and (not h["cpu"] or heroes.all(func(o): return o["cpu"])):
 		phase = Phase.EXIT
 		phase_t = 2.5
 		for o in heroes:
 			o["score"] += 200 if not o["dead"] else 0
 		event.emit("exit", {"h": h["i"]})
+
+
+## The move from `p` to `np`, kept inside the box of half-size `half` round `at`: a step that would leave it (or go
+## farther out) is held on that axis, so nobody is ever pushed through a wall.
+func _keep(p: Vector2, np: Vector2, at: Vector2, half: Vector2) -> Vector2:
+	if absf(np.x - at.x) > half.x and absf(np.x - at.x) > absf(p.x - at.x):
+		np.x = p.x
+	if absf(np.y - at.y) > half.y and absf(np.y - at.y) > absf(p.y - at.y):
+		np.y = p.y
+	return np
+
+
+## A free floor spot next to `p` (for a companion rejoining), or `p` itself.
+func _beside(p: Vector2) -> Vector2:
+	for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1), Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
+		var q: Vector2 = p + d * 0.9
+		if not solid_at(q):
+			return q
+	return p
 
 
 func _open_door(c: Vector2i) -> void:

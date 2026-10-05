@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bh0fxeptios34"
-valid=false
+path="res://.godot/imported/power_shield.glb-5c59d6736558f6cc9c575e09fa2d8975.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/power_shield.glb"
+dest_files=["res://.godot/imported/power_shield.glb-5c59d6736558f6cc9c575e09fa2d8975.scn"]
 
 [params]
 

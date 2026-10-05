@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://clctd7xo4ul7t"
-valid=false
+path="res://.godot/imported/turret.glb-1ad026f3e092f3272e99331f7878d9bf.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/turret.glb"
+dest_files=["res://.godot/imported/turret.glb-1ad026f3e092f3272e99331f7878d9bf.scn"]
 
 [params]
 

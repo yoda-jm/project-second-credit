@@ -78,3 +78,35 @@ func test_the_autopilot_party_goes_down() -> void:
 			levels += 1
 			party = e.party()
 	assert_int(levels).is_greater_equal(2)
+
+
+func test_companions_follow_the_player_and_leave_the_exit_to_them() -> void:
+	# a human who walks the autopilot's way (the leader) with two CPU companions: they stay on its screen, and they
+	# never take the party down themselves
+	var party := _party(3)
+	party[0]["cpu"] = false
+	var e := TorchEngine.new(1, party, 5)
+	for h in e.heroes:
+		h["health"] = 4000.0
+	var lead := TorchBot.new(0)
+	var bots := [TorchBot.new(1), TorchBot.new(2)]
+	var exits := []
+	e.event.connect(func(k, d): if k == "exit": exits.append(d["h"]))
+	var worst := 0.0
+	for n in 60 * 120:
+		e.heroes[0]["cpu"] = true      # the leader's bot picks goals as if alone
+		lead.drive(e)
+		e.heroes[0]["cpu"] = false
+		for b in bots:
+			b.drive(e)
+		e.tick()
+		var a: Vector2 = e.heroes[0]["pos"]
+		for i in [1, 2]:
+			var o: Vector2 = e.heroes[i]["pos"] - a
+			worst = maxf(worst, maxf(absf(o.x) / T.VIEW.x, absf(o.y) / T.VIEW.y))
+		if e.phase != T.Phase.PLAY and e.phase != T.Phase.READY:
+			break
+	prints("fourtorches companions: worst screen fraction", snappedf(worst, 0.01), "exits", exits)
+	assert_float(worst).is_less(1.0)
+	for x in exits:
+		assert_int(x).is_equal(0)

@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://loaj3ne43gh6"
-valid=false
+path="res://.godot/imported/worm_head.glb-be0a2f4a7784f39d51282b1df335c16f.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/worm_head.glb"
+dest_files=["res://.godot/imported/worm_head.glb-be0a2f4a7784f39d51282b1df335c16f.scn"]
 
 [params]
 

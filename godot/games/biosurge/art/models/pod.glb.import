@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://catff2blv6mcl"
-valid=false
+path="res://.godot/imported/pod.glb-5db93723859f6119c24c0c2b506e170f.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/pod.glb"
+dest_files=["res://.godot/imported/pod.glb-5db93723859f6119c24c0c2b506e170f.scn"]
 
 [params]
 

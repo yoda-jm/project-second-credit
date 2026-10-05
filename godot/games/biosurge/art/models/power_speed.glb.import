@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c680tnkian2wd"
-valid=false
+path="res://.godot/imported/power_speed.glb-6aa702cd9de15f4cdea8f2134e7727f8.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/power_speed.glb"
+dest_files=["res://.godot/imported/power_speed.glb-6aa702cd9de15f4cdea8f2134e7727f8.scn"]
 
 [params]
 

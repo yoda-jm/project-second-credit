@@ -1,4 +1,127 @@
-"""DOCSTRING"""
+"""Four Torches (game 35) models: the four heroes, their thrown and cast shots, six kinds of monster with the imp's
+fire, the three monster generators (three damage states each) and the dungeon props.
+Original designs for a torch-lit dungeon crawl, nothing taken from any arcade game: the knight is a stocky man in
+plate under a red surcoat with a gold flame, a flat-topped great helm with a red horsehair crest, big rimmed
+pauldrons, a red cape and a crescent axe-hammer; the shieldmaiden wears a blue tunic over mail, a cream fur mantle,
+a steel cap with two white feathered wings, two golden braids, and carries a sword and a round blue shield with a
+white sunwheel; the mage is an old man with a long white beard in a yellow robe sewn with gold stars, a plum
+mantle, sash and trim, a wide-brimmed hat whose tall tip bends back, and a gnarled staff curled round a glowing orb;
+the ranger is masked in a green hood and cloak over a leather jerkin, a quiver of red-fletched arrows on the back and
+a recurve bow. Each hero carries a lit torch tucked in the belt. Monsters: a wailing translucent ghost trailing a
+wisp; an olive tusked brute with a spiked club; a red horned imp with bat wings cupping a ball of fire; a sorcerer in
+a deep purple hood with violet eyes and a crystal wand; a skeleton archer in a rusty kettle helm; the deathshade, a
+tall black wraith with a pale skull, green eyes, an iron crown of spikes, long claws and a violet-burning hem.
+Deterministic; output CC BY-SA 4.0; provenance: this script, no third-party assets.
+Run: blender -b --factory-startup -P tools/blender/fourtorches_models.py -- godot/games/fourtorches/art/models [name ...]
+Helpers come from blastyard_models.py (mat, box, cyl, sphere, rod, tube, prism, join, export), blastyard_bombers.py
+(merge, mirror, smoothstep, smooth_path), hopline_models.py (TurnRig, ell, hemi), mossfolk_models.py (lathe_r, lumpy,
+solid) and prism_models.py (animate, export_anim, empty, new_obj). 30 fps.
+
+Axes: Godot units = metres, y up; the dungeon floor is the XZ plane at y = 0, seen from above at about 57 degrees
+with the camera on +Y/+Z. Everything is built in Blender facing -Y, which exports facing Godot +Z. Origins at the feet
+(characters) or the base centre (props), unless noted. Animations marked * are seamless loops: set their loop mode in
+the game. Emissive materials all have "glow" in their names; materials with alpha (ghost_glow, ghost_wisp_glow, the
+*_trail_glow ribbons, potion_glass, cobweb_silk, food_bowl_steam_glow, amulet_halo_glow, imp_fire_smoke) are
+alpha-blended.
+
+Heroes: knight.glb, shieldmaiden.glb, mage.glb, ranger.glb. Armature "<name>_rig" (root, hips, body, head, arm.L/R,
+             fore.L/R, hand.L/R, leg.L/R, shin.L/R, foot.L/R, cape, cape2, skirt.F, skirt.B; the ranger adds bow and
+             nock under fore.L), skinned mesh "body". Heights: knight 1.12 (to the crest; helm top 0.93), shieldmaiden
+             0.98 (wing tips; cap 0.9), mage 1.15 (hat tip), ranger 0.89; about 0.6 wide with the weapon.
+             "<name>_team": the colour accents (knight red: surcoat, skirt, cape, crest; shieldmaiden blue: tunic,
+             sleeves' caps, shield face; mage yellow: robe, sleeves, hat; ranger green: hood, shoulder cape, cloak,
+             sleeves). Recolour it in the view if needed. Other materials <name>_*: steel, gold, skin, leather, ...
+             "<name>_torch_glow" / "<name>_torch_core_glow": the torch in the belt (knight and mage on the left hip,
+             the others on the right); the mage's orb is "mage_staff_glow" (+ mage_staff_core_glow).
+             Bone-attached empty "muzzle" at the weapon tip, where shots start: knight on hand.R (the axe's top spike),
+             shieldmaiden on hand.R (the sword's point), mage on hand.R (the orb's centre), ranger on "bow" (just in
+             front of the bow grip, where the arrow leaves). Read its global position when the shot fires.
+             Animations:  idle*   2.0 s  breathing, a glance, the cape stirring, the weapon held upright
+                          run*    0.4 s  two strides (feet ~0.36 apart: about 1.8 m/s at speed 1), lean, cape streaming
+                          attack  0.3 s  repeatable (starts and ends at the idle hold): wind-up f3, the blow f5
+                                         (0.17 s: spawn the shot then), recovery to f9. Knight: an overhead chop;
+                                         shieldmaiden: a diagonal forehand cut; mage: staff raised then thrust out;
+                                         ranger: the bow raised and the string drawn to the cheek, loosed at f5
+                          hurt    0.27 s a recoil and back
+                          die     1.2 s  staggers, the knees go (f12), falls on the back (f22), lies still: holds the
+                                         last frame (the body then lies along Godot -Z behind the origin)
+                          cheer*  1.0 s  the weapon raised high, two hops
+Shots (one root node named like the file, origin at the centre, flying towards Godot +Z; set them at about y 0.6):
+             throw_axe.glb   0.46 long; child "axe" (spin* 0.3 s: end over end about X) and "trail" (a ghost
+                             ribbon streaming back); throw_axe_steel, _wood, throw_axe_glow (the edges),
+                             throw_axe_trail_glow (alpha).
+             throw_sword.glb 0.52 long, point first; child "sword" (spin* 0.4 s: rolling about its length) and
+                             "trail"; throw_sword_glow (blue edges), throw_sword_trail_glow.
+             fireball.glb    0.24 across, flames trailing 0.4 back; children "core" (fireball_core_glow, pulsing),
+                             "flames" (fireball_glow, turning), "trail" (fireball_trail_glow); animation spin* 0.4 s.
+             arrow.glb       mesh "arrow" 0.52 long (tip at Godot z +0.27), red fletching, arrow_glow (a glint at the
+                             tip), child "trail". The skeleton's arrows reuse it.
+             imp_fire.glb    the imp's fire, 0.17 across: as fireball (imp_fire_core_glow, imp_fire_glow,
+                             imp_fire_trail_glow) plus dark smoke puffs (imp_fire_smoke, alpha).
+Monsters (armature "<name>_rig", skinned mesh "body", origin on the floor, facing +Z):
+             ghost.glb       0.92 tall (hovering: the root bobs 0.01..0.11 above the floor), its wisp trailing 0.5
+                             behind; bones root, body, head, arm.L/R, tail, tail2. ghost_glow (alpha), ghost_wisp_glow,
+                             ghost_hollow, ghost_eye_glow. walk* 1.0 s (float, bob, the wisp swaying), attack 0.4 s
+                             (rears f4, lunges f7), die 0.8 s (swells, rises and vanishes: scale 0 at the end).
+             grunt.glb       0.95 tall, 0.7 wide (biped bones as the heroes', plus hand.R); grunt_skin (olive), grunt_*;
+                             grunt_eye_glow. walk* 0.8 s (a lumbering stomp), attack 0.5 s (club up f5, smash f8 =
+                             0.27 s, on the floor in front), die 1.0 s (reels, knees, falls on its face, holds).
+             imp.glb         0.84 tall to the horns; bones as the grunt plus tail, wing.L/R; imp_skin (red),
+                             imp_eye_glow, imp_fire_glow / imp_fire_core_glow (the ball in its right hand). Empty
+                             "muzzle" on fore.R at the fireball. walk* 0.4 s (a skittering trot), attack 0.37 s (winds
+                             back f4, flings f7 = 0.23 s: spawn imp_fire), die 0.73 s (jumps, spins and shrinks to 0).
+             sorcerer.glb    0.99 tall to the hood's point; sorcerer_robe (purple), sorcerer_rune_glow (runes, wand
+                             crystal), sorcerer_eye_glow. Empty "muzzle" on fore.R at the crystal. walk* 0.8 s (a glide),
+                             attack 0.6 s (hands raised f6, cast f9 = 0.3 s), die 1.0 s (the robe collapses flat, holds),
+                             fade 0.4 s (the blink-out hint: a twist that thins him to a thread, gone at the end; hide
+                             the node after it, or fade the materials yourself) and appear 0.4 s (the reverse).
+             skeleton.glb    0.88 tall; hero bones (+ bow, nock); skeleton_bone, skeleton_eye_glow, skeleton_rust (helm).
+                             Empty "muzzle" on bow. walk* 0.67 s, attack 0.6 s (draws f7, holds to f10, looses f12 =
+                             0.4 s: spawn an arrow), die 1.0 s (folds into a heap, the skull rolls off, holds).
+             deathshade.glb  1.1 tall to the crown, hovering 0.03..0.11; bones root, body, head, arm.L/R, fore.L/R,
+                             tail, tail2. deathshade_robe (near black), deathshade_hem_glow (violet), deathshade_eye_glow
+                             (green), deathshade_bone, deathshade_iron. walk* 1.33 s (a slow drift), attack 0.6 s (arms
+                             spread f6, the drain reach f10..f13), die 1.2 s (sinks into a heap of cloth, holds).
+Generators (one root node named like the file, origin at the base centre, about 1 x 1 m; children "state_0" (whole),
+             "state_1" (damaged), "state_2" (nearly destroyed), all at the origin: show one):
+             gen_bones.glb   a stone altar (0.72 x 0.56) with a horned skull (0.92 tall), candles, a heap of bones;
+                             gen_bones_glow (runes, skull eyes), gen_bones_flame_glow (candles).
+             gen_hut.glb     a stake-walled hut, thatched cone roof (1.18 across, 1.38 tall to the skull finial),
+                             a doorway lit from inside (gen_hut_glow) facing +Z, skull totems.
+             gen_brazier.glb an iron brazier on three clawed legs (0.85 across, about 1.2 tall with the fire), a demon
+                             face; gen_brazier_glow / gen_brazier_core_glow (fire), gen_brazier_ember_glow,
+                             gen_brazier_eye_glow.
+Props (origin at the base centre on the floor, facing +Z, unless noted):
+             door.glb        node "door" (the frame: stone jambs at x +-0.56, 0.12 wide, a lintel to y 1.46, iron
+                             guides, a threshold; 1.24 wide over all, z -0.15..0.15) with the child "leaf" (the
+                             iron-banded plank door, x -0.5..0.5, y 0.02..1.27, 0.1 thick, a ring pull and a glowing
+                             keyhole "door_lock_glow"); lift the leaf up by about 1.3 (or sink it) to open.
+             key.glb         a gold key (0.37 long) lying slanted, key_glow, key_gem_glow.
+             chest.glb       node "chest" (0.62 x 0.42, 0.3 tall, iron bands, gold lock, coins heaped inside:
+                             chest_gold_glow) with the child "lid", its origin on the hinge (back top edge, y 0.3,
+                             z -0.21): open it with lid.rotation.x = -100 degrees (Godot) or so.
+             gold_pile.glb   coins heaped 0.5 across with a goblet and two gems (gold_pile_*_glow).
+             food_ham.glb, food_bowl.glb (stew with steam: alpha), food_cider.glb (a clay jug with an apple).
+             potion.glb      a round flask 0.37 tall: potion_glass (alpha), potion_glow (blue liquid), star motes.
+             amulet.glb      a gold sunburst amulet with a violet gem (amulet_glow) standing on a red cushion, a halo
+                             ring (amulet_halo_glow, alpha).
+             exit.glb        a 1 x 1 stairwell: the rim (top at y 0.03) round a shaft going down to y -0.75, six steps
+                             descending away from the camera (from the +Z edge towards -Z) to a glowing doorway in
+                             the back wall (exit_glow) and exit_rune_glow runes on the rim. Leave the floor tile out
+                             under it.
+             torch_wall.glb  a wall sconce: origin on the wall face at floor level (the wall is at z 0, the room
+                             towards +Z); the torch at y 1.0..1.36, the child "flame" (torch_wall_glow,
+                             torch_wall_core_glow; animation flicker* 0.4 s) and the empty "light" at the flame
+                             (about (0, 1.42, 0.23)) for an OmniLight.
+             pillar.glb      1 x 1 footprint, 1.6 tall, fluted shaft, moss.
+             rubble.glb (0.8 across), barrel.glb (0.44 across, 0.62 tall), bones_decor.glb (scattered bones, a
+                             skull, a rusted blade).
+             cobweb.glb      a corner web 0.62 x 0.62 in the plane of a wall face (z 0), its origin at the corner it
+                             hangs from (place it at the top corner of a wall): it spans +X and down (-Y), with a
+                             spider; cobweb_silk (alpha).
+             banner.glb      a wall banner: origin at its rod (against the wall, z 0), the cloth hanging 0.9 down
+                             (y 0.04 .. -0.9) and 0.46 wide; banner_team (red: recolour it), a gold flame emblem.
+"""
 import bpy, bmesh, math, os, sys, random
 from mathutils import Vector, Matrix
 
@@ -340,7 +463,7 @@ def hero_anims(rig, style, base, cape=True, blink=None, phi0=None):
                         "arm.L": (arm * sg * (1 if style != "draw" else 0.4), -6, 0),
                         "fore.L": (-30 - 10 * up, 0, 0),
                         "arm.R": (-arm * sg * swing_arm, 6, 0), "fore.R": (-10 * swing_arm, 0, 0),
-                        "skirt.F": (-0.8 * fwd, 0, 0), "skirt.B": (0.5 * fwd, 0, 0)},
+                        "skirt.F": (-0.55 * fwd, 0, 0), "skirt.B": (0.45 * fwd, 0, 0)},
                  capes(34 + 6 * up, 18 - 8 * up, 5 * sg))
     rig.action("run", {0: run_p(0, 0), 3: run_p(0, 1), 6: run_p(1, 0), 9: run_p(1, 1), 12: run_p(0, 0)}, loop=True)
 
@@ -2417,7 +2540,7 @@ def exit_tile():
     stone = mat("exit_stone", (0.36, 0.34, 0.36), 0.85)
     stone2 = mat("exit_stone_dark", (0.2, 0.19, 0.21), 0.9)
     rune = mat("exit_rune_glow", (0.4, 0.9, 1.0), 0.3, emit=4.0)
-    glow = mat("exit_glow", (0.35, 0.8, 1.0), 0.3, emit=3.0, emit_color=(0.3, 0.75, 1.0))
+    glow = mat("exit_glow", (0.3, 0.75, 1.0), 0.3, emit=2.0, emit_color=(0.25, 0.65, 1.0))
     # a 1 x 1 stairwell: a rim flush with the floor (top at y 0.03); the steps go down away from the camera (from
     # the front edge, Godot +Z, towards the back) into a glowing doorway in the shaft's back wall
     parts = []

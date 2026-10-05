@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bi7xftjearbbp"
-valid=false
+path="res://.godot/imported/credit.glb-9167eb29e5f9afb8fc9a889b6cd90bd2.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/credit.glb"
+dest_files=["res://.godot/imported/credit.glb-9167eb29e5f9afb8fc9a889b6cd90bd2.scn"]
 
 [params]
 

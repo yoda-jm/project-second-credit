@@ -24,7 +24,7 @@ var _ship: Node3D
 var _pods: Array[Node3D] = []
 var _drone: Node3D
 var _shield: MeshInstance3D
-var _laser: MeshInstance3D
+var _laser: Node3D
 var _shots_mm: MultiMeshInstance3D
 var _orbs_mm: MultiMeshInstance3D
 var _foes := {}
@@ -67,6 +67,17 @@ func _scene(name: String) -> Node3D:
 	if ResourceLoader.exists(path):
 		return (load(path) as PackedScene).instantiate()
 	return null
+
+
+## The first mesh in a model (with its own materials), for drawing many at once.
+func _glb_mesh(name: String) -> Mesh:
+	var n := _scene(name)
+	if n == null:
+		return null
+	var mi := n.find_children("*", "MeshInstance3D", true, false)
+	var m: Mesh = (mi[0] as MeshInstance3D).mesh if not mi.is_empty() else null
+	n.free()
+	return m
 
 
 func _mat(col: Color, rough := 0.5, metal := 0.0, emit := 0.0) -> StandardMaterial3D:
@@ -135,13 +146,22 @@ func _on_level(e: BioEngine) -> void:
 		_fallback_walls(e)
 	_we.environment = _env
 	_build_ship(e)
-	_shots_mm = _batch(QuadMesh.new(), _mat(SHOT_COL, 0.2, 0.0, 4.0), Vector2(0.18, 0.7))
+	var pulse := _glb_mesh("shot_pulse")
+	if pulse:
+		_shots_mm = _batch(pulse, null, Vector2.ONE)
+	else:
+		_shots_mm = _batch(QuadMesh.new(), _mat(SHOT_COL, 0.2, 0.0, 4.0), Vector2(0.18, 0.7))
 	_orbs_mm = _batch(SphereMesh.new(), _mat(ORB_COL, 0.2, 0.0, 3.0), Vector2(0.32, 0.32))
-	_laser = MeshInstance3D.new()
-	var lm := BoxMesh.new()
-	lm.size = Vector3(0.22, 0.12, 1.0)
-	_laser.mesh = lm
-	_laser.material_override = _mat(Color(0.6, 1.0, 1.0), 0.2, 0.0, 6.0)
+	_laser = _scene("shot_laser")     # runs from its origin to z -1: scale.z is the length
+	if _laser == null:
+		var lmi := MeshInstance3D.new()
+		var lm := BoxMesh.new()
+		lm.size = Vector3(0.22, 0.12, 1.0)
+		lmi.mesh = lm
+		lmi.material_override = _mat(Color(0.6, 1.0, 1.0), 0.2, 0.0, 6.0)
+		_laser = Node3D.new()
+		_laser.add_child(lmi)
+		lmi.position.z = -0.5
 	_laser.visible = false
 	_stage.add_child(_laser)
 	if _cam_pos == Vector3.ZERO:
@@ -205,11 +225,14 @@ func _build_ship(e: BioEngine) -> void:
 	body.name = "body"
 	_ship.add_child(body)
 	_pods.clear()
-	for spec in [["pod_side", Vector3(-0.75, 0, 0.1), "side"], ["pod_side", Vector3(0.75, 0, 0.1), "side"], ["pod_rear", Vector3(0, 0, 0.6), "rear"]]:
+	# on the ship's mounts; pod_side is built for the right wing, so the left one is mirrored
+	for spec in [["pod_side", Vector3(-0.47, 0, 0.1), "side"], ["pod_side", Vector3(0.47, 0, 0.1), "side"], ["pod_rear", Vector3(0, 0, 0.57), "rear"]]:
 		var pd := _scene(spec[0])
 		if pd == null:
 			pd = _sphere(0.18, Color(0.6, 0.9, 0.9), 0.5)
 		pd.position = spec[1]
+		if spec[1].x < 0.0:
+			pd.scale.x = -1.0
 		pd.set_meta("needs", spec[2])
 		body.add_child(pd)
 		_pods.append(pd)
@@ -325,7 +348,7 @@ func _place_ship(e: BioEngine, delta: float) -> void:
 	_laser.visible = on
 	if on:
 		var reach := e.laser_reach()
-		_laser.position = _ship.position + Vector3(0, 0.1, -0.6 - reach * 0.5)
+		_laser.position = _ship.position + Vector3(0, 0.1, -0.7)
 		_laser.scale = Vector3(1.0 + 0.2 * sin(_time * 40.0), 1.0, reach)
 
 
@@ -335,7 +358,7 @@ func _place_shots(e: BioEngine) -> void:
 	for i in e.shots.size():
 		var s: Dictionary = e.shots[i]
 		var v: Vector2 = s["vel"]
-		var t := Transform3D(Basis(Vector3.UP, atan2(v.x, v.y)), w(s["pos"]) + Vector3(0, 0.25, 0))
+		var t := Transform3D(Basis(Vector3.UP, atan2(-v.x, v.y)), w(s["pos"]) + Vector3(0, 0.25, 0))   # nose -Z along v
 		if s["kind"] == "homing":
 			t = t.scaled_local(Vector3(1.6, 1, 0.7))
 		mm.set_instance_transform(i, t)
@@ -378,11 +401,11 @@ func _place_foes(e: BioEngine, delta: float) -> void:
 				var head := n.find_child("head", true, false) as Node3D
 				var to: Vector2 = (e.ship["pos"] as Vector2) - f["pos"]
 				if head:
-					head.rotation.y = atan2(-to.x, to.y) + PI
+					head.rotation.y = atan2(to.x, -to.y)   # its eye looks +Z at 0
 			"dart":
 				var v: Vector2 = f["vel"]
 				if v.length() > 0.1:
-					n.rotation.y = atan2(-v.x, -v.y) + PI
+					n.rotation.y = atan2(v.x, -v.y)   # faces +Z at 0
 			"pod":
 				n.scale = Vector3.ONE * (1.0 + 0.06 * sin(_time * 5.0 + id))
 			"crab":
@@ -436,14 +459,17 @@ func _place_boss(e: BioEngine, delta: float) -> void:
 	_boss.visible = not dead
 	_boss.position = _boss.position.lerp(w(e.boss["pos"]), minf(1.0, delta * 2.0))
 	var t: float = e.boss["t"]
-	for part in ["jaw_l", "arm_l"]:
-		var p := _boss.find_child(part, true, false) as Node3D
-		if p:
-			p.rotation.y = sin(t * 2.0) * 0.25
-	for part in ["jaw_r", "arm_r"]:
-		var p := _boss.find_child(part, true, false) as Node3D
-		if p:
-			p.rotation.y = -sin(t * 2.0) * 0.25
+	var hive := e.level % 5 == 4   # the hive heart's shutters hinge along Z (modelled open; 115 degrees shuts them)
+	for side in [1.0, -1.0]:
+		var sfx := "_l" if side > 0.0 else "_r"
+		var jaw := _boss.find_child("jaw" + sfx, true, false) as Node3D
+		if jaw and hive:
+			jaw.rotation.z = -side * deg_to_rad(115.0) * (0.35 + 0.35 * sin(t * 1.4))
+		elif jaw:
+			jaw.rotation.y = side * sin(t * 2.0) * 0.25
+		var arm := _boss.find_child("arm" + sfx, true, false) as Node3D
+		if arm:
+			arm.rotation.y = side * sin(t * 2.0 + 0.6) * (0.1 if hive else 0.25)
 	var fl: float = _boss.get_meta("flash", 0.0)
 	_boss.set_meta("flash", maxf(0.0, fl - delta))
 	var core := _boss.find_child("core", true, false) as Node3D

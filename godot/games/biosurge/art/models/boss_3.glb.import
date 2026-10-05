@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://bncec0fy65dcn"
-valid=false
+path="res://.godot/imported/boss_3.glb-40077f1b8daf1b6382a88b1c72a6fa25.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/boss_3.glb"
+dest_files=["res://.godot/imported/boss_3.glb-40077f1b8daf1b6382a88b1c72a6fa25.scn"]
 
 [params]
 

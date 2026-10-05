@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://c3tktjk2kr8hd"
-valid=false
+path="res://.godot/imported/crab.glb-13d81cf4f7996be34d59ae59431e269d.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/crab.glb"
+dest_files=["res://.godot/imported/crab.glb-13d81cf4f7996be34d59ae59431e269d.scn"]
 
 [params]
 

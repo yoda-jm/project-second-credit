@@ -4,11 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://b3rsbed3avv2p"
-valid=false
+path="res://.godot/imported/shop_keeper.glb-a822a2f1bc774c9bc69178af3dc60dcb.scn"
 
 [deps]
 
 source_file="res://games/biosurge/art/models/shop_keeper.glb"
+dest_files=["res://.godot/imported/shop_keeper.glb-a822a2f1bc774c9bc69178af3dc60dcb.scn"]
 
 [params]
 
