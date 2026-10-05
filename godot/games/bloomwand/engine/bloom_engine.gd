@@ -2,9 +2,9 @@ class_name BloomEngine
 extends RefCounted
 ## Bloomwand rules (a single-screen fairy platformer in the Rod Land tradition; our own tuning), 60 Hz ticks. One or
 ## two fairies on a screen of blocks and ladders (x right, y up, a tile a unit; the fairy's position is her feet).
-## Fairies walk, fall off edges, climb ladders, and conjure a magic ladder from where they stand up to the platform
-## above (up to six tiles; it fades once left). They cannot jump. The wand's beam reaches three tiles ahead and
-## catches the first creature: held over her head, it is slammed down in front and behind while the wand is held,
+## Fairies walk, fall off edges, climb ladders, and (pushing up where there is no ladder) conjure a magic ladder up to
+## the platform above (up to six tiles; it fades once left). They cannot jump. The wand's beam reaches three tiles
+## ahead and catches the first creature: held over her head, it is slammed down in front and behind by itself,
 ## each slam a hit (and a knock to any creature it lands on); out of hits it bursts into a fruit, sometimes a letter
 ## bubble. Flowers are picked by walking through them; all of them before the last creature goes is a big bonus.
 ## E X T R A in letters is an extra life. A creature's touch costs a life. After a while the creatures hurry.
@@ -156,13 +156,7 @@ func _fairy(f: Dictionary) -> void:
 		var c := _foe(f["holding"])
 		if c.is_empty() or c["dead"]:
 			f["holding"] = -1
-		elif not f["cast_held"]:
-			c["held_by"] = -1
-			c["stun"] = 1.0
-			c["pos"] = p + Vector2(f["face"] * 0.8, 0.0)
-			c["vy"] = 0.0
-			f["holding"] = -1
-		else:
+		else:   # a caught creature is slammed to and fro by itself until it bursts
 			f["slam_t"] += TICK
 			c["pos"] = p + Vector2(0, 1.0)
 			if f["slam_t"] >= SLAM_EVERY:
@@ -178,7 +172,8 @@ func _fairy(f: Dictionary) -> void:
 	if f["cast_pressed"]:
 		_cast(f)   # from a ladder too: the beam runs along the row
 	f["cast_pressed"] = false
-	if f["ladder_pressed"] and standing(p.x, p.y) and not f["climbing"]:
+	# up where there's no ladder: a rainbow ladder to the floor above
+	if (f["ladder_pressed"] or (f["climb_in"] > 0 and not ladder_at(p.x, p.y + 0.1))) and standing(p.x, p.y) and not f["climbing"]:
 		_conjure(f)
 	f["ladder_pressed"] = false
 	# climbing

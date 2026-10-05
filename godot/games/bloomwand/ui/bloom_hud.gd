@@ -98,6 +98,10 @@ func _draw() -> void:
 		HudKit.banner(self, vp, vp.y * 0.42, "THE GARDEN IS SAFE" if game.won else "GAME OVER", "PRESS ENTER" if not game.demo else "",
 			HudKit.GOLD if game.won else HudKit.BAD, 1.0)
 	elif not _moved and not game.demo and game.index == 0 and e.phase == B.Phase.PLAY:
-		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["← →  ↑ ↓", "WALK, CLIMB"], ["SPACE", "WAND (HOLD TO SLAM)"], ["X", "MAGIC LADDER"], ["F2", "PLAYER 2"]])
+		var r := Rect2(vp.x * 0.5 - 320, vp.y - 170, 640, 80)
+		HudKit.panel(self, r, ACCENT)
+		HudKit.text(self, Vector2(vp.x * 0.5, r.position.y + 32), "ZAP A CREATURE WITH SPACE - IT GETS SMASHED", 21, HudKit.GOLD, HudKit.font(true), HudKit.CENTER)
+		HudKit.text(self, Vector2(vp.x * 0.5, r.position.y + 60), "clear them all to finish the level  -  UP with no ladder makes a rainbow one", 16, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
+		HudKit.hints(self, Vector2(vp.x * 0.5, vp.y - 50), [["ARROWS", "WALK, CLIMB"], ["SPACE", "WAND"], ["F2", "PLAYER 2"]])
 	if game.demo:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 14), "DEMO  -  PRESS ANY KEY TO PLAY", 18, HudKit.INK, HudKit.label_font(), HudKit.CENTER)

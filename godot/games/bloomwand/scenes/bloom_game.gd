@@ -1,9 +1,9 @@
 class_name BloomGame
 extends Node
 ## Runs Bloomwand: the levels in turn (the score, lives and letters carried on), one fairy or two (F2 or a second pad
-## brings in the second). 60 Hz ticks. Player one: the arrows to walk and climb, space or Z for the wand (hold it to
-## keep slamming), X or C for a magic ladder; the first pad: the stick or d-pad, A the wand, B the ladder. Player two:
-## W A S D, F the wand, G the ladder, or the second pad. In a one-player game W A S D work for player one too.
+## brings in the second). 60 Hz ticks. Player one: the arrows to walk and climb (up where there is no ladder conjures
+## a rainbow one), space or Z for the wand; the first pad: the stick or d-pad, A the wand. Player two: W A S D and F,
+## or the second pad. In a one-player game W A S D work for player one too.
 ## "--demo" lets the autopilot play; "--level=N" starts at a level; "--players=2".
 
 signal level_started(engine: BloomEngine)

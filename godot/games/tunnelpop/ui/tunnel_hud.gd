@@ -58,21 +58,31 @@ func _draw() -> void:
 	var left := e.foes.filter(func(f): return not f["dead"]).size()
 	HudKit.panel(self, Rect2(vp.x * 0.5 - 140, 14, 280, 56), ACCENT)
 	HudKit.text(self, Vector2(vp.x * 0.5, 50), "CREATURES LEFT  %d" % left, 22, HudKit.INK, HudKit.font(true), HudKit.CENTER)
+	HudKit.text(self, Vector2(vp.x * 0.5, 88), "DIG TO THEM AND PUMP THEM TILL THEY POP", 15, HudKit.MUTED, HudKit.label_font(), HudKit.CENTER)
 	var cam := get_viewport().get_camera_3d()
 	if cam:
+		# a marker over every creature still to pop
+		for f in e.foes:
+			if f["dead"]:
+				continue
+			var fp: Vector2 = f["pos"]
+			var sp0 := cam.unproject_position(Vector3(fp.x, -fp.y + 0.75, 0.6))
+			var b := sp0 + Vector2(0, -4.0 * sin(_t * 5.0 + f["id"]))
+			var mc := HudKit.BAD if not f["ghost"] else Color(0.7, 0.7, 1.0, 0.6)
+			draw_colored_polygon(PackedVector2Array([b, b + Vector2(-8, -12), b + Vector2(8, -12)]), mc)
 		for p in _pops:
 			var sp := cam.unproject_position(p["pos"]) - Vector2(0, p["t"] * 40.0)
 			var c: Color = p["col"]
 			HudKit.text(self, sp, p["text"], p["size"], Color(c, clampf(1.2 - p["t"], 0.0, 1.0)), HudKit.font(true), HudKit.CENTER)
 	if e.phase == D.Phase.READY:
-		HudKit.banner(self, vp, vp.y * 0.3, "ROUND %d" % (e.level + 1), "PLAYER 1 READY", ACCENT, clampf(e.phase_t * 2.0, 0.0, 1.0))
+		HudKit.banner(self, vp, vp.y * 0.3, "ROUND %d" % (e.level + 1), "POP ALL %d CREATURES" % e.foes.filter(func(f): return not f["dead"]).size(), ACCENT, clampf(e.phase_t * 2.0, 0.0, 1.0))
 	elif e.phase == D.Phase.CLEARED:
 		HudKit.banner(self, vp, vp.y * 0.3, "ROUND CLEAR", "", HudKit.GOLD, clampf((3.0 - e.phase_t) * 3.0, 0.0, 1.0))
 	elif _last > 0.0:
 		HudKit.banner(self, vp, vp.y * 0.3, "THE LAST ONE RUNS!", "", HudKit.BAD, minf(1.0, _last))
 	if game.over:
 		HudKit.banner(self, vp, vp.y * 0.42, "GAME OVER", "PRESS ENTER" if not game.demo else "", HudKit.BAD, 1.0)
-	elif not _moved and not game.demo and e.level == 0 and e.phase in [D.Phase.READY, D.Phase.PLAY]:
+	elif not game.demo and e.level == 0 and e.time < 15.0 and e.phase in [D.Phase.READY, D.Phase.PLAY]:
 		# what to do, until the first dig
 		var r := Rect2(vp.x * 0.5 - 330, vp.y - 196, 660, 110)
 		HudKit.panel(self, r, ACCENT)

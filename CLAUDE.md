@@ -184,12 +184,20 @@ decisions below are settled unless the owner reopens them.
    drifting through earth, drakes' fire, the vegetable, the last one running; levels generated per round; the autopilot
    plans over tunnels and earth (`demo/dig_bot.gd`). `--level=N`.
 36. Game 33, **Bloomwand** (Rod Land-like, `godot/games/bloomwand/`): a fairy catches creatures with her wand and slams
-   them to bits, conjures rainbow ladders, picks flowers, collects E X T R A; six levels in `levels/garden.bloom` (made
+   them to bits, conjures rainbow ladders (up where there is none), picks flowers, collects E X T R A; six levels in `levels/garden.bloom` (made
    and checked by `tools/bloomwand_levels.py`), a backdrop per level (`view3d/bloom_backdrop.gd`), 1-2 players (F2), the
    autopilot plans on a graph of walks, drops, ladders and magic ladders (`demo/bloom_bot.gd`). `--level=N`, `--players=2`.
-37. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+37. Game 34, **Biosurge** (Xenon 2-like, `godot/games/biosurge/`): a vertical shooter through living caverns (wall profiles
+   and islands generated per level, drawn by `view3d/bio_world.gd`), enemy waves, wall turrets, worms, pods, a boss per
+   level, credits and the trader's shop between levels (gun levels, side pods, rear gun, homing, laser, drone); the
+   autopilot dodges by predicting shots half a second ahead (`demo/bio_bot.gd`). `--level=N`.
+38. Game 35, **Four Torches** (Gauntlet-like, `godot/games/fourtorches/`): a co-op dungeon crawl for 1-4 heroes (knight,
+   shieldmaiden, mage, ranger; any seat the CPU, F2-F4), generated dungeons with doors and keys, generators, six
+   monster kinds, health draining, food, potions, the exit; CPU heroes plan on distance maps (`demo/torch_bot.gd`).
+   `--players=N`, `--humans=N`, `--level=N`.
+39. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-38. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+40. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
