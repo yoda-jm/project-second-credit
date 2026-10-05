@@ -170,7 +170,16 @@ func _build_ground(e: TinEngine) -> void:
 	pm.size = Vector2(120, 80)
 	g.mesh = pm
 	g.position = Vector3(24, -0.02, 14)
-	g.material_override = Pbr.material(th[0], th[1], 0.12)
+	var gm := Pbr.material(th[0], th[1], 0.12)
+	if _theme == 2:
+		# snow: white with a blue tinge, keeping the texture's relief, a glitter of sheen
+		gm = gm.duplicate()
+		gm.albedo_texture = null
+		gm.albedo_color = Color(0.93, 0.95, 1.0)
+		gm.roughness = 0.75
+		gm.rim_enabled = true
+		gm.rim = 0.3
+	g.material_override = gm
 	_stage.add_child(g)
 	# the board's tin edge: a raised rim round the diorama
 	for side in [[Vector3(24, 0.15, -6.5), Vector3(66, 0.3, 0.6)], [Vector3(24, 0.15, 34.5), Vector3(66, 0.3, 0.6)],

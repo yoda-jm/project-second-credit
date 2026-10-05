@@ -393,6 +393,7 @@ const GAMES: Array[Dictionary] = [
 		"tagline": "Race wind-up tin cars round tabletop tracks, sliding through every bend.",
 		"inspired_by": "Super Sprint (1986)",
 		"scene": "res://games/tinplate/scenes/tinplate_game.tscn",
+		"card": "res://core/ui/cards/tinplate.png",
 		"accent": Color(0.95, 0.35, 0.25),
 		"props": [["res://games/tinplate/art/models/car.glb", "model", 0.6],
 			["res://games/tinplate/art/models/trophy.glb", "model", 0.4],
