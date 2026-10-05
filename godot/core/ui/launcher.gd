@@ -108,6 +108,8 @@ func _build_backdrop() -> void:
 	for g in GameRegistry.GAMES:
 		for prop in g.get("props", []):
 			var key: String = prop[0]
+			if not ResourceLoader.exists(key):
+				continue   # a model not made yet: the game floats its other props
 			if not _prop_mm.has(key):
 				_prop_mm[key] = _multimesh(key, PROP_COUNT, _prop_material(prop[1]))
 
@@ -202,6 +204,8 @@ func _process(delta: float) -> void:
 		grow = 1.0 - pow(1.0 - grow, 3.0)
 		var spin := _time * (0.3 + s.w) + k * TAU
 		var b := Basis(Vector3(s.w, 1.0, 0.3).normalized(), spin).scaled(Vector3.ONE * (0.6 + s.w * 0.8) * _prop_norm.get(key, 1.0) * maxf(grow * edge, 0.001))
+		if not _prop_mm.has(key):
+			continue
 		var mm: MultiMesh = _prop_mm[key].multimesh
 		mm.set_instance_transform(_prop_count[key], Transform3D(b, p))
 		_prop_count[key] += 1
