@@ -249,6 +249,20 @@ Second Credit stands on the work of many people. Everything below is free and op
 - Models by `tools/blender/tinplate_models.py`; the road and barriers written as shaders
   (`godot/games/tinplate/shaders/`); sound effects and music by `tools/audio/tinplate_sfx.py` and `tinplate_music.py`.
 
+## Game 32 (Tunnel Pop, working title)
+
+- Inspired by *Dig Dug* (Namco, 1982). None of its code, graphics, sounds, music or characters are in this repo: the
+  digger, the puffers, the drakes, the garden and the music are our own; the levels are generated.
+- Models by `tools/blender/tunnelpop_models.py`; the earth written as a shader (`godot/games/tunnelpop/shaders/`);
+  sound effects and music by `tools/audio/tunnelpop_sfx.py` and `tunnelpop_music.py`.
+
+## Game 33 (Bloomwand, working title)
+
+- Inspired by *Rod Land* (Jaleco, 1990). None of its code, graphics, sounds, music, characters or levels are in this
+  repo: the fairies, the creatures, the six levels (`tools/bloomwand_levels.py`), the backdrops and the music are our own.
+- Models and backdrops by `tools/blender/bloomwand_models.py` and `bloomwand_backdrops.py`; shaders in
+  `godot/games/bloomwand/shaders/`; sound effects and music by `tools/audio/bloomwand_sfx.py` and `bloomwand_music.py`.
+
 ## Textures and fonts
 
 - **ambientCG** by Lennart Demes, CC0 1.0: grass, sand, soil, rock, stone bricks, planks and metal PBR texture

@@ -14,8 +14,8 @@ and Tetris Effect.
 - **All-new art and audio**, under open licences.
 - **AI-built.** Developed mostly with Claude Code, driving Godot and Blender.
 
-> Status: thirty-one games are playable, in 3D with sound
-> and music, from **Glimmerdeep** (game 1) to **Tinplate Turbo** (game 31), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
+> Status: thirty-three games are playable, in 3D with sound
+> and music, from **Glimmerdeep** (game 1) to **Bloomwand** (game 33), all working titles. Download a build above, or run `tools/fetch-tools.sh`, then `.tools/bin/godot --path godot`.
 >
 > The macOS build is not notarised: right-click the app and choose Open the first time.
 
@@ -57,6 +57,8 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 29 | Pipe Mania (1989): **Brassflow** | Lead the glow from the boiler to the engine with brass pipe, in a steam workshop at night: pieces to turn, blocked cells, crosses for loops, fast flow |
 | 30 | Scorched Earth (1991): **Ridgefire** | Turn-based artillery for 2-4 tanks on ground that blasts carve and slump, wind, a weapon shop, a new landscape each round |
 | 31 | Super Sprint (1986): **Tinplate Turbo** | Tin toy cars drifting round six tabletop tracks, a bridge, ramps, oil, wrenches for upgrades, a championship for 1-2 players |
+| 32 | Dig Dug (1982): **Tunnel Pop** | Dig a garden's earth in four layers and pump the burrow creatures till they pop, drop rocks on them, the vegetable bonus, eyes drifting through the earth |
+| 33 | Rod Land (1990): **Bloomwand** | A fairy's wand catches creatures and slams them to bits; rainbow ladders, flowers, E X T R A letters, six storybook levels, two players |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

@@ -424,6 +424,18 @@ const GAMES: Array[Dictionary] = [
 			["res://games/tunnelpop/art/models/puffer.glb", "model", 0.5],
 			["res://games/tunnelpop/art/models/veg_carrot.glb", "model", 0.4]],
 	},
+	{
+		"id": "bloomwand",
+		"style": "Platform",
+		"title": "Bloomwand",
+		"tagline": "A fairy's wand catches creatures and slams them into fruit, in six storybook levels.",
+		"inspired_by": "Rod Land (1990)",
+		"scene": "res://games/bloomwand/scenes/bloomwand_game.tscn",
+		"accent": Color(1.0, 0.55, 0.8),
+		"props": [["res://games/bloomwand/art/models/fairy.glb", "model", 0.6],
+			["res://games/bloomwand/art/models/bopper.glb", "model", 0.5],
+			["res://games/bloomwand/art/models/flower.glb", "model", 0.4]],
+	},
 ]
 ## The styles in collection order (for the launcher's filter).
 static func styles() -> Array[String]:

@@ -59,6 +59,8 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 29 | Pipe Mania (1989) | *Brassflow* | A grid flow that advances on a timer, a piece queue, a route-planning autopilot that walks the cursor like a player |
 | 30 | Scorched Earth (1991) | *Ridgefire* | A column-height ground that blasts carve and slump, turn-based play with a shop, CPU gunners that fly test shells |
 | 31 | Super Sprint (1986) | *Tinplate Turbo* | Spline tracks with a bridge (cars follow their own road), drifting arcade cars, CPU drivers on a racing line, tilt-shift |
+| 32 | Dig Dug (1982) | *Tunnel Pop* | Grid digging carved as voxels, enemies on a tunnel graph that ghost through earth, falling rocks, generated levels |
+| 33 | Rod Land (1990) | *Bloomwand* | Ladder platforming without jumps, catch-and-slam, a level generator that checks reachability, a planning autopilot |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own

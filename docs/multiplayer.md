@@ -51,6 +51,8 @@ level, apart in time or space, racing the clock and each other's shadow), **Spli
 | 29 | **Brassflow** (Pipe Mania) | Two players on one board, each with a cursor, sharing one dispenser (the original's co-op) | Versus: two boards side by side, a leak sends blocks to the rival | Co-op, lockstep |
 | 30 | **Ridgefire** (Scorched Earth) | Hot seat for 2-4 tanks, any seat the CPU (done) | Teams; online turns | Turns |
 | 31 | **Tinplate Turbo** (Super Sprint) | Two players on one screen (done, F2), CPUs fill the grid | Four players on pads; ghost laps | Race, lockstep |
+| 32 | **Tunnel Pop** (Dig Dug) | Alternating turns (the original two-player mode) | Co-op: two diggers in one garden | Turns / co-op |
+| 33 | **Bloomwand** (Rod Land) | Two fairies at once (done, F2) | Versus: who bursts more | Co-op, lockstep |
 
 ## Suggested order
 

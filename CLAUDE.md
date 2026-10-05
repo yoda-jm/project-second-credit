@@ -179,9 +179,17 @@ decisions below are settled unless the owner reopens them.
    (`tracks/tracks.tin`, made and checked by `tools/tinplate_tracks.py`), drifting arcade physics, a bridge, ramps, oil,
    puddles, wrenches for upgrades, a championship; CPU drivers on a racing line (`demo/tin_bot.gd`); 1-2 players (F2).
    `--track=N`, `--players=2`.
-35. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
+35. Game 32, **Tunnel Pop** (Dig Dug-like, `godot/games/tunnelpop/`): dig a garden's earth in four layers (a grid of cells
+   and links, carved in the view at a quarter cell), pump creatures till they pop, rocks that fall when dug under, eyes
+   drifting through earth, drakes' fire, the vegetable, the last one running; levels generated per round; the autopilot
+   plans over tunnels and earth (`demo/dig_bot.gd`). `--level=N`.
+36. Game 33, **Bloomwand** (Rod Land-like, `godot/games/bloomwand/`): a fairy catches creatures with her wand and slams
+   them to bits, conjures rainbow ladders, picks flowers, collects E X T R A; six levels in `levels/garden.bloom` (made
+   and checked by `tools/bloomwand_levels.py`), a backdrop per level (`view3d/bloom_backdrop.gd`), 1-2 players (F2), the
+   autopilot plans on a graph of walks, drops, ladders and magic ladders (`demo/bloom_bot.gd`). `--level=N`, `--players=2`.
+37. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a
    glyph atlas per size (the Whisker Alley 660 MB leak): animate `scale`, never `font_size`. Iron Flags creeps about
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
-36. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
+38. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
