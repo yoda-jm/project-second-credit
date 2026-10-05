@@ -73,8 +73,11 @@ func _ready() -> void:
 	_check_http.timeout = 15.0
 	_check_http.request_completed.connect(_on_check_done)
 	SelfUpdate.tidy()
-	var quiet := "--no-update" in args or "--demo" in args
-	if Settings.update_check and not quiet:
+	for a in args:
+		if a.begins_with("--library-selftest="):  # tools/test-library.sh
+			add_child.call_deferred(load("res://core/library/library_selftest.gd").new())
+	var quiet: bool = "--no-update" in args or "--demo" in args or Array(args).any(func(a): return String(a).begins_with("--library-selftest"))
+	if web or (Settings.update_check and not quiet):  # the browser has nothing without the channel's list
 		get_tree().create_timer(1.0).timeout.connect(check)
 
 
@@ -173,7 +176,7 @@ func played(id: String) -> void:
 
 ## Fetches the channel's manifest (in the background; the launcher never waits for it).
 func check() -> void:
-	if dev or _preview or checking:
+	if dev or _preview or checking or _check_http == null:
 		return
 	checking = true
 	changed.emit()
@@ -340,6 +343,7 @@ func _on_pack_done(result: int, code: int, _headers: PackedStringArray, _body: P
 	elif not ProjectSettings.load_resource_pack(dest, true):
 		_fail(id, "could not open the downloaded game")
 		return
+	print("library: downloaded %s (%s)" % [id, g["version"]])
 	_queue.pop_front()
 	_progress.erase(id)
 	changed.emit()
@@ -427,6 +431,8 @@ func _mount(id: String) -> void:
 		push_warning("library: %s is missing or damaged, it will download again" % id)
 		installed.erase(id)
 		_save_installed()
+		return
+	print("library: mounted %s (%s)" % [id, e.get("version", "?")])
 
 
 ## Removes old versions and unfinished downloads (not mounted yet at this point of the start).

@@ -8,9 +8,12 @@ import sys
 def entries(path):
     with open(path, "rb") as f:
         data = f.read()
-    start = data.find(b"GDPC") if not data.startswith(b"GDPC") else 0
-    if data[-4:] == b"GDPC" and start < 0:  # embedded in an executable: the header offset is just before the tail magic
-        start = struct.unpack_from("<Q", data, len(data) - 12)[0]
+    if data.startswith(b"GDPC"):
+        start = 0
+    elif data[-4:] == b"GDPC":  # embedded in an executable: the pack, its size, then the magic again at the very end
+        start = len(data) - 12 - struct.unpack_from("<Q", data, len(data) - 12)[0]
+    else:
+        sys.exit(f"{path}: no Godot pack found")
     o = start + 4
     ver, major, minor, patch = struct.unpack_from("<4I", data, o)
     o += 16
@@ -21,8 +24,6 @@ def entries(path):
         o = start + dir_off
     else:
         o += 16 * 4
-    if ver < 3:
-        pass
     count = struct.unpack_from("<I", data, o)[0]
     o += 4
     out = []
