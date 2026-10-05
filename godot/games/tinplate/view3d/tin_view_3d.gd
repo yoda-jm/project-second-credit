@@ -34,9 +34,13 @@ var _keys: Array = []
 var _lights: Array = []          ## per car headlight
 var _wrench: Node3D
 var _gantry_mats: Array[StandardMaterial3D] = []
-var _skids: Array = []           ## [a, b, c, d, age]
+var _skids: Array = []           ## the open chunk's segments: [a, b, half width (Vector2), y, alpha]
 var _skid_mesh: MeshInstance3D
 var _skid_im: ImmediateMesh
+var _skid_mat: StandardMaterial3D
+var _skid_chunks: Array[MeshInstance3D] = []   ## baked marks (they stay for the race)
+const SKID_CHUNK := 160
+const SKID_CHUNKS := 40
 var _fx: Bursts
 var _time := 0.0
 var _shake := 0.0
@@ -119,15 +123,17 @@ func _on_race(e: TinEngine) -> void:
 	_build_barriers(e.track)
 	_build_bridge(e.track)
 	_build_hazards(e.track)
+	_build_trackside(e.track)
 	_build_props(e.track)
 	_build_cars(e)
+	_skid_chunks.clear()
 	_skid_im = ImmediateMesh.new()
 	_skid_mesh = MeshInstance3D.new()
 	_skid_mesh.mesh = _skid_im
-	var sm := _mat(Color(0.05, 0.05, 0.05, 0.55), 0.9)
-	sm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	sm.vertex_color_use_as_albedo = true
-	_skid_mesh.material_override = sm
+	_skid_mat = _mat(Color(1, 1, 1, 1), 0.85)
+	_skid_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_skid_mat.vertex_color_use_as_albedo = true
+	_skid_mesh.material_override = _skid_mat
 	_skid_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_stage.add_child(_skid_mesh)
 	_wrench = null
@@ -165,29 +171,49 @@ func _build_environment(e: TinEngine) -> void:
 
 func _build_ground(e: TinEngine) -> void:
 	var th: Array = THEMES[_theme % THEMES.size()]
+	# the board: a raised slab of the theme's ground, its tin sides printed with a band, on a wooden table
+	var board := Rect2(-9.0, -6.5, 66.0, 41.0)
 	var g := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
-	pm.size = Vector2(120, 80)
+	pm.size = board.size
+	pm.subdivide_width = 8
+	pm.subdivide_depth = 6
 	g.mesh = pm
-	g.position = Vector3(24, -0.02, 14)
-	var gm := Pbr.material(th[0], th[1], 0.12)
+	g.position = Vector3(board.get_center().x, -0.02, board.get_center().y)
+	var src := Pbr.material(th[0], th[1], 0.12)
+	var gm := ShaderMaterial.new()
+	gm.shader = load("res://games/tinplate/shaders/tin_ground.gdshader")
+	gm.set_shader_parameter("albedo_tex", src.albedo_texture)
+	gm.set_shader_parameter("normal_tex", src.normal_texture)
+	gm.set_shader_parameter("tint", th[1])
+	gm.set_shader_parameter("patch_col", [Color(0.8, 1.0, 0.55), Color(1.0, 0.85, 0.7), Color(0.85, 0.92, 1.0), Color(0.7, 0.65, 0.6),
+		Color(0.6, 0.55, 0.9), Color(1.0, 0.7, 0.4)][_theme % 6])
+	gm.set_shader_parameter("stripes", 1.0 if _theme == 0 else 0.0)
+	gm.set_shader_parameter("plain", 1.0 if _theme == 2 else 0.0)
 	if _theme == 2:
-		# snow: white with a blue tinge, keeping the texture's relief, a glitter of sheen
-		gm = gm.duplicate()
-		gm.albedo_texture = null
-		gm.albedo_color = Color(0.93, 0.95, 1.0)
-		gm.roughness = 0.75
-		gm.rim_enabled = true
-		gm.rim = 0.3
+		gm.set_shader_parameter("tint", Color(0.93, 0.95, 1.0))
 	g.material_override = gm
 	_stage.add_child(g)
-	# the board's tin edge: a raised rim round the diorama
-	for side in [[Vector3(24, 0.15, -6.5), Vector3(66, 0.3, 0.6)], [Vector3(24, 0.15, 34.5), Vector3(66, 0.3, 0.6)],
-			[Vector3(-9.5, 0.15, 14), Vector3(0.6, 0.3, 41.6)], [Vector3(57.5, 0.15, 14), Vector3(0.6, 0.3, 41.6)]]:
-		var rim := _box(side[1], Color(0.75, 0.72, 0.68), side[0])
-		(rim.material_override as StandardMaterial3D).metallic = 0.8
-		(rim.material_override as StandardMaterial3D).roughness = 0.25
-		_stage.add_child(rim)
+	var band := _mat([Color(0.85, 0.2, 0.15), Color(0.2, 0.4, 0.8), Color(0.15, 0.45, 0.3), Color(0.12, 0.15, 0.3), Color(0.25, 0.1, 0.35),
+		Color(0.55, 0.25, 0.1)][_theme % 6], 0.3, 0.6)
+	var trim := _mat(Color(0.95, 0.78, 0.35), 0.25, 0.9)
+	for side in [[Vector3(board.get_center().x, -0.8, board.position.y), Vector3(board.size.x + 0.4, 1.6, 0.2)],
+			[Vector3(board.get_center().x, -0.8, board.end.y), Vector3(board.size.x + 0.4, 1.6, 0.2)],
+			[Vector3(board.position.x, -0.8, board.get_center().y), Vector3(0.2, 1.6, board.size.y)],
+			[Vector3(board.end.x, -0.8, board.get_center().y), Vector3(0.2, 1.6, board.size.y)]]:
+		var wall := _box(side[1], Color.WHITE, side[0])
+		wall.material_override = band
+		_stage.add_child(wall)
+		var lip := _box(Vector3(side[1].x + 0.1, 0.12, side[1].z + 0.1), Color.WHITE, side[0] + Vector3(0, 0.82, 0))
+		lip.material_override = trim
+		_stage.add_child(lip)
+	var table := MeshInstance3D.new()
+	var tm := PlaneMesh.new()
+	tm.size = Vector2(260, 180)
+	table.mesh = tm
+	table.position = Vector3(24, -1.62, 14)
+	table.material_override = Pbr.material("planks", Color(0.55, 0.4, 0.3), 0.08)
+	_stage.add_child(table)
 	match _theme:
 		2:
 			_add_weather(Color(1, 1, 1, 0.9), Vector3(0, -1.5, 0), 0.12, 300)
@@ -325,6 +351,118 @@ func _build_bridge(t: TinTrack) -> void:
 				_stage.add_child(c)
 
 
+## The track's surroundings: a printed verge outside the barriers, gravel traps outside the tight bends with tyre
+## walls at their apexes, banner boards along the straights, and clouds' shadows drifting over day tracks.
+func _build_trackside(t: TinTrack) -> void:
+	var n := t.count()
+	var th: Array = THEMES[_theme % THEMES.size()]
+	var night: bool = th[7]
+	var verge := SurfaceTool.new()
+	verge.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var gravel := SurfaceTool.new()
+	gravel.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var any_gravel := false
+	for side in [-1.0, 1.0]:
+		for s in n:
+			var a := s
+			var b := (s + 1) % n
+			if t.height[a] > 0.3 or t.height[b] > 0.3:
+				continue
+			var o0 := t.width * 0.5 + 0.25
+			var o1 := o0 + 0.7
+			var la: Vector2 = t.left_normal(a) * side
+			var lb: Vector2 = t.left_normal(b) * side
+			_strip(verge, t.pos[a] + la * o0, t.pos[b] + lb * o0, t.pos[b] + lb * o1, t.pos[a] + la * o1, 0.012, s * TinTrack.STEP)
+			# gravel outside a tight bend (the outside is away from the turn)
+			if absf(t.bend[a]) > 0.1 and signf(t.bend[a]) == -side:
+				var g1 := o1 + 2.6
+				if _road_dist(t, t.pos[a] + la * (g1 + 0.5)) > t.width * 0.5 + 0.8:
+					_strip(gravel, t.pos[a] + la * o1, t.pos[b] + lb * o1, t.pos[b] + lb * g1, t.pos[a] + la * g1, 0.014, s * TinTrack.STEP)
+					any_gravel = true
+	var vm := MeshInstance3D.new()
+	vm.mesh = verge.commit()
+	vm.material_override = _mat(Color(0.86, 0.84, 0.8) if not night else Color(0.35, 0.36, 0.42), 0.6, 0.2)
+	_stage.add_child(vm)
+	if any_gravel:
+		var gm := MeshInstance3D.new()
+		gm.mesh = gravel.commit()
+		var gsm := ShaderMaterial.new()
+		gsm.shader = load("res://games/tinplate/shaders/tin_gravel.gdshader")
+		gm.material_override = gsm
+		gm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_stage.add_child(gm)
+	# tyre walls at the apexes of the tightest bends (inside), three stacks each
+	for s in n:
+		var b := t.bend[s]
+		if absf(b) < 0.14 or absf(b) < absf(t.bend[(s - 1 + n) % n]) or absf(b) < absf(t.bend[(s + 1) % n]) or t.height[s] > 0.3:
+			continue
+		var inside: Vector2 = t.left_normal(s) * signf(b)
+		for k in [-2, 0, 2]:
+			var q: int = (s + k + n) % n
+			var p: Vector2 = t.pos[q] + inside * (t.width * 0.5 + 0.75)
+			if _road_dist(t, p) < t.width * 0.5 + 0.6:
+				continue
+			var ty := _scene("tyre_stack")
+			if ty:
+				ty.position = Vector3(p.x, 0, p.y)
+				_stage.add_child(ty)
+	# banner boards along the straights, facing the road
+	var cols := [[Color(0.95, 0.85, 0.2), Color(0.15, 0.35, 0.85)], [Color(0.9, 0.2, 0.15), Color(0.95, 0.95, 0.9)],
+		[Color(0.2, 0.7, 0.35), Color(0.95, 0.85, 0.2)]]
+	var bsh: Shader = load("res://games/tinplate/shaders/tin_banner.gdshader")
+	var run := 0
+	var placed := 0
+	for s in n:
+		run = run + 1 if absf(t.bend[s]) < 0.03 else 0
+		if run < 10 or s % 12 != 0 or t.height[s] > 0.3:
+			continue
+		var side := 1.0 if (s / 12) % 2 == 0 else -1.0
+		var p: Vector2 = t.pos[s] + t.left_normal(s) * side * (t.width * 0.5 + 1.35)
+		if _road_dist(t, p) < t.width * 0.5 + 1.0:
+			continue
+		var board := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(3.2, 0.55, 0.06)
+		board.mesh = bm
+		var m := ShaderMaterial.new()
+		m.shader = bsh
+		var cc: Array = cols[placed % cols.size()]
+		m.set_shader_parameter("col_a", cc[0])
+		m.set_shader_parameter("col_b", cc[1])
+		board.material_override = m
+		board.position = Vector3(p.x, 0.42, p.y)
+		board.rotation.y = -t.dir[s].angle()
+		_stage.add_child(board)
+		for leg in [-1.4, 1.4]:
+			_stage.add_child(_box(Vector3(0.06, 0.4, 0.06), Color(0.3, 0.3, 0.32), Vector3(p.x, 0.2, p.y) + Vector3(t.dir[s].x, 0, t.dir[s].y) * leg))
+		placed += 1
+	# clouds drifting over a day track
+	if not night:
+		var cl := MeshInstance3D.new()
+		var pm := PlaneMesh.new()
+		pm.size = Vector2(66, 41)
+		cl.mesh = pm
+		var cm := ShaderMaterial.new()
+		cm.shader = load("res://games/tinplate/shaders/tin_clouds.gdshader")
+		cl.material_override = cm
+		cl.position = Vector3(24, 0.03, 14)
+		cl.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_stage.add_child(cl)
+
+
+func _strip(st: SurfaceTool, a: Vector2, b: Vector2, c: Vector2, d: Vector2, y: float, v: float) -> void:
+	var pts := [[a, Vector2(0, v)], [c, Vector2(1, v + TinTrack.STEP)], [b, Vector2(0, v + TinTrack.STEP)],
+		[a, Vector2(0, v)], [d, Vector2(1, v)], [c, Vector2(1, v + TinTrack.STEP)]]
+	# facing up whichever side of the road they are on
+	var nrm := Vector3(c.x - a.x, 0, c.y - a.y).cross(Vector3(b.x - a.x, 0, b.y - a.y))
+	if nrm.y < 0.0:
+		pts = [pts[0], pts[2], pts[1], pts[3], pts[5], pts[4]]
+	for q in pts:
+		st.set_normal(Vector3.UP)
+		st.set_uv(q[1])
+		st.add_vertex(Vector3(q[0].x, y, q[0].y))
+
+
 func _build_hazards(t: TinTrack) -> void:
 	for o in t.oil:
 		var n := _scene("oil")
@@ -416,42 +554,83 @@ func _build_props(t: TinTrack) -> void:
 		["tree", "tree_round", "tree", "hay_bale", "house"]][_theme % 6]
 	var night: bool = THEMES[_theme % THEMES.size()][7]
 	var lamps := 0
-	var x := -7.0
-	while x < 56.0:
-		var z := -5.0
-		while z < 34.0:
-			var p := Vector2(x + rng.randf_range(-1.0, 1.0), z + rng.randf_range(-1.0, 1.0))
-			z += 3.2
-			var near := _road_dist(t, p)
-			if near < t.width * 0.5 + 1.8:
+	# groves, a village and a few loners where the road is far enough, instead of an even sprinkle
+	var trees: Array = {0: ["tree", "tree_round"], 1: ["rock"], 2: ["tree"], 3: ["tyre_stack", "cone"], 4: ["cone"], 5: ["tree", "tree_round"]}[_theme % 6]
+	var extra: Array = kinds
+	var spots: Array[Vector2] = []
+	for k in 40:
+		var c := Vector2(rng.randf_range(-7.0, 55.0), rng.randf_range(-5.0, 33.0))
+		if _road_dist(t, c) > t.width * 0.5 + 4.0:
+			spots.append(c)
+	var groves := spots.slice(0, 6)
+	for gc in groves:
+		var c: Vector2 = gc
+		var rad := rng.randf_range(3.0, 5.5)
+		var a := 0.0
+		while a < 26.0:
+			var p: Vector2 = c + Vector2.from_angle(a * 2.4) * rad * sqrt(a / 26.0)
+			a += 1.0
+			if _road_dist(t, p) < t.width * 0.5 + 1.8 or p.x < -8.0 or p.x > 56.0 or p.y < -6.0 or p.y > 34.0:
 				continue
-			if night and lamps < 12 and near < t.width * 0.5 + 3.0 and rng.randf() < 0.3:
-				_lamp(p)
-				lamps += 1
+			var kind: String = trees[rng.randi() % trees.size()]
+			var nd: Node3D = _rock(rng) if kind == "rock" else _scene(kind)
+			if nd == null:
 				continue
-			if rng.randf() > (0.35 if near < 8.0 else 0.55):
+			nd.position = Vector3(p.x, 0, p.y)
+			nd.rotation.y = rng.randf() * TAU
+			var sc := rng.randf_range(0.75, 1.25)
+			nd.scale = Vector3(sc, sc, sc)
+			_stage.add_child(nd)
+	# the village: houses in a row, facing the same way
+	if spots.size() > 6 and _theme != 1:
+		var c: Vector2 = spots[6]
+		var facing := rng.randf() * TAU
+		for k in 5:
+			var p: Vector2 = c + Vector2.from_angle(facing) * (k - 2) * 3.6
+			if _road_dist(t, p) < t.width * 0.5 + 2.2:
 				continue
-			var kind: String = kinds[rng.randi() % kinds.size()]
-			var n := _rock(rng) if kind == "rock" else _scene(kind)
-			if n == null:
+			var h := _scene("house")
+			if h == null:
 				continue
-			n.position = Vector3(p.x, 0, p.y)
-			n.rotation.y = rng.randf() * TAU
-			var sc := rng.randf_range(0.85, 1.2)
-			n.scale = Vector3(sc, sc, sc)
-			_stage.add_child(n)
-			if kind == "windmill_toy":
-				var sails := n.find_child("sails", true, false) as Node3D
-				if sails:
-					_windmills.append(sails)
-			if night and kind == "house":
+			h.position = Vector3(p.x, 0, p.y)
+			h.rotation.y = -facing + PI * 0.5
+			_stage.add_child(h)
+			if night:
 				var l := OmniLight3D.new()
 				l.light_color = Color(1.0, 0.75, 0.4)
-				l.light_energy = 0.8
-				l.omni_range = 3.0
-				l.position = Vector3(0, 1.0, 0)
-				n.add_child(l)
-		x += 3.2
+				l.light_energy = 0.9
+				l.omni_range = 3.5
+				l.position = Vector3(0, 1.0, 1.8)
+				h.add_child(l)
+	# loners and lamps
+	lamps = 0
+	for k in range(7, spots.size()):
+		var p: Vector2 = spots[k]
+		var near := _road_dist(t, p)
+		if night and lamps < 12 and near < t.width * 0.5 + 6.0:
+			_lamp(p)
+			lamps += 1
+			continue
+		var kind: String = extra[rng.randi() % extra.size()]
+		var nd: Node3D = _rock(rng) if kind == "rock" else _scene(kind)
+		if nd == null:
+			continue
+		nd.position = Vector3(p.x, 0, p.y)
+		nd.rotation.y = rng.randf() * TAU
+		_stage.add_child(nd)
+		if kind == "windmill_toy":
+			var sails := nd.find_child("sails", true, false) as Node3D
+			if sails:
+				_windmills.append(sails)
+	# lamps along the road on a night track
+	if night:
+		for s in range(0, t.count(), 22):
+			if lamps >= 14:
+				break
+			var p: Vector2 = t.pos[s] + t.left_normal(s) * (t.width * 0.5 + 1.4) * (1.0 if s % 44 == 0 else -1.0)
+			if _road_dist(t, p) > t.width * 0.5 + 1.0:
+				_lamp(p)
+				lamps += 1
 
 
 ## A desert boulder: a squashed, lumpy sphere of red rock.
@@ -645,42 +824,67 @@ func _place_car(e: TinEngine, i: int, delta: float) -> void:
 	var key := _keys[i] as Node3D
 	if key:
 		key.rotation.x += (2.0 + speed * 0.4) * delta
-	# skid marks and dust where the tyres slide
-	if c["slide"] > 2.2 and not c["air"] and speed > 4.0:
+	# tyre traces where the rear tyres slide, or spin off the line (they stay for the race), and dust
+	var spin: bool = c["throttle"] > 0.0 and along > 0.5 and along < 6.5 and c["lap"] < 0 and e.phase != T.Phase.COUNTDOWN
+	var sliding: bool = c["slide"] > 1.1 and speed > 3.0
+	if (sliding or spin) and not c["air"]:
 		var side := Vector2(-fwd.y, fwd.x)
+		var alpha: float = clampf((c["slide"] - 1.1) / 3.5, 0.0, 1.0) * 0.55 + 0.2 if sliding else 0.35
 		for s in [-1.0, 1.0]:
-			var wp: Vector2 = p - fwd * 0.65 + side * s * 0.42
+			var wp: Vector2 = p - fwd * 0.58 + side * s * 0.4
 			var prev: Vector2 = c.get("skid_%d" % int(s), Vector2.INF)
-			if prev != Vector2.INF and prev.distance_to(wp) < 1.5:
-				_skids.append([prev, wp, side * 0.09, c["y"] + 0.025, 0.0])
+			if prev != Vector2.INF and prev.distance_to(wp) < 1.5 and prev.distance_to(wp) > 0.05:
+				var d := (wp - prev).normalized()
+				_skids.append([prev, wp, Vector2(-d.y, d.x) * 0.075, c["y"] + 0.022, alpha])
 			c["skid_%d" % int(s)] = wp
-		if randf() < 0.3:
-			_fx.burst(n.position - Vector3(fwd.x, 0, fwd.y) * 0.8 + Vector3(0, 0.15, 0), Color(0.85, 0.82, 0.78), 2, 0.8, 0.8, 0.25, 0.0, 0.6, 0.6, "smoke")
 	else:
 		c.erase("skid_-1")
 		c.erase("skid_1")
+	if c["slide"] > 2.2 and not c["air"] and speed > 4.0:
+		if randf() < 0.3:
+			_fx.burst(n.position - Vector3(fwd.x, 0, fwd.y) * 0.8 + Vector3(0, 0.15, 0), Color(0.85, 0.82, 0.78), 2, 0.8, 0.8, 0.25, 0.0, 0.6, 0.6, "smoke")
 
 
-func _draw_skids(delta: float) -> void:
-	for sk in _skids:
-		sk[4] += delta
-	_skids = _skids.filter(func(sk): return sk[4] < 9.0)
-	if _skids.size() > 700:
-		_skids = _skids.slice(_skids.size() - 700)
+## The open chunk of marks is redrawn each frame; a full one is baked into a mesh that stays (the oldest go after
+## SKID_CHUNKS of them).
+func _draw_skids(_delta: float) -> void:
+	if _skids.size() >= SKID_CHUNK:
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for sk in _skids:
+			_skid_quad(st, sk)
+		var mi := MeshInstance3D.new()
+		mi.mesh = st.commit()
+		mi.material_override = _skid_mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_stage.add_child(mi)
+		_skid_chunks.append(mi)
+		if _skid_chunks.size() > SKID_CHUNKS:
+			_skid_chunks.pop_front().queue_free()
+		_skids.clear()
 	_skid_im.clear_surfaces()
 	if _skids.is_empty():
 		return
 	_skid_im.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
 	for sk in _skids:
-		var a: Vector2 = sk[0]
-		var b: Vector2 = sk[1]
-		var w: Vector2 = sk[2]
-		var y: float = sk[3]
-		var al := clampf(1.0 - sk[4] / 9.0, 0.0, 1.0) * 0.55
-		_skid_im.surface_set_color(Color(0.05, 0.05, 0.05, al))
-		for q in [a - w, b - w, b + w, a - w, b + w, a + w]:
-			_skid_im.surface_add_vertex(Vector3(q.x, y, q.y))
+		_skid_quad(_skid_im, sk)
 	_skid_im.surface_end()
+
+
+func _skid_quad(target: Object, sk: Array) -> void:
+	var a: Vector2 = sk[0]
+	var b: Vector2 = sk[1]
+	var w: Vector2 = sk[2]
+	var y: float = sk[3]
+	var col := Color(0.04, 0.035, 0.03, sk[4])
+	for q in [a - w, b + w, b - w, a - w, a + w, b + w]:
+		var v := Vector3(q.x, y, q.y)
+		if target is SurfaceTool:
+			(target as SurfaceTool).set_color(col)
+			(target as SurfaceTool).add_vertex(v)
+		else:
+			(target as ImmediateMesh).surface_set_color(col)
+			(target as ImmediateMesh).surface_add_vertex(v)
 
 
 func _place_wrench(e: TinEngine, _delta: float) -> void:

@@ -10,11 +10,22 @@ uniform float start_y = 0.0;
 uniform float night = 0.0;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+	vec2 i = floor(p); vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
+}
 
 void fragment() {
 	float x = UV.x;
 	float y = UV.y;
 	vec3 col = road_col.rgb * (0.9 + 0.12 * hash(floor(vec2(x * 60.0, y * 8.0))));
+	// tar patches, hairline cracks and the rubbered line where the cars run
+	float patch = noise(vec2(x * 3.0, y * 0.25));
+	col *= 0.9 + 0.18 * smoothstep(0.55, 0.8, patch);
+	float crack = abs(noise(vec2(x * 9.0, y * 1.1)) - 0.5);
+	col *= 1.0 - 0.35 * smoothstep(0.02, 0.0, crack) * step(0.15, x) * step(x, 0.85);
+	col *= 1.0 - 0.12 * smoothstep(0.32, 0.45, x) * smoothstep(0.68, 0.55, x);
 	// kerbs
 	float kerb = step(x, 0.07) + step(0.93, x);
 	float stripe = step(0.5, fract(y * 0.8));
