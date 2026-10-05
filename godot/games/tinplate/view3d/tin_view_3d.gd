@@ -133,6 +133,7 @@ func _on_race(e: TinEngine) -> void:
 	_skid_mat = _mat(Color(1, 1, 1, 1), 0.85)
 	_skid_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_skid_mat.vertex_color_use_as_albedo = true
+	_skid_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_skid_mesh.material_override = _skid_mat
 	_skid_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_stage.add_child(_skid_mesh)
@@ -829,13 +830,13 @@ func _place_car(e: TinEngine, i: int, delta: float) -> void:
 	var sliding: bool = c["slide"] > 1.1 and speed > 3.0
 	if (sliding or spin) and not c["air"]:
 		var side := Vector2(-fwd.y, fwd.x)
-		var alpha: float = clampf((c["slide"] - 1.1) / 3.5, 0.0, 1.0) * 0.55 + 0.2 if sliding else 0.35
+		var alpha: float = clampf((c["slide"] - 1.1) / 3.0, 0.0, 1.0) * 0.5 + 0.42 if sliding else 0.5
 		for s in [-1.0, 1.0]:
 			var wp: Vector2 = p - fwd * 0.58 + side * s * 0.4
 			var prev: Vector2 = c.get("skid_%d" % int(s), Vector2.INF)
-			if prev != Vector2.INF and prev.distance_to(wp) < 1.5 and prev.distance_to(wp) > 0.05:
+			if prev != Vector2.INF and prev.distance_to(wp) < 4.0 and prev.distance_to(wp) > 0.05:
 				var d := (wp - prev).normalized()
-				_skids.append([prev, wp, Vector2(-d.y, d.x) * 0.075, c["y"] + 0.022, alpha])
+				_skids.append([prev, wp, Vector2(-d.y, d.x) * 0.095, c["y"] + 0.022, alpha])
 			c["skid_%d" % int(s)] = wp
 	else:
 		c.erase("skid_-1")
@@ -876,7 +877,7 @@ func _skid_quad(target: Object, sk: Array) -> void:
 	var b: Vector2 = sk[1]
 	var w: Vector2 = sk[2]
 	var y: float = sk[3]
-	var col := Color(0.04, 0.035, 0.03, sk[4])
+	var col := Color(0.015, 0.012, 0.01, sk[4])
 	for q in [a - w, b + w, b - w, a - w, a + w, b + w]:
 		var v := Vector3(q.x, y, q.y)
 		if target is SurfaceTool:
