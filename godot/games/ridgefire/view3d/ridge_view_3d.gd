@@ -171,7 +171,9 @@ func _on_round(e: RidgeEngine) -> void:
 		_tanks.append(t)
 	# the aim guide: a short dotted line out of the muzzle
 	_guide = MeshInstance3D.new()
-	_guide.material_override = _mat(Color(1.0, 0.95, 0.7), 0.4, 0.0, 2.0)
+	_guide.material_override = _mat(Color(1.0, 0.95, 0.7), 0.4, 0.0, 3.0)
+	(_guide.material_override as StandardMaterial3D).shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	(_guide.material_override as StandardMaterial3D).no_depth_test = true
 	_guide.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_stage.add_child(_guide)
 	_build_motes()
@@ -623,7 +625,7 @@ func _place_guide(e: RidgeEngine) -> void:
 	var len := 1.5 + float(p["power"]) / 100.0 * 6.0
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var side := Vector2(-dir.y, dir.x) * 0.07
+	var side := Vector2(-dir.y, dir.x) * 0.13
 	var k := 0.0
 	while k < len:
 		var a0 := m + dir * k

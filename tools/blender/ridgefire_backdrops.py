@@ -1175,7 +1175,7 @@ def mesa_dusk(sc):
     tr.box((nose - 0.1, TY + 3.2, TZ), (0.3, 0.9, 1.6), "headlight_glow", (1, 1, 1))
     tr.box((nose - 2.0, TY + 4.0, TZ + 1.62), (2.0, 0.8, 0.05), "window_glow", (1, 1, 1))
     x = nose - 19.0
-    for k in range(6):
+    for k in range(2):   # short enough to vanish whole into the tunnel's block
         L = 17.0
         tr.box((x - L / 2, TY + 2.6, TZ), (L - 0.6, 3.8, 3.0), "paint", body if k % 2 == 0 else hexc("#4a2420"))
         tr.box((x - L / 2, TY + 4.65, TZ), (L - 0.5, 0.4, 3.2), "roof", roof)
@@ -1183,6 +1183,8 @@ def mesa_dusk(sc):
             tr.box((x - 1.6 - w * 2.2, TY + 3.2, TZ + 1.52), (1.4, 0.9, 0.05), "window_glow", (1, 1, 1))
         x -= L
     sc.empty("headlight", (nose + 1.0, TY + 3.2, TZ))
+    # where the nose stops: deep in the block, the whole train inside the tunnel (the block is ~60 m through)
+    sc.empty("train_end", (x1 + 56.0, TY + 0.4, TZ))
 
     # the foreground: cacti, shrubs, rocks, a wind pump
     near = sc.acc("near_cacti")

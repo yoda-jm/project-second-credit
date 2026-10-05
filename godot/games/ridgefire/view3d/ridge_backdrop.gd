@@ -514,7 +514,12 @@ func _collect(root: Node3D, d: Dictionary) -> void:
 			_spin.append([node, node.transform, Vector3.UP, 0.7])
 		elif nm == "train":
 			var td: Dictionary = d["train"]
-			_slide.append([node, node.position, Vector3(td["dist"], 0, 0), "loop", td["dist"] / td["speed"], td["pause"]])
+			# it runs into the tunnel and stops inside the block (never out of its far side)
+			var dist: float = td["dist"]
+			var stop := root.find_child("train_end", true, false) as Node3D
+			if stop:
+				dist = stop.position.x - node.position.x
+			_slide.append([node, node.position, Vector3(dist, 0, 0), "loop", dist / td["speed"], td["pause"]])
 		elif nm == "rover":
 			var rd: Dictionary = d["rover"]
 			_slide.append([node, node.position, Vector3(rd["dist"], 0, 0), "ping", rd["dist"] / rd["speed"], 6.0])

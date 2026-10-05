@@ -120,6 +120,7 @@ func _draw_play(vp: Vector2) -> void:
 			if i == e.turn and e.phase == R.Phase.AIM:
 				var b := sp + Vector2(0, -16 - 6 * sin(_t * 5.0))
 				draw_colored_polygon(PackedVector2Array([b, b + Vector2(-10, -14), b + Vector2(10, -14)]), Color(p["colour"]).lightened(0.3))
+				_protractor(cam, p)
 		for p in _pops:
 			if cam.is_position_behind(p["pos"]):
 				continue
@@ -155,6 +156,36 @@ func _draw_play(vp: Vector2) -> void:
 			HudKit.banner(self, vp, vp.y * 0.34, "NOBODY LEFT", "A DRAW", HudKit.BAD, 1.0)
 	if game.demo:
 		HudKit.text(self, Vector2(vp.x * 0.5, vp.y - 8), "DEMO  -  PRESS ANY KEY TO PLAY", 16, HudKit.INK, HudKit.label_font(), HudKit.CENTER)
+
+
+## The aim around the tank whose turn it is: a half dial with a tick every 15 degrees, the needle along the barrel
+## (as long as the power), the angle at its tip. Directions go through the camera, so the dial matches the scene.
+func _protractor(cam: Camera3D, p: Dictionary) -> void:
+	var piv := Vector3(p["x"], p["y"] + 1.15, 0)
+	var c := cam.unproject_position(piv)
+	var scr := func(deg: float) -> Vector2:
+		var a := deg_to_rad(deg)
+		return (cam.unproject_position(piv + Vector3(cos(a), sin(a), 0) * 3.0) - c).normalized()
+	var r := 78.0
+	var col: Color = Color(p["colour"]).lightened(0.35)
+	var mine: bool = not p["cpu"]
+	var alpha := 0.9 if mine else 0.45
+	var pts := PackedVector2Array()
+	for k in 37:
+		pts.append(c + scr.call(k * 5.0) * r)
+	draw_polyline(pts, Color(1, 1, 1, 0.35 * alpha), 2.0, true)
+	for k in 13:
+		var d: Vector2 = scr.call(k * 15.0)
+		var big := k % 3 == 0
+		draw_line(c + d * (r - (12.0 if big else 6.0)), c + d * r, Color(1, 1, 1, (0.7 if big else 0.4) * alpha), 2.0 if big else 1.0, true)
+	var ang: float = p["angle"]
+	var nd: Vector2 = scr.call(ang)
+	var len := r * (0.3 + 0.7 * float(p["power"]) / 100.0)
+	draw_line(c, c + nd * len, Color(0, 0, 0, 0.5 * alpha), 6.0, true)
+	draw_line(c, c + nd * len, Color(col, alpha), 3.5, true)
+	draw_circle(c + nd * len, 5.0, Color(col, alpha))
+	draw_circle(c, 4.0, Color(1, 1, 1, alpha))
+	HudKit.text(self, c + nd * (r + 22.0) + Vector2(0, 7), "%d°" % roundi(ang), 20, Color(HudKit.INK, alpha), HudKit.font(true), HudKit.CENTER)
 
 
 func _draw_seats(vp: Vector2) -> void:
