@@ -87,6 +87,7 @@ def main():
     ap.add_argument("--out", default="build/channel")
     ap.add_argument("--prev", help="the channel's current manifest (for what changed, and to keep old notes)")
     ap.add_argument("--web-only", action="store_true", help="only the games checked in the browser (the Pages copy)")
+    ap.add_argument("--all-web", action="store_true", help="mark every game as playable in the browser (to try them there)")
     ap.add_argument("--build-info", help="write the launcher's build info here instead")
     ap.add_argument("--bundled", action="store_true", help="with --build-info: the launcher holds every game")
     a = ap.parse_args()
@@ -102,7 +103,7 @@ def main():
         except ValueError:
             prev = {}
     os.makedirs(a.out, exist_ok=True)
-    web = web_games()
+    web = set(game_ids()) if a.all_web else web_games()
     games = {}
     for gid in game_ids():
         pck = os.path.join(a.packs, gid + ".pck")

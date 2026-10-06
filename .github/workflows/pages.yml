@@ -1,9 +1,12 @@
 name: Website
 
+# The site, with the web build in play/ (the launcher and the packs of the games checked in the browser), taken from
+# the "latest" release. Runs after each release build (release.yml) and when the site alone changes.
 on:
   push:
     branches: [main]
     paths: ["site/**", "godot/core/fonts/**", "tools/build-site.sh", ".github/workflows/pages.yml"]
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -23,6 +26,16 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+      - name: The web build, from the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p build/web
+          if gh release download latest -R "$GITHUB_REPOSITORY" -p SecondCredit-web.zip -D build; then
+            unzip -q build/SecondCredit-web.zip -d build/web
+          else
+            echo "no web build in the latest release yet"
+          fi
       - name: Build the site
         run: tools/build-site.sh
       - uses: actions/configure-pages@v6

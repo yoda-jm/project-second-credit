@@ -1,8 +1,10 @@
 name: Release builds
 
-# Builds Linux (AppImage), Windows (zip) and macOS (zip, ad-hoc signed).
-# - every push to main refreshes the rolling "latest" pre-release
-# - tags like m2-bastion or v0.2.0 publish a release of their own
+# The launchers (Linux AppImage, Windows zip, macOS zip: the launcher alone) and one pack per game, published as an
+# update channel (docs/updater.md), plus the web build for the site:
+# - every push to main refreshes the rolling "latest" pre-release (the default channel), then the website
+# - tags like m2-bastion or v0.2.0 publish a release of their own (the "stable" channel)
+# Nothing is published unless an exported launcher downloads, mounts and runs every game (tools/test-library.sh).
 on:
   push:
     branches: [main]
@@ -19,11 +21,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # tags, for the version in file names
+          fetch-depth: 0  # tags and history: versions, the core serial, what changed
 
       - name: Cache portable Godot and export templates
         uses: actions/cache@v6
@@ -41,29 +43,55 @@ jobs:
           key: godot-import-${{ runner.os }}-${{ hashFiles('godot/project.godot', 'godot/**/*.import', 'godot/**/*.jpg', 'godot/**/*.png', 'godot/**/*.glb', 'godot/**/*.obj', 'godot/**/*.wav', 'godot/**/*.ogg', 'godot/**/*.ttf') }}
           restore-keys: godot-import-${{ runner.os }}-
 
-      - name: Export
+      - name: The channel's current manifest (for what changed)
+        run: |
+          mkdir -p build
+          if [ "$GITHUB_REF" = refs/heads/main ]; then url=releases/download/latest/manifest.json; else url=releases/latest/download/manifest.json; fi
+          curl -fsSL -o build/prev-manifest.json "https://github.com/$GITHUB_REPOSITORY/$url" || rm -f build/prev-manifest.json
+
+      - name: Game packs
+        run: tools/export-packs.sh
+
+      - name: Launchers
         run: tools/export.sh
 
-      - name: Upload builds
+      - name: Web build
+        run: |
+          SKIP_PACKS=1 SKIP_IMPORT=1 PREV_MANIFEST=build/prev-manifest.json tools/build-web.sh
+          (cd build/web && zip -qr ../dist/SecondCredit-web.zip .)
+
+      - name: The launcher downloads, mounts and runs every game
+        run: SKIP_PACKS=1 tools/test-library.sh
+
+      - name: Update channel
+        run: |
+          channel=$([ "$GITHUB_REF" = refs/heads/main ] && echo latest || echo stable)
+          python3 tools/make_manifest.py --channel "$channel" --prev build/prev-manifest.json --out build/channel
+
+      - name: Upload the launchers
         uses: actions/upload-artifact@v7
         with:
-          name: second-credit-builds
+          name: second-credit-launchers
           path: build/dist/*
+          retention-days: 7
 
-      - name: Publish the rolling "latest" pre-release
+      - name: Publish the rolling "latest" channel
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest build/dist/* --prerelease --target "$GITHUB_SHA" --title "Latest build (main)" \
-            --notes "Built automatically from $GITHUB_SHA on main. May be unstable; tagged releases are the stable ones."
+        run: tools/publish-channel.sh latest build/prev-manifest.json
 
       - name: Publish the tagged release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" build/dist/* --title "Second Credit $GITHUB_REF_NAME" \
-            --notes "Playable builds for Linux (AppImage), Windows and macOS. See the README for what is inside." \
-            || gh release upload "$GITHUB_REF_NAME" build/dist/* --clobber
+        run: tools/publish-channel.sh "$GITHUB_REF_NAME" build/prev-manifest.json
+
+  site:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

@@ -5,6 +5,7 @@
 #   1. it downloads every game from the channel, checks and mounts each one, and runs it for a moment
 #   2. started again offline, it mounts the downloaded games and runs each one
 #   3. from a fresh folder, a channel with damaged files: nothing may be installed
+#   4. a channel with a newer launcher: it replaces itself (as an AppImage would) and starts again
 # Needs Godot and its export templates (tools/fetch-tools.sh godot templates).
 # Usage: tools/test-library.sh [id ...]   (default: every game)   SKIP_PACKS=1 reuses build/packs/
 set -euo pipefail
@@ -60,5 +61,31 @@ ok=0
 run home download channel || ok=1
 run home reopen channel || ok=1
 run home2 damaged bad || ok=1
+
+echo "== selfupdate"
+mkdir -p "$T/self" "$T/home3"
+cp "$T/launcher.x86_64" "$T/SecondCredit.AppImage"
+cp "$T/launcher.x86_64" "$T/self/SecondCredit-linux-x86_64.AppImage"
+python3 - "$T" <<'PY'
+import hashlib, json, os, sys
+t = sys.argv[1]
+m = json.load(open(f"{t}/channel/manifest.json"))
+new = f"{t}/self/SecondCredit-linux-x86_64.AppImage"
+m["games"] = {}
+m["launcher"]["core"] += 1
+m["launcher"]["files"] = {"linux": {"file": os.path.basename(new), "size": os.path.getsize(new),
+                                    "sha256": hashlib.sha256(open(new, "rb").read()).hexdigest()}}
+json.dump(m, open(f"{t}/self/manifest.json", "w"))
+PY
+before=$(stat -c %i "$T/SecondCredit.AppImage")
+APPIMAGE="$PWD/$T/SecondCredit.AppImage" XDG_DATA_HOME="$PWD/$T/home3" timeout 300 "$T/SecondCredit.AppImage" --headless \
+  --audio-driver Dummy -- --channel-url="http://127.0.0.1:$port/self/manifest.json" --library-selftest=selfupdate 2>&1 \
+  | tee "$T/selfupdate.log" | grep -E "^SELFTEST" || true
+after=$(stat -c %i "$T/SecondCredit.AppImage")
+if grep -q "^SELFTEST relaunched" "$T/selfupdate.log" && [ "$before" != "$after" ] && [ -x "$T/SecondCredit.AppImage" ]; then
+  echo "SELFTEST selfupdate: the launcher replaced itself and started again"
+else
+  echo "SELFTEST selfupdate: FAILED (inode $before -> $after)"; ok=1
+fi
 [ $ok -eq 0 ] && echo "library test: PASSED" || echo "library test: FAILED (logs in $T/)"
 exit $ok

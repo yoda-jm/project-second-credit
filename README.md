@@ -3,7 +3,7 @@
 [![CI](https://github.com/yoda-jm/project-second-credit/actions/workflows/ci.yml/badge.svg)](https://github.com/yoda-jm/project-second-credit/actions/workflows/ci.yml)
 [![Release builds](https://github.com/yoda-jm/project-second-credit/actions/workflows/release.yml/badge.svg)](https://github.com/yoda-jm/project-second-credit/releases/tag/latest)
 
-**Website: https://yoda-jm.github.io/project-second-credit/** · **Download: [latest build](https://github.com/yoda-jm/project-second-credit/releases/tag/latest)** (Linux AppImage, Windows, macOS)
+**Website: https://yoda-jm.github.io/project-second-credit/** · **Download: [latest build](https://github.com/yoda-jm/project-second-credit/releases/tag/latest)** (Linux AppImage, Windows, macOS: a small launcher that downloads each game when it is first played) · **[Play in your browser](https://yoda-jm.github.io/project-second-credit/play/)**
 
 Free, open-source remakes of simple 80s and 90s games. The original rules stay intact, and the presentation is
 fully modern: lighting, materials, particles, sound and music, in the spirit of Pac-Man Championship Edition

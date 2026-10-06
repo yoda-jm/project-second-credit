@@ -201,3 +201,10 @@ decisions below are settled unless the owner reopens them.
    1 MB a minute (to look at). GPU media and launcher cards: record with the monitor awake, one game at a time.
 40. Next: the shared campaign/mod system ([docs/level-packs.md](docs/level-packs.md)), the level editors, and
    polish passes over every game.
+41. **The library** ([docs/updater.md](docs/updater.md)): the download is the launcher alone; each game is its own pack
+   (`tools/export-packs.sh`, only `games/<id>/`: a game may use `core/` and its own folder, never another game's,
+   checked by `core/tests/test_packs.gd`), downloaded on first play from the update channel (`latest` by default,
+   `stable` = tags). The launcher finds new versions at start and only installs them when asked (U, LIBRARY). CI
+   (`release.yml`) runs `tools/test-library.sh` (an exported launcher downloads and runs every game) before publishing.
+   The web build (`tools/build-web.sh`, `play/` on the site) downloads the games of `tools/web-games.txt` the same way;
+   check new ones with `tools/test-web.sh <id>` before adding them. `--library-preview` fakes a channel for captures.

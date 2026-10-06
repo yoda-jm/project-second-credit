@@ -154,6 +154,7 @@ func _fail(message: String) -> void:
 
 
 func _finish() -> void:
+	set_process(false)
 	print("SELFTEST %s: %s" % [step, "PASSED" if _failures == 0 else "%d FAILED" % _failures])
 	if not Library.web:
 		get_tree().quit(0 if _failures == 0 else 1)

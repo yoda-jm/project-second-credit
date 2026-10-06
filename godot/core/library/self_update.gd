@@ -73,22 +73,23 @@ static func tidy() -> void:
 		OS.execute("rm", ["-rf", t + ".old"])
 
 
-## Starts this launcher again (the new file, once replaced) and quits.
+## Starts this launcher again (the new file, once replaced) with the same arguments, and quits.
 static func relaunch() -> void:
-	var args := OS.get_cmdline_user_args()
-	var user := ["--"] + Array(args) if not args.is_empty() else []
+	var user := Array(OS.get_cmdline_user_args())
+	if "--relaunched" not in user:
+		user.append("--relaunched")
+	var args := Array(OS.get_cmdline_args()) + ["--"] + user
+	var t := target()
 	match platform():
 		"macos":
-			var t := target()
 			if t != "":
-				OS.create_process("open", ["-n", t] + (["--args"] + Array(args) if not args.is_empty() else []))
+				OS.create_process("open", ["-n", t, "--args"] + args)
 			else:
-				OS.create_process(OS.get_executable_path(), user)
+				OS.create_process(OS.get_executable_path(), args)
 		"linux":
-			var t := target()
-			OS.create_process(t if t != "" else OS.get_executable_path(), user)
+			OS.create_process(t if t != "" else OS.get_executable_path(), args)
 		_:
-			OS.create_process(OS.get_executable_path(), user)
+			OS.create_process(OS.get_executable_path(), args)
 	(Engine.get_main_loop() as SceneTree).quit()
 
 
@@ -97,6 +98,7 @@ func start(url: String, entry: Dictionary) -> void:
 	_http = HTTPRequest.new()
 	_http.use_threads = true
 	_http.max_redirects = 8
+	_http.download_chunk_size = 1 << 22
 	_http.download_file = PART
 	_http.body_size_limit = int(entry.get("size", 0)) + 1_000_000
 	add_child(_http)

@@ -1,5 +1,6 @@
 #!/bin/bash
-# Exports release builds into build/dist/: Linux AppImage, Windows zip and macOS zip (ad-hoc signed).
+# Exports the launchers into build/dist/: Linux AppImage, Windows zip and macOS zip (ad-hoc signed). They hold the
+# launcher only; each game is its own pack (tools/export-packs.sh), downloaded from the update channel (docs/updater.md).
 # Needs Godot and its export templates: tools/fetch-tools.sh godot templates
 # Usage: tools/export.sh [linux] [windows] [macos]   (default: all three)
 set -euo pipefail
@@ -7,8 +8,9 @@ cd "$(dirname "$0")/.."
 GODOT=${GODOT_BIN:-$PWD/.tools/bin/godot}
 T=.tools
 want=" ${*:-linux windows macos} "
-ver=$(git describe --tags --always 2>/dev/null || echo dev)
-rm -rf build && mkdir -p build/dist
+ver=$(git describe --tags --always --exclude latest 2>/dev/null || echo dev)
+python3 tools/make_manifest.py --build-info godot/core/library/build.json
+rm -rf build/dist build/linux build/windows build/macos && mkdir -p build/dist  # build/packs stays (tools/export-packs.sh)
 
 timeout 600 "$GODOT" --headless --path godot --import >/dev/null 2>&1 || true
 

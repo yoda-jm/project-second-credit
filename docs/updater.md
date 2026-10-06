@@ -1,201 +1,108 @@
-# Updates and on-demand games: specification
+# The launcher, the game packs and updates
 
-Status: proposal (branch `updater-spec`). A readable version with diagrams is the private page linked from
-`CLAUDE.local.md`.
+Status: in place (desktop and web). Android: not started (see the end).
 
-## Goal
+## What the player sees
 
-- The launcher checks GitHub for a newer build at start, downloads it, and relaunches itself.
-- Every game stays listed in the launcher. A game that was never downloaded shows its size and downloads
-  when it's first picked. Games that are installed update on their own, and the launcher says which ones changed.
-- The same mechanism serves the web build (all games, without a huge first download) and an Android build.
+- The download is the launcher alone (about 20 MB of core plus the Godot runtime). Every game is on the shelf.
+- A game that isn't on the computer says **NOT DOWNLOADED** with its size; floppy disks, clouds and download arrows
+  float behind it. Enter downloads it (a progress bar on the card), then starts it.
+- At start the launcher checks the update channel in the background, never waiting for it. It **never installs
+  anything by itself**: when something is new, a notice slides in ("NEW: new versions of Fuseflight, Biosurge...
+  Press U"), the status pill in the corner says "LATEST · 3 UPDATES · PRESS U", and the cards say **NEW VERSION**.
+- Enter on a game with a new version asks: **UPDATE, THEN PLAY** or **PLAY THIS VERSION**, with what changed.
+- **LIBRARY** (menu, or U) lists every game: its state, size and what changed, and DOWNLOAD / UPDATE / CANCEL /
+  REMOVE / PLAY per game, **UPDATE ALL**, **DOWNLOAD ALL**, CHECK NOW, and the launcher's own update (UPDATE AND
+  RESTART). A game updated since it was last played says UPDATED until then.
+- Settings: "Look for updates at start" (on) and "Stable releases only" (off: the **latest** channel is the default).
 
-## Today
+## How it's built
 
-- `release.yml` exports one 225-258 MB file per OS (Godot runtime + every game in one embedded `.pck`) and
-  deletes and recreates the rolling `latest` pre-release on every push to `main`.
-- The web build (`web-build` branch, `docs/web.md`) ships five games in one `.pck` to keep it under ~60 MB.
-  Its "Later" section already asks for per-game packs.
+| Piece | Holds | Size |
+|---|---|---|
+| Launcher (`tools/export.sh`) | the Godot runtime, `core/`, the add-ons, `core/library/build.json` | 19 MB pack; downloads of 44 MB (Linux), 55 MB (Windows), 78 MB (macOS) |
+| Game pack (`tools/export-packs.sh`) | `games/<id>/` only, through the "Pack" export preset | 2 to 26 MB, 211 MB in all |
+| Web launcher (`tools/build-web.sh`) | the same core for the browser (Compatibility renderer, single-threaded template) | 19 MB pack |
 
-## Design: one runtime, one core pack, one pack per game
+- `Library` (autoload, `core/library/library.gd`) keeps the downloaded packs in `user://library/` with
+  `installed.json`, mounts them at start (`ProjectSettings.load_resource_pack`), fetches the manifest, downloads,
+  checks size and SHA-256, mounts. The rules are pure functions in `core/library/library_catalog.gd` (tested in
+  `core/tests/test_library.gd`); the screens are `core/ui/library_ui.gd`.
+- Godot 4.7 mounts a pack with its own `class_name` scripts and UIDs at run time: no restart. A game already played
+  this session keeps its old scripts loaded, so its update asks for a restart.
+- Development runs (editor, `tools/test.sh`, `tools/capture.sh`) have every game in `res://` and never touch the
+  network. `--library-preview` fakes a channel to look at every state. `--no-update` and `--demo` skip the check.
+- An "all games" build (every game inside the launcher) still works: games found in `res://` at start count as
+  installed and can be updated by a pack.
 
-| Layer | Holds | Size | Changes when |
-|---|---|---|---|
-| Runtime | Godot export template (exe) | 70-110 MB (25-35 MB zipped) | Godot version changes |
-| Core pack | `core/`, launcher, settings, fonts, cards, a few launcher props | ~16 MB | launcher or shared code changes, a game is added |
-| Game pack `<id>.pck` | `games/<id>/**` only | 3-26 MB | that game's folder changes |
+### Rules the build enforces (`core/tests/test_packs.gd`)
 
-The desktop runtime and core pack ship together as today's single file (embedded pack), so the
-"launcher update" is a whole-file replacement. Games are separate `.pck` files mounted with
-`ProjectSettings.load_resource_pack()` just before `LoadingScreen.go()` loads the scene.
+- A game uses only `core/` and its own folder (Fruitburrow got its own copies of the Bastion trees, the launcher its
+  own gem shader). `core/` never needs a game, except the registry and the campaign packs' lookup.
+- Card art lives in `core/ui/cards/`; a game's floating props come from its pack once it's downloaded.
 
-**Spike (Godot 4.7.2, done):** a core pack exported without `games/*` and a game pack with two
-`class_name` scripts, a texture referenced by UID and a scene. After mounting, `get_global_class_list()`
-contains the game's classes, `ResourceUID.has_id()` knows its UIDs, and the scene loads and runs. No
-restart and no cache tricks needed.
+## The channel
 
-### Rules the build enforces
-
-- A game references only `core/` and its own folder (a check script in CI). Today one breaks this:
-  Fruitburrow loads decor from `games/bastion/art/models/`; move it to `core/` or copy it.
-- The launcher's floating props and card art must live in `core/` (the launcher already skips missing props).
-- `core/api.txt` holds an integer, `CORE_API`, raised by hand when a change in `core/` breaks old game packs
-  (HUD kit, story cards, pack chooser, settings). Each game pack records the API it was built for.
-- Packs are built with the same Godot version as the runtime (tokenized GDScript and resource formats).
-
-## The channel manifest
-
-One JSON file per channel (`stable`, `latest`), published last so a channel switches in one step:
+`tools/make_manifest.py` writes `manifest.json` and copies each pack as `<id>-<version>.pck`:
 
 ```json
 {
-  "channel": "latest", "build": "m35-17-g396b2d0", "commit": "396b2d0", "date": "2026-10-06T00:30:00Z",
-  "godot": "4.7.2", "core_api": 3,
-  "launcher": {
-    "linux":   {"url": ".../SecondCredit-linux-x86_64.AppImage", "sha256": "...", "size": 61000000},
-    "windows": {"url": "...", "sha256": "...", "size": 0},
-    "macos":   {"url": "...", "sha256": "...", "size": 0},
-    "android": {"url": "...", "sha256": "...", "size": 0}
-  },
-  "games": {
-    "fuseflight": {
-      "version": "a1b2c3d4", "core_api": 3, "title": "Fuseflight",
-      "desktop": {"url": ".../fuseflight-a1b2c3d4.pck", "sha256": "...", "size": 14100000},
-      "mobile":  {"url": ".../fuseflight-a1b2c3d4-etc2.pck", "sha256": "...", "size": 15800000},
-      "web": true,
-      "changes": ["Fuseflight: walkers take wing after the third bomb", "..."]
-    }
-  }
+ "format": 1, "channel": "latest", "build": "m8-flags-171-g10ee5ad", "commit": "...", "godot": "4.7.2",
+ "launcher": {"core": 108, "build": "...", "files": {"linux": {"file": "SecondCredit-linux-x86_64.AppImage", "sha256": "...", "size": 0}}},
+ "games": {"fuseflight": {"version": "af9e044815", "file": "fuseflight-af9e044815.pck", "sha256": "...", "size": 8300000,
+   "min_core": 106, "web": false, "changes": ["Fuseflight: ..."], "date": "..."}}
 }
 ```
 
-- `version` = first 8 hex of the git tree hash of `godot/games/<id>` mixed with the Godot version and
-  `CORE_API`. Same folder, same version: unchanged games are never downloaded again.
-- `changes` = commit subjects that touched the folder since the previous version (they are written as
-  captions already), shown under "What's new".
-- `web` = the game is checked in the Compatibility renderer and may appear in the browser.
+- **version**: the git tree of `godot/games/<id>` and the Godot version. Same folder, same version: nobody downloads
+  a game again for nothing.
+- **core serial**: how many commits changed the launcher's code (`godot/core`, `project.godot`, `addons`, the icon).
+  `launcher.core` is the serial of this build; a launcher with a lower one is offered the update.
+- **min_core**: the serial when the game last changed. An older launcher was never tested with that version: it
+  keeps the game it has and says "NEEDS THE NEW LAUNCHER" for the new one. No manual version bump to forget.
+- **changes**: commit subjects that touched the game since the previous manifest (they are captions already).
+- **web**: listed in `tools/web-games.txt` (checked in the browser).
 
-## Hosting (free, no API calls)
+### Hosting
 
-- **Manifest and web packs: GitHub Pages** (`/channel/<name>/manifest.json`, `/packs/<id>-<version>.pck`).
-  Pages answers with `Access-Control-Allow-Origin: *`; the browser can fetch from it.
-- **Desktop and Android files: GitHub Releases.** One long-lived release per channel; assets are named
-  with their version and uploaded only when new (`gh release upload`), old ones pruned after two versions.
-  Stop deleting and recreating `latest`: links would break mid-download.
-- Release downloads redirect to `release-assets.githubusercontent.com` **without CORS headers** (checked), so
-  the web build can't use them; hence Pages for the web.
-- No GitHub API (60 requests an hour per IP unauthenticated): only plain file URLs.
-- Pages limits: 1 GB site, 100 GB a month soft bandwidth. One version of every desktop pack is about 300 MB.
+- Desktop: GitHub Releases. `latest` channel: `releases/download/latest/manifest.json` (the rolling pre-release);
+  `stable`: `releases/latest/download/manifest.json` (GitHub's newest full release, i.e. the newest tag). Files
+  are found beside the manifest. No GitHub API (60 requests an hour per IP).
+- `tools/publish-channel.sh` keeps the `latest` release (its tag moves), uploads only packs it doesn't have,
+  replaces the launchers, uploads the manifest last, and removes packs listed neither now nor in the previous
+  manifest.
+- Web: GitHub Pages, `play/` (launcher) and `play/packs/` (manifest and the web games' packs). Release downloads
+  have no CORS headers, Pages has `Access-Control-Allow-Origin: *`. The browser keeps downloaded packs in
+  IndexedDB (`user://`).
+- `release.yml`: packs, launchers, web build, then `tools/test-library.sh` (an exported launcher downloads, checks,
+  mounts and runs every game from a local channel, again offline, refuses damaged files, and replaces itself), and
+  only then publishes; then the site (`pages.yml`, reusable) takes the web build from the release.
 
-## Launcher behaviour
+## The launcher's own update
 
-### At start
+| Platform | How |
+|---|---|
+| Linux AppImage | download, check, write beside `$APPIMAGE`, `chmod +x`, rename over it, start it, quit (tested) |
+| Windows | unzip the `.exe` beside the running one, rename the running one to `.old` (allowed), the new one in its place; `.old` goes at the next start |
+| macOS | `ditto` unzips the app beside the running one, the running one becomes `.old`, the new one takes its place, `open -n`; not from a translocated (never moved) app |
+| Web | "RELOAD THE PAGE" |
+| Anything else | the library says a new launcher is out and opens the download page |
 
-1. Show the launcher straight away from what is installed (never wait for the network).
-2. In the background: fetch the manifest (`If-None-Match`, 5 s timeout). Offline: nothing happens.
-3. Newer launcher: download, verify, show "Update ready: restart" (or restart at once on the
-   next return to the launcher if updates are set to automatic). Never restart under a running game.
-4. Installed games with a new version: download in the background, one at a time, smallest first.
-5. A toast when done: "3 games updated: Fuseflight, Biosurge, Four Torches". Their cards get an
-   "UPDATED" chip until played; the card shows the `changes` lines.
+The restart repeats the launcher's arguments plus `--relaunched`. Windows and macOS are written but not yet tried on
+those systems: try them before relying on them.
 
-### Card states
+## Testing
 
-| State | Card shows | Enter does |
-|---|---|---|
-| Installed | as today | play |
-| Not downloaded | size, "DOWNLOAD" | download with progress on the card, then play |
-| Downloading | progress bar, MB of MB | nothing (Esc cancels) |
-| Update ready | "UPDATED" chip | play the new version |
-| Needs newer launcher | "UPDATE THE LAUNCHER" | start the launcher update |
-| Offline, not downloaded | greyed, "needs a connection" | nothing |
+- `tools/test.sh -a res://core/tests`: the rules, the dependency check, the launcher.
+- `tools/test-library.sh [id ...]`: the end-to-end check above (about 10 minutes for every game).
+- `tools/test-web.sh [--no-build] [id ...]`: builds the web version and the site, serves them like Pages and plays
+  the launcher and each web game in headless Chrome (each downloads its pack, the first one comes back from the
+  browser's storage), screenshots in `build/web-test/`.
+- `CAPTURE_ARGS="--library-preview --open-library" tools/capture.sh -s res://core/ui/launcher.tscn`: the screens.
 
-### Files
+## Android (later)
 
-- `user://packs/<id>-<version>.pck` and `user://packs/installed.json` (id, version, sha256, date, played).
-- Download to `.part`, check size and SHA-256 (`HashingContext`), rename, update `installed.json`, delete
-  the old version. A failed check deletes the file and retries once.
-- A pack can't be unmounted: a game already played this session switches version at the next start.
-- Saves and settings stay in `user://` as today; game packs never write there except their own saves.
-- A "Downloads" page in Settings: installed size per game, remove a game, "update now".
-
-### Settings
-
-- Updates: **Automatic** (default) / Ask / Off.
-- Channel: **Stable** (tagged releases, default for players) / Latest (every push to `main`).
-
-### Captures, tests and demos
-
-`--no-update` and every capture/test path (`tools/capture.sh`, `tools/test.sh`, `--demo`) disable the
-network entirely, so construction movies stay deterministic and CI never downloads.
-
-## Launcher self-update per platform
-
-| Platform | Replace | Relaunch |
-|---|---|---|
-| Linux AppImage | `$APPIMAGE` path: download beside it, `chmod +x`, `rename()` over it (atomic, the running copy stays mapped) | `OS.create_process($APPIMAGE, args)` then quit |
-| Windows | rename running `SecondCredit.exe` to `.old`, write the new one, delete `.old` at next start | same |
-| macOS | replace `Second Credit.app` contents; if it runs from a translocated read-only path (not moved to Applications), say so and open the download page | `open -n` the bundle |
-| Not writable (distro package, read-only folder) | don't; show "Version X is out" with a link | - |
-
-Downloads made by our own process carry no quarantine flag on macOS. All three keep a `--relaunched` argument so
-a failed update can't loop: if the new file fails to start twice, the old one is restored.
-
-## Builds
-
-- `tools/export-packs.sh`: one import, then `--export-pack` per game with a preset whose exclude filter is
-  rewritten (the same trick as `tools/build-web.sh`), plus the core pack. Writes `build/packs/` and the manifest.
-- Desktop builds keep an **"all games" download** (packs in a `packs/` folder beside the exe, read-only,
-  treated as installed and updated into `user://`): for offline players, archives and stores. The plain
-  launcher download becomes about 30-60 MB.
-- `release.yml`: build packs once (Linux runner), export the three launchers, upload new assets, then the
-  manifest. `pages.yml`: copy the current packs and manifests into the site.
-
-## Web build
-
-- The page loads runtime + core pack (~25 MB instead of ~60 MB for five games). Every game whose manifest
-  entry says `web: true` is listed; picking one downloads its pack from Pages with `HTTPRequest`, stores
-  it in `user://` (IndexedDB, survives visits) and mounts it.
-- Desktop packs serve the browser as they are (S3TC/BPTC textures, same as the web preset); no separate web packs.
-- No launcher self-update: the page is always the latest. File names carry the version so caches never
-  serve a stale core.
-- "Updated since your last visit" uses the same toast.
-- Replaces `tools/web-games.txt` with the manifest's `web` flag (coordinate with the `web-build` branch).
-
-## Android
-
-- Packs: a second flavor with ETC2/ASTC textures (`-etc2.pck`), same manifest. Game data lands in internal
-  storage; `load_resource_pack` works there.
-- APK: about 50 MB (arm64, core only) instead of 300+ MB with every game.
-- **App updates are not in-app.** No paid Play account (and Play forbids self-updates), so distribute the APK
-  on GitHub Releases, with Obtainium or F-Droid for app updates. The launcher only says "A new version is out"
-  and opens the release page. Packs update in-app as on desktop. F-Droid may flag downloaded packs (they
-  hold compiled scripts): ship an "all games" APK flavor there.
-- Still needed before Android is real: touch controls, the Mobile or Compatibility renderer per game,
-  performance checks.
-
-## Security
-
-- HTTPS only, SHA-256 per file from the manifest.
-- Phase 2: sign the manifest (Godot `Crypto.sign` with an RSA key in a GitHub secret; public key in the
-  core pack) so a compromised mirror can't serve code. A compromised GitHub account could change the
-  source anyway, so this is defence in depth.
-- No telemetry: only GET requests, no identifiers.
-
-## Phases (small commits, each runnable)
-
-1. **Split the build**: dependency check, `export-packs.sh`, "all games" builds mount packs from `packs/`
-   beside the exe. Same player experience. Test: every game starts from its pack.
-2. **Manifest and channels** in CI; stop recreating `latest`. Test: manifest schema, versions stable across
-   two builds of the same tree.
-3. **Launcher states and downloads**: card states, `installed.json`, verify, toast. Test against a local
-   channel served by `python3 -m http.server` (fake updates, a corrupt file, offline).
-4. **Self-update** per desktop OS, with rollback.
-5. **Web on demand**: all `web: true` games in the browser.
-6. **Android**: mobile packs, APK, touch controls (a project of its own).
-
-## Open questions for the owner
-
-- Default channel for players: Stable (recommended) or Latest?
-- Keep the "all games" desktop download? (Recommended: yes, for offline use.)
-- Updates on by default without asking? (Recommended: yes, with a toast.)
+Packs need no change (textures aren't VRAM-compressed, so one pack serves desktop, web and phones). The APK would be
+the launcher alone (~50 MB) and download games like the desktop. The app itself can't update itself outside a store:
+distribute it on GitHub Releases with Obtainium or F-Droid; the library would only say a new version is out. Touch
+controls and per-game renderer checks are the real work.

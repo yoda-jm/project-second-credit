@@ -74,10 +74,13 @@ const shot = async (name) => {
 
 // the launcher; a visit that downloads every web game (the launcher's self-test); the next visit, where they come back
 // from the browser's storage; then each game, played by its autopilot (mounted from storage at start)
-const pages = [{ name: "launcher", query: "", wait: [8, 8] },
+// (WEB_TEST_SURVEY=1: only each game, downloaded on the way, to try games not yet listed for the browser)
+const survey = !!process.env.WEB_TEST_SURVEY;
+const pages = [{ name: "launcher", query: "", wait: [8, 8] }].concat(survey ? [] : [
 	{ name: "fetch", query: "?library-selftest=fetch", until: "SELFTEST fetch:", wait: [1, 1] },
-	{ name: "mounted", query: "?library-selftest=mounted", until: "SELFTEST mounted:", wait: [1, 1] }].concat(
-	games.map((g) => ({ name: g, query: `?game=${g}&demo`, wait: [120, 30], expect: `library: mounted ${g}` })));  // SwiftShader compiles the shaders slowly
+	{ name: "mounted", query: "?library-selftest=mounted", until: "SELFTEST mounted:", wait: [1, 1] }],
+	games.map((g) => ({ name: g, query: `?game=${g}&demo`, wait: [120, 30],  // SwiftShader compiles the shaders slowly
+		expect: `library: ${survey ? "downloaded" : "mounted"} ${g}` })));
 let ok = true;
 for (const p of pages) {
 	const before = problems.length;
