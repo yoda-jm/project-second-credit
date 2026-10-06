@@ -78,7 +78,10 @@ static func relaunch() -> void:
 	var user := Array(OS.get_cmdline_user_args())
 	if "--relaunched" not in user:
 		user.append("--relaunched")
-	var args := Array(OS.get_cmdline_args()) + ["--"] + user
+	var engine := Array(OS.get_cmdline_args())
+	if DisplayServer.get_name() == "headless" and "--headless" not in engine:
+		engine.append("--headless")  # not among the arguments Godot hands back
+	var args := engine + ["--"] + user
 	var t := target()
 	match platform():
 		"macos":
