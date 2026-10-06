@@ -12,6 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 GODOT=${GODOT_BIN:-$PWD/.tools/bin/godot}
 T=build/test-library
+[ -n "${GITHUB_ACTIONS:-}" ] && trap 'echo "::error title=library test::stopped at line $LINENO: $BASH_COMMAND"' ERR
 rm -rf "$T" && mkdir -p "$T/channel" "$T/bad" "$T/home" "$T/home2"
 
 [ "${SKIP_PACKS:-}" ] || tools/export-packs.sh "$@"
@@ -48,14 +49,22 @@ server=$!
 trap 'kill $server 2>/dev/null' EXIT
 sleep 1
 
+# on GitHub Actions, failures become annotations (readable on the run page without signing in)
+report() {  # title, log
+  [ -n "${GITHUB_ACTIONS:-}" ] || return 0
+  local lines
+  lines=$(grep -E "SELFTEST FAIL|SCRIPT ERROR|^ERROR|SELFTEST .*FAILED|timed out" "$2" | grep -v "godot_ai\|leaked\|in use at exit\|PagedAllocator\|RID allocations" | head -15 | tr '\n' '|' | sed 's/%/%25/g; s/|/%0A/g')
+  echo "::error title=library test: $1::${lines:-no SELFTEST result (crash or timeout?)}%0A$(tail -5 "$2" | tr '\n' '|' | sed 's/%/%25/g; s/|/%0A/g')"
+}
+
 run() {  # home, step, channel
   echo "== $2"
   XDG_DATA_HOME="$PWD/$T/$1" timeout 1200 "$T/launcher.x86_64" --headless --audio-driver Dummy -- \
     --channel-url="http://127.0.0.1:$port/$3/manifest.json" --library-selftest="$2" 2>&1 | tee "$T/$2.log" | grep -E "^SELFTEST" || true
   if grep -E "^(SCRIPT ERROR|ERROR: .*(Parse|Cannot|load))" "$T/$2.log" | grep -v "godot_ai" | head -5 | grep .; then
-    echo "script errors in $2 (see $T/$2.log)"; return 1
+    echo "script errors in $2 (see $T/$2.log)"; report "$2" "$T/$2.log"; return 1
   fi
-  grep -q "^SELFTEST $2: PASSED" "$T/$2.log"
+  grep -q "^SELFTEST $2: PASSED" "$T/$2.log" || { report "$2" "$T/$2.log"; return 1; }
 }
 ok=0
 run home download channel || ok=1
@@ -85,7 +94,7 @@ after=$(stat -c %i "$T/SecondCredit.AppImage")
 if grep -q "^SELFTEST relaunched" "$T/selfupdate.log" && [ "$before" != "$after" ] && [ -x "$T/SecondCredit.AppImage" ]; then
   echo "SELFTEST selfupdate: the launcher replaced itself and started again"
 else
-  echo "SELFTEST selfupdate: FAILED (inode $before -> $after)"; ok=1
+  echo "SELFTEST selfupdate: FAILED (inode $before -> $after)"; report selfupdate "$T/selfupdate.log"; ok=1
 fi
 [ $ok -eq 0 ] && echo "library test: PASSED" || echo "library test: FAILED (logs in $T/)"
 exit $ok
