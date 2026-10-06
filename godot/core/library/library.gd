@@ -61,6 +61,8 @@ func _ready() -> void:
 	_tidy()
 	for id in installed.keys():
 		_mount(id)
+	print("library: %d games downloaded here%s" % [installed.size(),
+		(", browser storage %s" % ("kept" if OS.is_userfs_persistent() else "NOT kept")) if web else ""])
 	var cached = JSON.parse_string(FileAccess.get_file_as_string(CACHED)) if FileAccess.file_exists(CACHED) else null
 	if LibraryCatalog.valid_manifest(cached):
 		manifest = cached
@@ -85,6 +87,7 @@ func _request(threads: bool) -> HTTPRequest:
 	var r := HTTPRequest.new()
 	r.use_threads = threads
 	r.max_redirects = 8
+	r.download_chunk_size = 1 << 22  # a frame reads up to 4 MB (in the browser, without threads, 64 KB a frame crawls)
 	add_child(r)
 	return r
 
@@ -254,7 +257,8 @@ func cancel(id: String) -> void:
 		return
 	if _queue[0] == id and _http:
 		_http.cancel_request()
-		DirAccess.remove_absolute(DIR + _part(id))
+		if not web:
+			DirAccess.remove_absolute(DIR + _part(id))
 		_queue.pop_front()
 		_progress.erase(id)
 		changed.emit()
@@ -280,7 +284,8 @@ func _start_next() -> void:
 	if _preview:
 		return  # the preview's progress is driven by _process
 	var g: Dictionary = manifest["games"][id]
-	_http.download_file = DIR + _part(id)
+	# in the browser the body comes in memory (download_file writes nothing there); the file is written at the end
+	_http.download_file = "" if web else DIR + _part(id)
 	_http.body_size_limit = int(g["size"]) + 1_000_000
 	_stall = 0.0
 	_last_bytes = 0
@@ -315,24 +320,40 @@ func _process(delta: float) -> void:
 			_fail(id, "the download stalled")
 
 
-func _on_pack_done(result: int, code: int, _headers: PackedStringArray, _body: PackedByteArray) -> void:
+func _on_pack_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if _queue.is_empty():
 		return
 	var id := _queue[0]
 	var g: Dictionary = manifest["games"][id]
 	var part := DIR + _part(id)
+	var dest := DIR + String(g["file"])
 	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
 		_fail(id, "no connection" if result in [HTTPRequest.RESULT_CANT_CONNECT, HTTPRequest.RESULT_CANT_RESOLVE] \
 			else "the download failed (%s)" % (str(code) if result == HTTPRequest.RESULT_SUCCESS else "error %d" % result))
 		return
-	if not _file_ok(part, g):
-		_fail(id, "the download was damaged")
-		return
-	var dest := DIR + String(g["file"])
-	DirAccess.remove_absolute(dest)
-	if DirAccess.rename_absolute(part, dest) != OK:
-		_fail(id, "could not save the game")
-		return
+	if web:
+		# checked in memory, then written once under its own name: the browser copies user:// to its storage in the
+		# background, and a file renamed while it does so stops every later copy
+		if body.size() != int(g["size"]) or _sha256(body) != String(g["sha256"]).to_lower():
+			push_warning("library: %s damaged: %d bytes of %d" % [id, body.size(), int(g["size"])])
+			_fail(id, "the download was damaged")
+			return
+		var f := FileAccess.open(dest, FileAccess.WRITE)
+		if f == null:
+			_fail(id, "could not save the game")
+			return
+		f.store_buffer(body)
+		f.close()
+	else:
+		if not _file_ok(part, g):
+			var got := FileAccess.open(part, FileAccess.READ)
+			push_warning("library: %s damaged: %d bytes of %d" % [id, got.get_length() if got else -1, int(g["size"])])
+			_fail(id, "the download was damaged")
+			return
+		DirAccess.remove_absolute(dest)
+		if DirAccess.rename_absolute(part, dest) != OK:
+			_fail(id, "could not save the game")
+			return
 	var was_update: bool = installed.has(id) or _bundled.has(id)
 	# an older file of the game stays until the next start (_tidy): it is still mounted now
 	installed[id] = {"version": g["version"], "file": g["file"], "sha256": g["sha256"], "size": g["size"],
@@ -352,13 +373,21 @@ func _on_pack_done(result: int, code: int, _headers: PackedStringArray, _body: P
 
 
 func _fail(id: String, message: String) -> void:
-	DirAccess.remove_absolute(DIR + _part(id))
+	if not web:
+		DirAccess.remove_absolute(DIR + _part(id))
 	_errors[id] = message
 	_queue.erase(id)
 	_progress.erase(id)
 	changed.emit()
 	failed.emit(id, message)
 	_start_next()
+
+
+static func _sha256(bytes: PackedByteArray) -> String:
+	var h := HashingContext.new()
+	h.start(HashingContext.HASH_SHA256)
+	h.update(bytes)
+	return h.finish().hex_encode()
 
 
 ## Size and SHA-256 as the manifest says.

@@ -1,0 +1,8 @@
+# The games playable in the browser (ids from godot/core/game_registry.gd), each checked there (tools/test-web.sh) in
+# the Compatibility renderer. tools/make_manifest.py marks them "web" in the channel's manifest; the web launcher lists
+# the others as being in the desktop download.
+tumbletop
+crates
+nightbite
+inkstorm
+hopline

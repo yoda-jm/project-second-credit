@@ -38,6 +38,7 @@ var _hovered_card := -1
 const CARD_ROW_X := 395.0  ## places the selected card in the middle of the card window
 const WINDOW_W := 1170.0
 var _center_tween: Tween
+static var _deep_linked := false  ## "--game=<id>" (on the web ?game=<id>) has been followed
 var _card_status: Array[Label] = []
 var _card_chip: Array[Label] = []
 var _card_bar: Array[ProgressBar] = []
@@ -50,12 +51,16 @@ const DOWNLOAD_PROPS := [["res://core/art/props/floppy_teal.glb", "model", 0.28]
 
 
 func _ready() -> void:
+	var deep_link := ""
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--game="):
+		if arg.begins_with("--game=") and not _deep_linked:  # once per run: the launcher comes back after the game
+			_deep_linked = true
 			var g := GameRegistry.find(arg.substr(7))
 			if not g.is_empty() and g["scene"] != "":
-				LoadingScreen.go.call_deferred(g["scene"], g["title"])
-				return
+				if Library.state(g) == LibraryCatalog.READY:
+					LoadingScreen.go.call_deferred(g["scene"], g["title"])
+					return
+				deep_link = g["id"]  # to download first (the web build): the launcher shows its card meanwhile
 	_build_backdrop()
 	_build_ui()
 	_load_sounds()
@@ -71,8 +76,16 @@ func _ready() -> void:
 		if _center_tween:
 			_center_tween.kill()
 		_card_box.position.x = _row_x(_selected), CONNECT_ONE_SHOT | CONNECT_DEFERRED)
+	if deep_link != "":
+		start = GameRegistry.GAMES.find(GameRegistry.find(deep_link))
+		_card_box.position.x = CARD_ROW_X - start * 414.0
 	_select_game(start, false)
 	_focus_menu(0, false)
+	if deep_link != "":
+		_follow_link(deep_link)
+	if OS.has_feature("web") and deep_link == "":
+		Library.changed.connect(_web_pick)
+		_web_pick()
 	_fade_from_black()
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--select="):  # for captures: change card after a second
@@ -944,6 +957,29 @@ func _on_downloaded(id: String) -> void:
 			get_tree().create_timer(0.9).timeout.connect(func():
 				if _selected == gi and not _launching and not _library.is_open():
 					_launch())
+
+
+## In the browser, start on a game that plays there (the last one played may be in the desktop download only).
+func _web_pick() -> void:
+	if Library.manifest.is_empty():
+		return
+	Library.changed.disconnect(_web_pick)
+	if Library.state(GameRegistry.GAMES[_selected]) in [LibraryCatalog.UNAVAILABLE, LibraryCatalog.OFFLINE]:
+		for i in _visible_games():
+			if Library.state(GameRegistry.GAMES[i]) in [LibraryCatalog.READY, LibraryCatalog.MISSING, LibraryCatalog.UPDATE]:
+				_select_game(i, false)
+				return
+
+
+## A link to a game not downloaded yet: download it as soon as the channel's list is in, then play it.
+func _follow_link(id: String) -> void:
+	match Library.state_of(id):
+		LibraryCatalog.MISSING, LibraryCatalog.UPDATE:
+			_download_then_play(id)
+		LibraryCatalog.OFFLINE:
+			Library.changed.connect(_follow_link.bind(id), CONNECT_ONE_SHOT)
+		LibraryCatalog.READY:
+			_launch()
 
 
 ## Back from the update question: keyboard focus returns to the menu.
