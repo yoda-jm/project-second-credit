@@ -37,6 +37,7 @@ var _played := {}  ## ids played this session (their scripts stay loaded: an upd
 var _restart_needed := false
 var _preview := false
 var _url := ""
+var _removed := {}  ## id -> its entry, for games removed this session (their file is still mounted)
 var _bundled := {}  ## ids whose game is inside the launcher download itself (an "all games" build)
 
 
@@ -88,6 +89,8 @@ func _request(threads: bool) -> HTTPRequest:
 	r.use_threads = threads
 	r.max_redirects = 8
 	r.download_chunk_size = 1 << 22  # a frame reads up to 4 MB (in the browser, without threads, 64 KB a frame crawls)
+	# GitHub Pages gzips everything and the browser unzips it already: Godot must not unzip it a second time
+	r.accept_gzip = not web
 	add_child(r)
 	return r
 
@@ -202,11 +205,13 @@ func _manifest_url() -> String:
 func _on_check_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	checking = false
 	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		push_warning("library: no manifest from %s (result %d, HTTP %d)" % [_manifest_url(), result, code])
 		failed.emit("", "no connection to the update channel" if result != HTTPRequest.RESULT_SUCCESS else "the update channel answered %d" % code)
 		changed.emit()
 		return
 	var m = JSON.parse_string(body.get_string_from_utf8())
 	if not LibraryCatalog.valid_manifest(m):
+		push_warning("library: the channel's manifest is unreadable (%d bytes)" % body.size())
 		failed.emit("", "the update channel sent something unreadable")
 		changed.emit()
 		return
@@ -236,6 +241,13 @@ var _told := {}  ## ids (and "launcher") already announced this session
 ## Queues a game's download (its first install or its update).
 func download(id: String) -> void:
 	if id in _queue or manifest.get("games", {}).get(id, {}).is_empty():
+		return
+	if _removed.get(id, {}).get("version", "") == manifest["games"][id]["version"]:
+		installed[id] = _removed[id]  # removed earlier this session: still mounted, so it's back at once
+		_removed.erase(id)
+		_save_installed()
+		changed.emit()
+		finished.emit.call_deferred(id)
 		return
 	if not LibraryCatalog.can_install(manifest["games"][id], _ctx()):
 		return
@@ -489,12 +501,15 @@ func _save_installed() -> void:
 
 
 ## Removes a downloaded game (it stays listed and can be downloaded again).
+## Its file stays mounted (Godot can't unmount a pack) and is deleted at the next start; until then, playing it again
+## brings it straight back instead of downloading over a file in use.
 func remove(id: String) -> void:
 	if not installed.has(id) or _preview:
 		return
+	_removed[id] = installed[id]
 	installed.erase(id)
 	_save_installed()
-	_restart_needed = true  # still mounted until the launcher restarts; the file goes at the next start
+	print("library: removed %s" % id)
 	changed.emit()
 
 
