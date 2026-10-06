@@ -1,8 +1,38 @@
-# The games playable in the browser (ids from godot/core/game_registry.gd), each checked there (tools/test-web.sh) in
-# the Compatibility renderer. tools/make_manifest.py marks them "web" in the channel's manifest; the web launcher lists
-# the others as being in the desktop download.
-tumbletop
+# The games playable in the browser (ids from godot/core/game_registry.gd), each checked there: its demo rendered
+# with the Compatibility renderer (what WebGL 2 runs) and played in headless Chrome (tools/test-web.sh). The manifest
+# marks them "web" (tools/make_manifest.py); the web launcher lists the others as being in the desktop download.
+# Left out (2026-10-06): frostpeak (about 12M triangles, under 60 fps even on the desktop), mossfolk (its fog shader
+# is not supported by the Compatibility renderer).
+glimmerdeep
+bastion
+fruitburrow
+whisker
+boots
+knuckles
+flags
+blastyard
+ingot
 crates
 nightbite
+prism
 inkstorm
 hopline
+slipfloe
+fizzlings
+relic
+henhouse
+deepbreath
+tumbletop
+popvoyage
+jellyspike
+novawardens
+lanternlinks
+marbledrift
+fuseflight
+brassflow
+ridgefire
+tinplate
+tunnelpop
+bloomwand
+biosurge
+fourtorches
