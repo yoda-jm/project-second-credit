@@ -60,7 +60,7 @@ Games 1 to 8 are the ladder that built the stack; games 9 onwards follow the cat
 | 32 | Dig Dug (1982): **Tunnel Pop** | Dig a garden's earth in four layers and pump the burrow creatures till they pop, drop rocks on them, the vegetable bonus, eyes drifting through the earth |
 | 33 | Rod Land (1990): **Bloomwand** | A fairy's wand catches creatures and slams them to bits; rainbow ladders, flowers, E X T R A letters, six storybook levels, two players |
 | 34 | Xenon 2 (1989): **Biosurge** | A vertical shooter through living caverns: waves, wall turrets, worms, a boss per level, a trader's shop of weapons between levels |
-| 35 | Gauntlet (1985): **Four Torches** | A dungeon crawl for one to four heroes, any of them CPU: generators, ghosts and imps, keys and doors, food against the draining health, potions |
+| 35 | Gauntlet (1985): **Four Torches** | A dungeon crawl for one to four heroes, any of them CPU: five hand-built crypts, hordes from ranked generators, keys and doors, crumbling walls, food against the draining health (don't shoot it), potions |
 
 Each remake will get its own original name. The names above only refer to the inspiration.
 

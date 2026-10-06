@@ -59,7 +59,7 @@ func _process(delta: float) -> void:
 			get_tree().create_timer(6.0).timeout.connect(func(): start(0))
 		return
 	if engine.phase == T.Phase.EXIT and engine.phase_t <= 0.0:
-		level += 1
+		level += engine.jump
 		_load(engine.party())
 		return
 	_acc = minf(_acc + delta, 0.25)

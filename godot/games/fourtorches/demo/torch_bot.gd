@@ -153,11 +153,14 @@ func _pick_goal(e: TorchEngine, h: Dictionary) -> Vector2i:
 	return best
 
 
-## The nearest living human hero, or far away (-INF) when there is none (the demo).
+## The nearest leader (a human hero, or the first hero in the demo), or far away (-INF) when this hero leads.
 func _leader(e: TorchEngine, p: Vector2) -> Vector2:
 	var best := Vector2(-INF, -INF)
-	for o in e.alive():
-		if not o["cpu"] and (best.x == -INF or p.distance_to(o["pos"]) < p.distance_to(best)):
+	var ls := e.leaders()
+	if ls.has(e.heroes[me]):
+		return best
+	for o in ls:
+		if best.x == -INF or p.distance_to(o["pos"]) < p.distance_to(best):
 			best = o["pos"]
 	return best
 

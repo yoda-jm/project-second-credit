@@ -1,8 +1,10 @@
 class_name TorchEngine
 extends RefCounted
 ## Four Torches rules (a co-op dungeon crawl in the Gauntlet tradition; our own tuning), 60 Hz ticks. A dungeon of
-## tiles (x right, y down: walls, floor, doors, the exit), generated per level: rooms joined by corridors, side rooms
-## behind doors (their keys lie about), generators in the rooms. One to four heroes (knight, shieldmaiden, mage,
+## tiles (x right, y down: walls, floor, doors, exits, walls that crumble when shot): the first levels are our own mazes
+## (`levels/crypts.torch`), the deeper ones generated (rooms joined by corridors, side rooms behind doors, generators).
+## Monsters and generators have a rank, 1 to 3, as in the classic: each hit takes a rank off, and a generator knocked
+## down a rank makes weaker monsters, and slower. They come in hordes. Shots also smash food and set off potions. One to four heroes (knight, shieldmaiden, mage,
 ## ranger: different speed, armour, missile and magic), each moving in eight directions and throwing one missile at a
 ## time; walking into monsters fights them hand to hand. Health drains slowly all the time; food mends it; touches and
 ## shots hurt (armour softens). Generators keep making monsters while heroes are near: ghosts (they hurt and vanish),
@@ -11,7 +13,7 @@ extends RefCounted
 ## Treasure scores. Any hero on the exit takes everyone down to the next level. The heroes stay together on one screen.
 ## Events: "shoot" {h}, "melee" {h}, "hit" {pos, kind}, "kill" {pos, kind, points}, "gen_hit" {pos, state}, "gen_break"
 ## {pos}, "hurt" {h, damage}, "die" {h}, "food" {h}, "key" {h}, "door" {cells}, "treasure" {h, points}, "potion"
-## {h} (picked up), "blast" {h, pos}, "exit" {h}, "rejoin" {h, pos}, "low" {h}, "spawn" {pos, kind}, "monster_shot" {pos, kind}.
+## {h} (picked up), "blast" {h, pos}, "exit" {h, jump}, "food_shot" {h, pos}, "potion_shot" {h, pos}, "crumble" {cell}, "rejoin" {h, pos}, "low" {h}, "spawn" {pos, kind}, "monster_shot" {pos, kind}.
 
 signal event(kind: String, data: Dictionary)
 
@@ -38,12 +40,24 @@ const MONSTER := {
 	"deathshade": {"hp": 8.0, "speed": 1.6, "touch": 60.0, "points": 100},
 }
 const GEN_KIND := {"bones": "ghost", "hut": "grunt", "brazier": "imp"}
+const LEVELS := "res://games/fourtorches/levels/crypts.torch"
+const HORDE := 80                        ## monsters at most
+const WAKE := 16.0                       ## monsters further than this from every hero wait
+const GEN_REACH := 12.0                  ## generators make monsters while a hero is this near
+const CRACK_HP := 3.0                    ## hits a crumbling wall takes
+
+static var _authored: Array = []
 
 var level := 0
 var phase := Phase.READY
 var phase_t := 2.0
 var time := 0.0
-var tiles := PackedByteArray()     ## 0 wall, 1 floor, 2 door, 3 exit
+var tiles := PackedByteArray()     ## 0 wall, 1 floor, 2 door, 3 exit, 4 crumbling wall
+var title := ""                    ## the level's name
+var rank := 1                      ## how strong the level's generators begin
+var exits := {}                    ## exit cell -> levels it goes down (1, or 2 for a skip)
+var jump := 1                      ## the exit taken
+var cracks := {}                   ## crumbling wall cell index -> hits left
 var heroes: Array[Dictionary] = []
 var monsters: Array[Dictionary] = []
 var gens: Array[Dictionary] = []
@@ -62,17 +76,102 @@ var _ticks := 0
 func _init(level_: int, party: Array, seed_ := 1) -> void:
 	level = level_
 	rng.seed = seed_ * 7919 + level_ * 131
-	_dungeon()
+	var lv := authored()
+	if level < lv.size():
+		_load_level(lv[level])
+	else:
+		rank = mini(3, 1 + level / 3)
+		title = "THE DEEP %d" % (level - lv.size() + 1)
+		_dungeon()
+	# each hero on a free floor cell of their own, nearest the start first
+	var d0 := _bfs(Vector2i(floori(start.x), floori(start.y)), [], 3)
+	var spots: Array[Vector2] = [start]
+	for dd in [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(2, 0), Vector2i(0, 2)]:
+		var c: Vector2i = Vector2i(floori(start.x), floori(start.y)) + dd
+		if walkable(c) and d0[idx(c)] <= 3:
+			spots.append(Vector2(c) + Vector2(0.5, 0.5))
 	for i in party.size():
 		var p: Dictionary = party[i]
 		var cls: String = p.get("cls", ORDER[i])
-		heroes.append({"i": i, "cls": cls, "cpu": p.get("cpu", true), "pos": start + Vector2((i % 2) * 0.9 - 0.45, (i / 2) * 0.9 - 0.45),
+		heroes.append({"i": i, "cls": cls, "cpu": p.get("cpu", true), "pos": spots[mini(i, spots.size() - 1)],
 			"face": Vector2(0, 1), "move": Vector2.ZERO, "fire": false, "potion_pressed": false, "health": float(p.get("health", 800)),
 			"score": p.get("score", 0), "keys": p.get("keys", 0), "potions": p.get("potions", 0), "dead": false, "melee_t": 0.0,
 			"hurt": 0.0, "shot": false, "low": false})
 
 
 # ------------------------------------------------------------------ the dungeon
+
+## Our levels, read once: [{name, rank, rows}].
+static func authored() -> Array:
+	if not _authored.is_empty():
+		return _authored
+	var f := FileAccess.open(LEVELS, FileAccess.READ)
+	if f == null:
+		return _authored
+	var cur := {}
+	for line in f.get_as_text().split("\n"):
+		var l := line.strip_edges(false, true)
+		if l.begins_with("== "):
+			cur = {"name": l.substr(3), "rank": 1, "rows": []}
+			_authored.append(cur)
+		elif cur.is_empty():
+			continue
+		elif l.begins_with("rank "):
+			cur["rank"] = int(l.substr(5))
+		elif l != "":
+			(cur["rows"] as Array).append(l)
+	return _authored
+
+
+func _load_level(lv: Dictionary) -> void:
+	title = lv["name"]
+	rank = lv["rank"]
+	tiles.resize(W * H)
+	tiles.fill(0)
+	var rows: Array = lv["rows"]
+	for y in mini(H, rows.size()):
+		var row: String = rows[y]
+		for x in mini(W, row.length()):
+			var ch := row[x]
+			var c := Vector2i(x, y)
+			if ch == "#":
+				continue
+			tiles[idx(c)] = 1
+			match ch:
+				"%":
+					tiles[idx(c)] = 4
+					cracks[idx(c)] = CRACK_HP
+				"D": tiles[idx(c)] = 2
+				"@": start = Vector2(x + 0.5, y + 0.5)
+				"E", "X":
+					tiles[idx(c)] = 3
+					exits[c] = 2 if ch == "X" else 1
+					if ch == "E":
+						exit_cell = c
+				"1", "2", "3":
+					tiles[idx(c)] = 0   # a generator is solid
+					_gen(c, ["bones", "hut", "brazier"][int(ch) - 1], rank)
+				"g", "r", "i", "s", "z", "d":
+					var kind: String = {"g": "ghost", "r": "grunt", "i": "imp", "s": "skeleton", "z": "sorcerer", "d": "deathshade"}[ch]
+					_spawn(kind, Vector2(x + 0.5, y + 0.5), rank)
+				"f", "b", "c", "k", "p", "$", "*":
+					var kind: String = {"f": "food_ham", "b": "food_bowl", "c": "food_cider", "k": "key", "p": "potion", "$": "chest", "*": "gold_pile"}[ch]
+					items.append({"cell": c, "kind": kind})
+
+
+## A generator of rank `r` (1-3): its hit points come in ranks, its look (state 0 whole .. 2 nearly gone) shows the rank.
+func _gen(c: Vector2i, kind: String, r: int) -> void:
+	var per := gen_rank_hp()
+	gens.append({"cell": c, "kind": kind, "rank": r, "state": 3 - r, "hp": per * r, "t": rng.randf_range(0.5, 2.0), "solid": true})
+
+
+func gen_rank_hp() -> float:
+	return 1.6 + level * 0.15
+
+
+func monster_rank_hp(kind: String) -> float:
+	return MONSTER[kind]["hp"] * 0.5 * (1.0 + level * 0.06)
+
 
 func idx(c: Vector2i) -> int:
 	return c.y * W + c.x
@@ -143,6 +242,7 @@ func _dungeon() -> void:
 			far = i
 	exit_cell = rooms[far].get_center()
 	tiles[idx(exit_cell)] = 3
+	exits[exit_cell] = 1
 	# side rooms behind doors
 	for k in 2:
 		_side_room(rooms, dist)
@@ -157,9 +257,8 @@ func _dungeon() -> void:
 			if c != Vector2i(-1, -1):
 				var kinds := ["bones", "hut", "brazier"]
 				var kind: String = kinds[rng.randi() % mini(kinds.size(), 2 + level / 2)]
-				gens.append({"cell": c, "kind": kind, "state": 0, "hp": 3.0 + level * 0.5, "t": rng.randf_range(0.5, 2.5)})
+				_gen(c, kind, rank)
 				tiles[idx(c)] = 0   # a generator is solid
-				gens.back()["solid"] = true
 		var stuff := ["food_ham", "food_bowl", "food_cider", "chest", "gold_pile", "potion"]
 		for k in rng.randi_range(1, 3):
 			var c := _free_cell(r)
@@ -171,7 +270,7 @@ func _dungeon() -> void:
 			var c := _free_cell(rooms[i])
 			if c != Vector2i(-1, -1):
 				var kind: String = ["grunt", "ghost", "imp", "skeleton", "sorcerer"][rng.randi() % mini(5, 2 + level)]
-				_spawn(kind, Vector2(c) + Vector2(0.5, 0.5))
+				_spawn(kind, Vector2(c) + Vector2(0.5, 0.5), rank)
 		if level >= 2 and rng.randf() < 0.12:
 			var c := _free_cell(rooms[i])
 			if c != Vector2i(-1, -1):
@@ -263,9 +362,9 @@ func _bfs(from: Vector2i, extra: Array[Vector2i] = [], limit := 1 << 20) -> Pack
 	return d
 
 
-func _spawn(kind: String, p: Vector2) -> void:
-	var m: Dictionary = MONSTER[kind]
-	monsters.append({"id": _next_id, "kind": kind, "pos": p, "hp": m["hp"] * (1.0 + level * 0.12), "dead": false, "t": rng.randf() * 2.0,
+func _spawn(kind: String, p: Vector2, r := 2) -> void:
+	r = clampi(r, 1, 3) if kind != "deathshade" else 3
+	monsters.append({"id": _next_id, "kind": kind, "pos": p, "rank": r, "top": r, "hp": monster_rank_hp(kind) * r, "dead": false, "t": rng.randf() * 2.0,
 		"shoot_t": rng.randf_range(1.5, 3.0), "fade": 0.0, "hit_t": 0.0, "face": Vector2(0, 1)})
 	_next_id += 1
 
@@ -280,15 +379,26 @@ func alive() -> Array[Dictionary]:
 	return out
 
 
-## Where the screen is: the middle of the living human heroes (the CPU companions follow them), else of everyone.
-func anchor() -> Vector2:
-	var c := Vector2.ZERO
-	var n := 0
+## Who leads: the living human heroes, or with no player (the demo) the first hero still standing.
+func leaders() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
 	for h in alive():
 		if not h["cpu"]:
-			c += h["pos"]
-			n += 1
-	return c / n if n > 0 else centre()
+			out.append(h)
+	if out.is_empty() and not alive().is_empty():
+		out.append(alive()[0])
+	return out
+
+
+## Where the screen is: the middle of the leaders (the CPU companions follow them).
+func anchor() -> Vector2:
+	var ls := leaders()
+	if ls.is_empty():
+		return start
+	var c := Vector2.ZERO
+	for h in ls:
+		c += h["pos"]
+	return c / ls.size()
 
 
 func centre() -> Vector2:
@@ -388,8 +498,9 @@ func _hero(h: Dictionary, c: Vector2) -> void:
 	var np := _slide(p, mv.limit_length(1.0) * cls["speed"] * TICK, R)
 	# stay on the screen: a human may not push past the edge the other humans hold; a CPU companion keeps to the
 	# screen round them, and one left off it (stuck behind a wall) rejoins beside the leader after a moment
-	var humans := alive().filter(func(o): return not o["cpu"])
-	if not h["cpu"] and humans.size() > 1:
+	var humans := leaders()
+	var leads := humans.has(h)
+	if leads and humans.size() > 1:
 		var oc := Vector2.ZERO
 		for o in humans:
 			if o != h:
@@ -397,7 +508,7 @@ func _hero(h: Dictionary, c: Vector2) -> void:
 		oc /= humans.size() - 1
 		var k := float(humans.size()) / (humans.size() - 1)
 		np = _keep(p, np, oc, VIEW * k)
-	elif h["cpu"] and not humans.is_empty():
+	elif not leads and not humans.is_empty():
 		var a := anchor()
 		np = _keep(p, np, a, VIEW * 0.92)
 		var off := absf(np.x - a.x) > VIEW.x or absf(np.y - a.y) > VIEW.y
@@ -406,9 +517,6 @@ func _hero(h: Dictionary, c: Vector2) -> void:
 			h["stray"] = 0.0
 			np = _beside(humans[0]["pos"])
 			event.emit("rejoin", {"h": h["i"], "pos": np})
-	elif h["cpu"] and alive().size() > 1:
-		var others := c * alive().size() - p
-		np = _keep(p, np, others / (alive().size() - 1), VIEW * 1.6)
 	# doors: a key opens the whole door it touches
 	var cc := Vector2i(floori(np.x + (h["face"] as Vector2).x * 0.5), floori(np.y + (h["face"] as Vector2).y * 0.5))
 	if tile(cc) == 2 and h["keys"] > 0:
@@ -445,12 +553,13 @@ func _hero(h: Dictionary, c: Vector2) -> void:
 					h["score"] += pts
 					event.emit("treasure", {"h": h["i"], "points": pts})
 	# the exit is the players' choice: a CPU companion on it waits (unless everyone is CPU, as in the demo)
-	if tile(here) == 3 and (not h["cpu"] or heroes.all(func(o): return o["cpu"])):
+	if tile(here) == 3 and leaders().has(h):
+		jump = exits.get(here, 1)
 		phase = Phase.EXIT
 		phase_t = 2.5
 		for o in heroes:
 			o["score"] += 200 if not o["dead"] else 0
-		event.emit("exit", {"h": h["i"]})
+		event.emit("exit", {"h": h["i"], "jump": jump})
 
 
 ## The move from `p` to `np`, kept inside the box of half-size `half` round `at`: a step that would leave it (or go
@@ -487,13 +596,16 @@ func _open_door(c: Vector2i) -> void:
 
 
 func _blast(h: Dictionary, magic: float) -> void:
-	var p: Vector2 = h["pos"]
-	event.emit("blast", {"h": h["i"], "pos": p})
+	event.emit("blast", {"h": h["i"], "pos": h["pos"]})
+	_blast_at(h, h["pos"], magic, 11.0)
+
+
+func _blast_at(h: Dictionary, p: Vector2, magic: float, reach: float) -> void:
 	for m in monsters:
-		if not m["dead"] and (m["pos"] as Vector2).distance_to(p) < 11.0:
-			_hurt_monster(m, 3.0 * magic, h)
+		if not m["dead"] and (m["pos"] as Vector2).distance_to(p) < reach:
+			_hurt_monster(m, 3.0 * magic * monster_rank_hp(m["kind"]), h)
 	for g in gens:
-		if g["hp"] > 0.0 and (Vector2(g["cell"]) + Vector2(0.5, 0.5)).distance_to(p) < 11.0:
+		if g["hp"] > 0.0 and (Vector2(g["cell"]) + Vector2(0.5, 0.5)).distance_to(p) < reach:
 			_hurt_gen(g, 1.5 * magic, h)
 
 
@@ -503,13 +615,23 @@ func _missiles() -> void:
 		var p: Vector2 = s["pos"] + s["vel"] * TICK
 		s["pos"] = p
 		var gone := false
+		var pc := Vector2i(floori(p.x), floori(p.y))
 		if solid_at(p):
 			# a generator in the way?
 			for g in gens:
-				if g["hp"] > 0.0 and Vector2i(floori(p.x), floori(p.y)) == g["cell"] and s["h"] >= 0:
+				if g["hp"] > 0.0 and pc == g["cell"] and s["h"] >= 0:
 					_hurt_gen(g, s["dmg"], heroes[s["h"]])
+			# a crumbling wall
+			if tile(pc) == 4 and s["h"] >= 0:
+				cracks[idx(pc)] = cracks.get(idx(pc), CRACK_HP) - 1.0
+				if cracks[idx(pc)] <= 0.0:
+					tiles[idx(pc)] = 1
+					cracks.erase(idx(pc))
+					event.emit("crumble", {"cell": pc})
 			gone = true
 			event.emit("hit", {"pos": p, "kind": "wall"})
+		elif s["h"] >= 0 and _shot_item(pc, s["h"]):
+			gone = true
 		elif s["h"] >= 0:
 			for m in monsters:
 				if not m["dead"] and (m["pos"] as Vector2).distance_to(p) < 0.55:
@@ -533,13 +655,34 @@ func _missiles() -> void:
 	missiles = keep
 
 
+## A hero's missile on an item: food is smashed (the cider jug is stone), a potion goes off as a smaller blast.
+func _shot_item(c: Vector2i, hi: int) -> bool:
+	for k in items.size():
+		var it: Dictionary = items[k]
+		if it["cell"] != c:
+			continue
+		var pos := Vector2(c) + Vector2(0.5, 0.5)
+		match it["kind"]:
+			"food_ham", "food_bowl":
+				items.remove_at(k)
+				event.emit("food_shot", {"h": hi, "pos": pos})
+				return true
+			"potion":
+				items.remove_at(k)
+				event.emit("potion_shot", {"h": hi, "pos": pos})
+				_blast_at(heroes[hi], pos, 0.5 * CLASSES[heroes[hi]["cls"]]["magic"], 6.0)
+				return true
+	return false
+
+
 func _hurt_monster(m: Dictionary, dmg: float, by: Dictionary) -> void:
 	m["hp"] -= dmg
 	m["hit_t"] = 0.15
+	m["rank"] = clampi(ceili(m["hp"] / monster_rank_hp(m["kind"]) - 0.001), 1, 3)
 	event.emit("hit", {"pos": m["pos"], "kind": m["kind"]})
 	if m["hp"] <= 0.0 and not m["dead"]:
 		m["dead"] = true
-		var pts: int = MONSTER[m["kind"]]["points"]
+		var pts: int = MONSTER[m["kind"]]["points"] * int(m.get("top", m["rank"]))
 		by["score"] += pts
 		event.emit("kill", {"pos": m["pos"], "kind": m["kind"], "points": pts})
 
@@ -548,8 +691,8 @@ func _hurt_gen(g: Dictionary, dmg: float, by: Dictionary) -> void:
 	if g["hp"] <= 0.0:
 		return
 	g["hp"] -= dmg
-	var full := 3.0 + level * 0.5
-	g["state"] = 2 if g["hp"] < full / 3.0 else (1 if g["hp"] < full * 2.0 / 3.0 else 0)
+	g["rank"] = clampi(ceili(g["hp"] / gen_rank_hp() - 0.001), 1, 3)
+	g["state"] = 3 - g["rank"]
 	event.emit("gen_hit", {"pos": Vector2(g["cell"]) + Vector2(0.5, 0.5), "state": g["state"]})
 	if g["hp"] <= 0.0:
 		tiles[idx(g["cell"])] = 1
@@ -575,7 +718,8 @@ func _monsters() -> void:
 		m["hit_t"] = maxf(0.0, m["hit_t"] - TICK)
 		var p: Vector2 = m["pos"]
 		# asleep when far from everyone
-		if p.distance_to(c) > 18.0:
+		var nh := _nearest_hero(p)
+		if nh.is_empty() or p.distance_to(nh["pos"]) > WAKE:
 			keep.append(m)
 			continue
 		var spec: Dictionary = MONSTER[m["kind"]]
@@ -659,11 +803,13 @@ func _generators() -> void:
 		if g["hp"] <= 0.0:
 			continue
 		var p := Vector2(g["cell"]) + Vector2(0.5, 0.5)
-		if p.distance_to(c) > 16.0 or monsters.size() > 36:
+		var nh := _nearest_hero(p)
+		if nh.is_empty() or p.distance_to(nh["pos"]) > GEN_REACH or monsters.size() >= HORDE:
 			continue
 		g["t"] -= TICK
 		if g["t"] <= 0.0:
-			g["t"] = rng.randf_range(2.6, 4.4) / (1.0 + level * 0.06) * (1.0 + g["state"] * 0.5)
+			# a horde: one every second or two from a whole generator, slower as it is knocked down
+			g["t"] = rng.randf_range(0.6, 1.3) / (1.0 + level * 0.05) * (1.0 + g["state"] * 0.5)
 			# out of a free side
 			for dd in [Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1)]:
 				var n: Vector2i = g["cell"] + dd
@@ -671,7 +817,7 @@ func _generators() -> void:
 					var kind: String = GEN_KIND[g["kind"]]
 					if level >= 3 and rng.randf() < 0.2:
 						kind = ["skeleton", "sorcerer"][rng.randi() % 2]
-					_spawn(kind, Vector2(n) + Vector2(0.5, 0.5))
+					_spawn(kind, Vector2(n) + Vector2(0.5, 0.5), g["rank"])
 					event.emit("spawn", {"pos": Vector2(n) + Vector2(0.5, 0.5), "kind": kind})
 					break
 

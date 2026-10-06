@@ -192,8 +192,10 @@ decisions below are settled unless the owner reopens them.
    level, credits and the trader's shop between levels (gun levels, side pods, rear gun, homing, laser, drone); the
    autopilot dodges by predicting shots half a second ahead (`demo/bio_bot.gd`). `--level=N`.
 38. Game 35, **Four Torches** (Gauntlet-like, `godot/games/fourtorches/`): a co-op dungeon crawl for 1-4 heroes (knight,
-   shieldmaiden, mage, ranger; any seat the CPU, F2-F4), generated dungeons with doors and keys, generators, six
-   monster kinds, health draining, food, potions, the exit; CPU heroes plan on distance maps (`demo/torch_bot.gd`).
+   shieldmaiden, mage, ranger; any seat the CPU, F2-F4), five authored crypts in `levels/crypts.torch` (our format, legend
+   in the file) then generated dungeons; hordes from generators, monsters and generators ranked 1-3 (a hit takes a rank
+   off), doors and keys, crumbling walls, a skip exit, health draining, food (shots smash it), potions; CPU heroes
+   follow the players (the screen sits on them, `anchor()`), plan on distance maps (`demo/torch_bot.gd`).
    `--players=N`, `--humans=N`, `--level=N`.
 39. Checks: `godot/tools/leak/leak_probe.tscn` runs a game's demo headless and prints node, object, resource and
    static-memory counts (`--scene=... --frames=N --every=N`); a Label3D whose font size changes each frame leaks a

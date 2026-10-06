@@ -25,6 +25,7 @@ var _monsters := {}
 var _gens: Array = []
 var _items := {}
 var _doors := {}
+var _cracks := {}                 ## crumbling wall cell -> its block
 var _shots: Array = []
 var _sconces: Array[Vector3] = []
 var _lights: Array[OmniLight3D] = []
@@ -126,6 +127,7 @@ func _on_level(e: TorchEngine) -> void:
 	_monsters.clear()
 	_items.clear()
 	_doors.clear()
+	_cracks.clear()
 	_shots.clear()
 	_gens.clear()
 	_sconces.clear()
@@ -181,6 +183,7 @@ func _build_dungeon(e: TorchEngine) -> void:
 	var floors: Array[Transform3D] = []
 	var walls: Array[Transform3D] = []
 	var caps: Array[Transform3D] = []
+	var caps_at := {}
 	for y in T.H:
 		for x in T.W:
 			var c := Vector2i(x, y)
@@ -199,6 +202,7 @@ func _build_dungeon(e: TorchEngine) -> void:
 				if beside:
 					walls.append(Transform3D(Basis(), wc(c) + Vector3(0, WALL_H * 0.5, 0)))
 					caps.append(Transform3D(Basis(), wc(c) + Vector3(0, WALL_H + 0.01, 0)))
+					caps_at[c] = true
 					# a sconce on some walls facing a floor to the south (towards the camera)
 					if e.tile(c + Vector2i(0, 1)) == 1 and (x * 7 + y * 3) % 9 == 0:
 						_sconce(wc(c) + Vector3(0, 1.0, 0.52))
@@ -216,7 +220,10 @@ func _build_dungeon(e: TorchEngine) -> void:
 				hd.add_child(d)
 				_stage.add_child(hd)
 				_doors[c] = hd
+			elif t == 4:
+				_cracks[c] = _crack_block(c)
 			elif t == 3:
+				var skip: bool = e.exits.get(c, 1) > 1
 				var ex := _scene("exit")
 				if ex == null:
 					ex = MeshInstance3D.new()
@@ -228,16 +235,47 @@ func _build_dungeon(e: TorchEngine) -> void:
 				ex.position += wc(c)
 				_stage.add_child(ex)
 				var el := OmniLight3D.new()
-				el.light_color = Color(0.45, 0.8, 1.0)
-				el.light_energy = 2.0
+				el.light_color = Color(1.0, 0.75, 0.3) if skip else Color(0.45, 0.8, 1.0)   # a gold glow: the shortcut
+				el.light_energy = 2.6 if skip else 2.0
 				el.omni_range = 4.0
 				el.position = wc(c) + Vector3(0, 0.8, 0)
 				_stage.add_child(el)
 	_batch(PlaneMesh.new(), Pbr.material("stone_bricks", Color(0.55, 0.52, 0.5), 0.5), floors, Vector3(1, 1, 1))
 	_batch(BoxMesh.new(), Pbr.material("dark_rock", Color(0.75, 0.7, 0.68), 0.6), walls, Vector3(1, WALL_H, 1))
-	_batch(PlaneMesh.new(), Pbr.material("dark_rock", Color(0.32, 0.3, 0.3), 0.6), caps, Vector3(1, 1, 1))
+	_batch(PlaneMesh.new(), _top_mat(), caps, Vector3(1, 1, 1))
+	# solid rock round and between the halls, level with the wall tops, so the screen never shows a void
+	var rock: Array[Transform3D] = []
+	for y in range(-12, T.H + 12):
+		for x in range(-16, T.W + 16):
+			var c := Vector2i(x, y)
+			if e.tile(c) == 0 and not caps_at.has(c) and not e.gens.any(func(g): return g["cell"] == c):
+				rock.append(Transform3D(Basis(), wc(c) + Vector3(0, WALL_H + 0.01, 0)))
+	_batch(PlaneMesh.new(), _top_mat(), rock, Vector3(1, 1, 1))
 	for it in e.items:
 		_item(it)
+
+
+## A wall block that crumbles when shot: paler, cracked stone a little lower than the walls, so it reads as breakable.
+func _crack_block(c: Vector2i) -> Node3D:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.96, WALL_H * 0.8, 0.96)
+	mi.mesh = bm
+	mi.material_override = Pbr.material("dark_rock", Color(0.95, 0.82, 0.62), 0.6)
+	mi.position = wc(c) + Vector3(0, WALL_H * 0.4, 0)
+	_stage.add_child(mi)
+	return mi
+
+
+## The wall tops: the rock texture with a faint warm glow of its own, so the maze's outline reads at a glance from above
+## (no torch reaches up there).
+func _top_mat() -> StandardMaterial3D:
+	var m := Pbr.material("dark_rock", Color(0.62, 0.56, 0.52), 0.6).duplicate() as StandardMaterial3D
+	m.emission_enabled = true
+	m.emission = Color(0.42, 0.33, 0.27)
+	m.emission_energy_multiplier = 0.35
+	m.emission_texture = m.albedo_texture
+	return m
 
 
 func _batch(mesh: Mesh, mat: Material, xs: Array[Transform3D], size: Vector3) -> void:
@@ -331,6 +369,22 @@ func _on_event(kind: String, d: Dictionary) -> void:
 				_fx.burst(w(h["pos"]) + Vector3(0, 0.5, 0), Color(0.5, 0.85, 1.0), 30, 3.0, 1.0, 0.08, 1.0, 2.0, 1.0, "glow")
 		"rejoin":
 			_fx.burst(w(d["pos"]) + Vector3(0, 0.5, 0), TEAM[d["h"] % 4], 24, 2.5, 0.7, 0.08, 1.0, 1.0, 1.0, "glow")
+		"crumble":
+			var c: Vector2i = d["cell"]
+			if _cracks.has(c):
+				var p := wc(c) + Vector3(0, 0.6, 0)
+				_fx.burst(p, Color(0.75, 0.65, 0.5), 26, 3.0, 0.9, 0.2, 0.0, -8.0, 1.0)
+				_fx.burst(p, Color(0.5, 0.45, 0.4), 12, 1.5, 1.2, 0.35, 0.0, 1.0, 1.0, "smoke")
+				(_cracks[c] as Node3D).queue_free()
+				_cracks.erase(c)
+				_shake = maxf(_shake, 0.3)
+		"food_shot":
+			_fx.burst(w(d["pos"]) + Vector3(0, 0.3, 0), Color(0.75, 0.45, 0.3), 18, 2.5, 0.6, 0.1, 0.0, -6.0, 1.0)
+		"potion_shot":
+			var p := w(d["pos"]) + Vector3(0, 0.5, 0)
+			_fx.burst(p, Color(0.6, 0.8, 1.0), 50, 6.0, 0.7, 0.1, 1.0, 0.0, 0.3, "glow")
+			_fx.flash(p, Color(0.7, 0.8, 1.0), 5.0)
+			_shake = 0.5
 		"spawn":
 			_fx.burst(w(d["pos"]) + Vector3(0, 0.4, 0), Color(0.6, 0.4, 0.8), 8, 1.5, 0.5, 0.15, 0.0, 1.0, 1.0, "smoke")
 
@@ -402,7 +456,8 @@ func _place_monsters(e: TorchEngine, delta: float) -> void:
 		var f: Vector2 = m["face"]
 		n.rotation.y = lerp_angle(n.rotation.y, atan2(f.x, f.y), minf(1.0, delta * 8.0))
 		n.visible = m["fade"] == 0.0 or fmod(_time, 0.4) < 0.05
-		n.scale = Vector3.ONE * (1.15 if m["hit_t"] > 0.0 else 1.0)
+		# the rank shows in the size (1 small .. 3 big), a hit punches it
+		n.scale = Vector3.ONE * (0.78 + 0.12 * float(m["rank"])) * (1.15 if m["hit_t"] > 0.0 else 1.0)
 	for id in _monsters.keys():
 		if not live.has(id):
 			(_monsters[id] as Node3D).queue_free()

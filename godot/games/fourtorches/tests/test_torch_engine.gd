@@ -12,6 +12,37 @@ func _party(n := 1) -> Array:
 	return out
 
 
+func test_our_levels_load() -> void:
+	var lv := TorchEngine.authored()
+	assert_int(lv.size()).is_greater_equal(5)
+	for i in lv.size():
+		var e := TorchEngine.new(i, _party(), 1)
+		assert_str(e.title).is_equal(lv[i]["name"])
+		assert_int(e.gens.size()).is_greater(3)
+		assert_int(e.tile(Vector2i(floori(e.start.x), floori(e.start.y)))).is_equal(1)
+
+
+func test_shots_smash_food_and_crumble_walls() -> void:
+	var e := TorchEngine.new(0, _party(), 3)
+	e.phase = T.Phase.PLAY
+	e.monsters.clear()
+	e.gens.clear()
+	var h := e.heroes[0]
+	var p: Vector2 = h["pos"]
+	var smashed := []
+	e.event.connect(func(k, d): if k in ["food_shot", "crumble"]: smashed.append(k))
+	# food two tiles to the right, then a crumbling wall beyond it
+	var c := Vector2i(floori(p.x) + 2, floori(p.y))
+	e.items = [{"cell": c, "kind": "food_ham"}]
+	e.tiles[e.idx(c + Vector2i(2, 0))] = 4
+	h["face"] = Vector2(1, 0)
+	for n in 240:
+		h["fire"] = true
+		e.tick()
+	assert_array(smashed).contains(["food_shot", "crumble"])
+	assert_int(e.tile(c + Vector2i(2, 0))).is_equal(1)
+
+
 func test_the_exit_is_reachable() -> void:
 	for lv in 6:
 		for sd in 4:

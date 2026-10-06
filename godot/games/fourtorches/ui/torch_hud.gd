@@ -33,6 +33,11 @@ func _on_event(kind: String, d: Dictionary) -> void:
 			_pops.append({"text": txt, "pos": Vector3(h["pos"].x, 1.6, h["pos"].y), "t": 0.0, "col": TEAM[d["h"] % 4].lightened(0.4)})
 		"low":
 			_warn[d["h"]] = 3.0
+		"food_shot", "potion_shot":
+			var p: Vector2 = d["pos"]
+			var who: String = T.CLASSES[e.heroes[d["h"]]["cls"]]["name"]
+			_pops.append({"text": "%s SHOT THE %s!" % [who, "FOOD" if kind == "food_shot" else "POTION"], "pos": Vector3(p.x, 1.4, p.y), "t": -0.6,
+				"col": HudKit.BAD})
 
 
 func _process(delta: float) -> void:
@@ -72,7 +77,7 @@ func _draw() -> void:
 		if h["potions"] > 0:
 			items += "POTION x%d" % h["potions"]
 		HudKit.text(self, Vector2(x + cw - 16, 84), items, 14, HudKit.INK, HudKit.label_font(), HudKit.RIGHT)
-	HudKit.text(self, Vector2(vp.x * 0.5, 134), "LEVEL %d" % (e.level + 1), 18, ACCENT, HudKit.label_font(), HudKit.CENTER)
+	HudKit.text(self, Vector2(vp.x * 0.5, 134), "LEVEL %d  -  %s" % [e.level + 1, e.title], 18, ACCENT, HudKit.label_font(), HudKit.CENTER)
 	var cam := get_viewport().get_camera_3d()
 	if cam:
 		for p in _pops:
@@ -86,9 +91,9 @@ func _draw() -> void:
 			var sp := cam.unproject_position(Vector3(h["pos"].x, 1.8, h["pos"].y))
 			HudKit.text(self, sp, "%s NEEDS FOOD!" % T.CLASSES[h["cls"]]["name"], 18, HudKit.BAD, HudKit.font(true), HudKit.CENTER)
 	if e.phase == T.Phase.READY:
-		HudKit.banner(self, vp, vp.y * 0.36, "LEVEL %d" % (e.level + 1), "FIND THE EXIT  -  HEALTH RUNS DOWN: EAT", ACCENT, clampf(e.phase_t * 2.0, 0.0, 1.0))
+		HudKit.banner(self, vp, vp.y * 0.36, e.title, "LEVEL %d  -  FIND THE EXIT  -  SMASH THE GENERATORS  -  DON'T SHOOT THE FOOD" % (e.level + 1), ACCENT, clampf(e.phase_t * 2.0, 0.0, 1.0))
 	elif e.phase == T.Phase.EXIT:
-		HudKit.banner(self, vp, vp.y * 0.36, "DOWN THE STAIRS", "LEVEL %d" % (e.level + 2), HudKit.GOLD, clampf((2.5 - e.phase_t) * 3.0, 0.0, 1.0))
+		HudKit.banner(self, vp, vp.y * 0.36, "DOWN THE STAIRS" if e.jump == 1 else "A SHORTCUT!", "LEVEL %d" % (e.level + 1 + e.jump), HudKit.GOLD, clampf((2.5 - e.phase_t) * 3.0, 0.0, 1.0))
 	if game.over:
 		HudKit.banner(self, vp, vp.y * 0.42, "THE TORCHES ARE OUT", "PRESS ENTER" if not game.demo else "", HudKit.BAD, 1.0)
 	elif not game.demo and e.level == 0 and e.time < 14.0:

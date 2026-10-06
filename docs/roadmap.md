@@ -62,7 +62,7 @@ game, and to polish each one to the same standard (3D, lighting, camera, juice).
 | 32 | Dig Dug (1982) | *Tunnel Pop* | Grid digging carved as voxels, enemies on a tunnel graph that ghost through earth, falling rocks, generated levels |
 | 33 | Rod Land (1990) | *Bloomwand* | Ladder platforming without jumps, catch-and-slam, a level generator that checks reachability, a planning autopilot |
 | 34 | Xenon 2 (1989) | *Biosurge* | Scrolling world from generated wall profiles, batched bullets, a shop, a dodging autopilot that predicts shots |
-| 35 | Gauntlet (1985) | *Four Torches* | Generated dungeons, crowds of monsters on a shared distance map, 1-4 heroes with CPU companions, many lights handed round |
+| 35 | Gauntlet (1985) | *Four Torches* | Five authored crypts then generated dungeons, hordes on a shared distance map with ranks 1-3, 1-4 heroes with CPU companions that follow the players, many lights handed round |
 
 Level compatibility: Crate Keeper reads `.xsb` collections, Ingot Run the free remakes' tile format, Prism Breaker
 LBreakout2 level sets; Mossfolk's importer for the original level files is still to do (it needs the player's own
