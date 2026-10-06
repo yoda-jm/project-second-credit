@@ -7,6 +7,8 @@ extends Node
 ##   selfupdate: the channel has a newer launcher: it replaces this one ($APPIMAGE) and starts it again
 ##   fetch:    (the web test) downloads every game the channel offers here, then waits for the browser to store them
 ##   mounted:  (the web test, next visit) every game came back from the browser's storage
+##   ui=<id>:  drives the launcher like a player (select, Enter to download and play, back, library, remove, Enter
+##             again) and saves a screenshot at each step in $SELFTEST_SHOTS
 ## Prints "SELFTEST ..." lines and quits with 0 when everything passed.
 
 var step := ""
@@ -18,6 +20,10 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--library-selftest="):
 			step = a.get_slice("=", 1)
+	if step.begins_with("ui:"):
+		_ui.call_deferred(step.get_slice(":", 1))
+		step = "ui"
+		return
 	printerr("SELFTEST start %s: build %s, core %d, %d installed" % [step, Library.build.get("build", "?"), Library.core(), Library.installed.size()])
 	if "--relaunched" in OS.get_cmdline_user_args():
 		printerr("SELFTEST relaunched from %s" % OS.get_executable_path())
@@ -139,6 +145,78 @@ func _check_mounted() -> void:
 	if n == 0:
 		_fail("no web game in the cached manifest")
 	_finish()
+
+
+# ------------------------------------------------------------------ ui
+
+var _shot_n := 0
+
+
+func _ui(id: String) -> void:
+	Library.check()
+	await _until(func(): return not Library.manifest.is_empty() and not Library.checking, 30.0)
+	var gi := GameRegistry.GAMES.find(GameRegistry.find(id))
+	var l = get_tree().current_scene
+	await _shot("start")
+	l._select_game(gi)
+	await _frames(40)
+	printerr("SELFTEST ui: %s is %s" % [id, Library.state_of(id)])
+	await _shot("selected")
+	l._launch()
+	await _frames(20)
+	await _shot("enter")
+	await _until(func(): return Library.state_of(id) == LibraryCatalog.READY, 120.0)
+	printerr("SELFTEST ui: downloaded, %s" % Library.state_of(id))
+	await _until(func(): return get_tree().current_scene == null or get_tree().current_scene.scene_file_path != "res://core/ui/launcher.tscn", 20.0)
+	await _seconds(12.0)
+	await _shot("playing")
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://core/ui/launcher.tscn")
+	await _frames(60)
+	l = get_tree().current_scene
+	await _shot("back")
+	l._library.open_panel()
+	await _frames(30)
+	await _shot("library")
+	l._library._row_of[id]["remove"].pressed.emit()
+	await _frames(30)
+	printerr("SELFTEST ui: after remove %s, installed %s, scene there %s" % [Library.state_of(id), Library.installed.has(id),
+		ResourceLoader.exists(GameRegistry.GAMES[gi]["scene"])])
+	await _shot("removed")
+	l._library.close()
+	await _frames(30)
+	await _shot("card-after-remove")
+	l._launch()
+	await _seconds(3.0)
+	printerr("SELFTEST ui: Enter after remove, %s" % Library.state_of(id))
+	await _shot("enter-after-remove")
+	await _seconds(20.0)
+	await _shot("after")
+	printerr("SELFTEST ui: done, %s" % Library.state_of(id))
+	_finish()
+
+
+func _shot(name: String) -> void:
+	await RenderingServer.frame_post_draw
+	_shot_n += 1
+	var dir := OS.get_environment("SELFTEST_SHOTS")
+	if dir != "":
+		get_viewport().get_texture().get_image().save_png(dir.path_join("%02d-%s.png" % [_shot_n, name]))
+
+
+func _frames(n: int) -> void:
+	for i in n:
+		await get_tree().process_frame
+
+
+func _seconds(t: float) -> void:
+	await get_tree().create_timer(t, true).timeout
+
+
+func _until(cond: Callable, timeout: float) -> void:
+	var t0 := Time.get_ticks_msec()
+	while not cond.call() and Time.get_ticks_msec() - t0 < timeout * 1000.0:
+		await get_tree().process_frame
 
 
 ## The games this run is about: the channel's (download) or the ones installed (reopen).

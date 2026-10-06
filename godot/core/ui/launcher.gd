@@ -42,6 +42,7 @@ static var _deep_linked := false  ## "--game=<id>" (on the web ?game=<id>) has b
 var _card_status: Array[Label] = []
 var _card_chip: Array[Label] = []
 var _card_bar: Array[ProgressBar] = []
+var _card_veil: Array[Control] = []
 var _library: LibraryUI
 var _play_when_ready := ""  ## the game to start as soon as its download is done
 var _from_keys: Array[String] = []  ## the prop each floating object showed before the current morph
@@ -492,6 +493,13 @@ func _make_card(g: Dictionary, index: int) -> Control:
 	chip_box.add_theme_stylebox_override("panel", csb)
 	chip_box.position = Vector2(10, 10)
 	chip_box.add_child(chip)
+	# over the picture: what stands between the player and the game (download, new version, progress)
+	var veil := Control.new()
+	veil.set_anchors_preset(Control.PRESET_FULL_RECT)
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	veil.draw.connect(_draw_veil.bind(veil, index))
+	pic.add_child(veil)
+	_card_veil.append(veil)
 	pic.add_child(chip_box)
 	_card_chip.append(chip)
 	v.add_child(_label(g["title"].to_upper(), 38, accent if playable else Color(0.75, 0.75, 0.8), false))
@@ -548,19 +556,10 @@ func _refresh_cards() -> void:
 				chip_color = GOLD
 			LibraryCatalog.MISSING:
 				text = ("DIDN'T DOWNLOAD (%s): ENTER TO RETRY" % Library.error(id)).to_upper() if Library.error(id) != "" \
-					else "PRESS ENTER TO DOWNLOAD  ·  %s" % Library.size_text(id)
-				chip = "NOT DOWNLOADED"
-				chip_color = LibraryUI.TEAL
-			LibraryCatalog.DOWNLOADING:
-				chip = "DOWNLOADING"
-				chip_color = LibraryUI.TEAL
+					else "PRESS ENTER TO DOWNLOAD AND PLAY"
+				color = LibraryUI.TEAL if Library.error(id) == "" else LibraryUI.RED
 			LibraryCatalog.NEEDS_LAUNCHER:
 				text = "UPDATE THE LAUNCHER TO GET IT (U)"
-				chip = "NOT DOWNLOADED"
-				chip_color = LibraryUI.AMBER
-			LibraryCatalog.OFFLINE, LibraryCatalog.UNAVAILABLE:
-				chip = "NOT DOWNLOADED"
-				chip_color = LibraryUI.MUTED
 		_card_status[i].text = text
 		_card_status[i].add_theme_color_override("font_color", color)
 		_card_chip[i].text = chip
@@ -572,6 +571,69 @@ func _refresh_cards() -> void:
 		if _card_bar[i].visible:
 			var p := Library.progress(id)
 			_card_bar[i].value = 100.0 * p[0] / maxf(1.0, p[1])
+		_card_veil[i].queue_redraw()
+
+
+## The card picture's veil: dark with a big download badge and the size (not downloaded), lighter with a gold badge
+## (a new version), a filling ring (downloading); nothing when the game is ready.
+func _draw_veil(c: Control, i: int) -> void:
+	var g: Dictionary = GameRegistry.GAMES[i]
+	var id: String = g["id"]
+	var st := Library.state(g)
+	if st in [LibraryCatalog.READY, LibraryCatalog.IN_DEVELOPMENT]:
+		return
+	var ring := LibraryUI.TEAL
+	var dark := 0.62
+	var words := ""
+	var progress := -1.0
+	match st:
+		LibraryCatalog.MISSING:
+			words = "DOWNLOAD  ·  %s" % Library.size_text(id) if Library.error(id) == "" else "TRY AGAIN"
+			if Library.error(id) != "":
+				ring = LibraryUI.RED
+		LibraryCatalog.UPDATE:
+			ring = GOLD
+			dark = 0.3
+			words = "NEW VERSION  ·  %s" % Library.size_text(id)
+		LibraryCatalog.DOWNLOADING:
+			var p := Library.progress(id)
+			progress = clampf(float(p[0]) / maxf(1.0, p[1]), 0.0, 1.0)
+			words = "WAITING" if Library._queue.find(id) > 0 else "%s / %s" % [LibraryCatalog.size_text(p[0]), LibraryCatalog.size_text(p[1])]
+		LibraryCatalog.NEEDS_LAUNCHER:
+			ring = LibraryUI.AMBER
+			words = "NEEDS THE NEW LAUNCHER"
+		LibraryCatalog.OFFLINE:
+			ring = LibraryUI.MUTED
+			dark = 0.72
+			words = "OFFLINE"
+		LibraryCatalog.UNAVAILABLE:
+			ring = LibraryUI.MUTED
+			dark = 0.72
+			words = "IN THE DESKTOP DOWNLOAD" if OS.has_feature("web") else "NOT IN THIS CHANNEL"
+	var sz := c.size
+	c.draw_rect(Rect2(Vector2.ZERO, sz), Color(0.01, 0.01, 0.03, dark))
+	var center := Vector2(sz.x * 0.5, sz.y * 0.5 - 16.0)
+	var r := 44.0
+	c.draw_circle(center, r, Color(0.02, 0.02, 0.05, 0.85))
+	c.draw_arc(center, r, 0.0, TAU, 64, Color(ring, 0.35), 5.0, true)
+	if progress >= 0.0:
+		c.draw_arc(center, r, -PI * 0.5, -PI * 0.5 + TAU * progress, 64, ring, 6.0, true)
+		var pct := "%d%%" % int(progress * 100.0)
+		var f := _font(false)
+		var w := f.get_string_size(pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
+		c.draw_string(f, center + Vector2(-w * 0.5, 10.0), pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 26, ring)
+	else:
+		c.draw_arc(center, r, 0.0, TAU, 64, ring, 4.0, true)
+		# the arrow into its tray
+		var a := center + Vector2(0, -4)
+		c.draw_line(a + Vector2(0, -20), a + Vector2(0, 10), ring, 7.0, true)
+		c.draw_colored_polygon(PackedVector2Array([a + Vector2(-14, 4), a + Vector2(14, 4), a + Vector2(0, 19)]), ring)
+		c.draw_polyline(PackedVector2Array([a + Vector2(-20, 16), a + Vector2(-20, 24), a + Vector2(20, 24), a + Vector2(20, 16)]), ring, 5.0, true)
+	var nf := _font()
+	var tw := nf.get_string_size(words, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x
+	var tp := Vector2(sz.x * 0.5 - tw * 0.5, center.y + r + 34.0)
+	c.draw_string_outline(nf, tp, words, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, 6, Color(0, 0, 0, 0.9))
+	c.draw_string(nf, tp, words, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, ring.lightened(0.15))
 
 
 ## A round glass button with a chevron; gold when hovered, dimmed when there is nothing more that way.
