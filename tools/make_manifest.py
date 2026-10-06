@@ -45,9 +45,13 @@ def game_ids():
     return sorted(d for d in os.listdir(os.path.join(ROOT, "godot/games")) if os.path.isdir(os.path.join(ROOT, "godot/games", d)))
 
 
+# raised when every pack must get a new name (2: the first channel's checksums didn't match its files)
+PACK_SERIES = 2
+
+
 def version_of(gid, godot):
     tree = git("rev-parse", f"HEAD:godot/games/{gid}")
-    return hashlib.sha1(f"{tree} {godot}".encode()).hexdigest()[:10]
+    return hashlib.sha1(f"{tree} {godot} {PACK_SERIES}".encode()).hexdigest()[:10]
 
 
 def sha256(path):
@@ -87,6 +91,9 @@ def main():
     ap.add_argument("--out", default="build/channel")
     ap.add_argument("--prev", help="the channel's current manifest (for what changed, and to keep old notes)")
     ap.add_argument("--web-only", action="store_true", help="only the games checked in the browser (the Pages copy)")
+    ap.add_argument("--keep-published", action="store_true",
+                    help="a game whose version is already in --prev keeps that entry (its file is already published: "
+                         "Godot's exports are not byte-for-byte the same twice, so a new copy would not match)")
     ap.add_argument("--all-web", action="store_true", help="mark every game as playable in the browser (to try them there)")
     ap.add_argument("--build-info", help="write the launcher's build info here instead")
     ap.add_argument("--bundled", action="store_true", help="with --build-info: the launcher holds every game")
@@ -121,6 +128,9 @@ def main():
             since = prev.get("commit", "")
             rng = [f"{since}..HEAD"] if since and subprocess.run(["git", "cat-file", "-e", since], cwd=ROOT).returncode == 0 else ["-3"]
             changes = [s for s in git("log", "--format=%s", *rng, "--", f"godot/games/{gid}").splitlines() if s][:6]
+        if a.keep_published and old.get("version") == ver and old.get("file") and old.get("sha256") and old.get("size"):
+            games[gid] = dict(old, web=gid in web, min_core=core_serial(last))
+            continue
         name = f"{gid}-{ver}.pck"
         dest = os.path.join(a.out, name)
         if not os.path.exists(dest):

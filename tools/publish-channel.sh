@@ -28,9 +28,15 @@ else
 fi
 
 existing=$(gh release view "$tag" --json assets -q '.assets[].name')
+published=$(python3 -c 'import json,sys
+try: print("\n".join(g["file"] for g in json.load(open(sys.argv[1]))["games"].values()))
+except (OSError, ValueError, KeyError): pass' "$prev")
 for f in build/channel/*.pck; do
   n=$(basename "$f")
-  grep -qxF "$n" <<<"$existing" || gh release upload "$tag" "$f"
+  # a pack the previous manifest lists is already there as described; anything else (new, or left by a cancelled
+  # run with other bytes) is uploaded so the file matches this manifest
+  if grep -qxF "$n" <<<"$existing" && grep -qxF "$n" <<<"$published"; then continue; fi
+  gh release upload "$tag" "$f" --clobber
 done
 gh release upload "$tag" build/dist/SecondCredit-* build/dist/VERSION.txt --clobber
 gh release upload "$tag" build/channel/manifest.json --clobber

@@ -65,8 +65,11 @@ jobs:
 
       - name: Update channel
         run: |
-          channel=$([ "$GITHUB_REF" = refs/heads/main ] && echo latest || echo stable)
-          python3 tools/make_manifest.py --channel "$channel" --prev build/prev-manifest.json --out build/channel
+          if [ "$GITHUB_REF" = refs/heads/main ]; then  # the rolling release keeps the packs it already has
+            python3 tools/make_manifest.py --channel latest --prev build/prev-manifest.json --keep-published --out build/channel
+          else
+            python3 tools/make_manifest.py --channel stable --prev build/prev-manifest.json --out build/channel
+          fi
 
       - name: Upload the launchers
         uses: actions/upload-artifact@v7
