@@ -20,6 +20,13 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--library-selftest="):
 			step = a.get_slice("=", 1)
+	if step == "panel":
+		_panel.call_deferred()
+		return
+	if step.begins_with("menu:"):
+		_menu.call_deferred(step.get_slice(":", 1))
+		step = "menu"
+		return
 	if step.begins_with("ui:"):
 		_ui.call_deferred(step.get_slice(":", 1))
 		step = "ui"
@@ -167,6 +174,9 @@ func _ui(id: String) -> void:
 	await _shot("enter")
 	await _until(func(): return Library.state_of(id) == LibraryCatalog.READY, 120.0)
 	printerr("SELFTEST ui: downloaded, %s" % Library.state_of(id))
+	await _frames(30)
+	await _shot("downloaded")
+	l._launch()  # downloading doesn't start the game: Enter again does
 	await _until(func(): return get_tree().current_scene == null or get_tree().current_scene.scene_file_path != "res://core/ui/launcher.tscn", 20.0)
 	await _seconds(12.0)
 	await _shot("playing")
@@ -177,6 +187,7 @@ func _ui(id: String) -> void:
 	await _shot("back")
 	l._library.open_panel()
 	await _frames(30)
+	_print_rows(l)
 	await _shot("library")
 	l._library._row_of[id]["remove"].pressed.emit()
 	await _frames(30)
@@ -194,6 +205,50 @@ func _ui(id: String) -> void:
 	await _shot("after")
 	printerr("SELFTEST ui: done, %s" % Library.state_of(id))
 	_finish()
+
+
+## Downloads a game from its card, comes back to a fresh launcher (as after playing), opens the library.
+func _menu(id: String) -> void:
+	Library.check()
+	await _until(func(): return not Library.manifest.is_empty() and not Library.checking, 30.0)
+	var l = get_tree().current_scene
+	l._select_game(GameRegistry.GAMES.find(GameRegistry.find(id)))
+	await _frames(10)
+	l._launch()
+	await _until(func(): return Library.state_of(id) == LibraryCatalog.READY, 120.0)
+	printerr("SELFTEST menu: %s %s, scene %s" % [id, Library.state_of(id), get_tree().current_scene.scene_file_path])
+	l._library.open_panel()
+	await _frames(20)
+	_print_rows(l)
+	l._library.close()
+	get_tree().change_scene_to_file("res://core/ui/launcher.tscn")
+	await _frames(60)
+	l = get_tree().current_scene
+	l._library.open_panel()
+	await _frames(30)
+	printerr("SELFTEST menu: a fresh launcher")
+	_print_rows(l)
+	printerr("SELFTEST menu: done")
+
+
+## Opens the library and says what each downloaded game's row shows.
+func _panel() -> void:
+	Library.check()
+	await _until(func(): return not Library.manifest.is_empty() and not Library.checking, 30.0)
+	await _frames(30)
+	var l = get_tree().current_scene
+	l._library.open_panel()
+	await _frames(30)
+	_print_rows(l)
+	printerr("SELFTEST panel: PASSED")
+
+
+func _print_rows(l) -> void:
+	for id in Library.installed:
+		var r: Dictionary = l._library._row_of[id]
+		var b: Button = r["button"]
+		printerr("SELFTEST row %s: %s | status '%s' | button '%s' visible %s in tree %s size %s" % [id, Library.state_of(id),
+			(r["status"] as Label).text, b.text, b.visible, b.is_visible_in_tree(), b.size])
 
 
 func _shot(name: String) -> void:

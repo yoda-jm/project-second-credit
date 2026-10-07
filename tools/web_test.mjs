@@ -5,7 +5,7 @@
 // 1 if there were any.
 // Usage: node tools/web_test.mjs <play-url> <out-dir> [game ...]   (run by tools/test-web.sh)
 import { spawn } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, appendFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -35,6 +35,7 @@ let nextId = 1;
 const pending = new Map();
 const problems = [];
 const log = [];
+const logLine = (l) => { log.push(l); appendFileSync(join(outDir, "console.log"), l + "\n"); };  // kept even if the run is stopped
 ws.addEventListener("message", (ev) => {
 	const m = JSON.parse(ev.data);
 	if (m.id && pending.has(m.id)) {
@@ -45,12 +46,12 @@ ws.addEventListener("message", (ev) => {
 	}
 	if (m.method === "Runtime.consoleAPICalled") {
 		const text = m.params.args.map((a) => a.value ?? a.description ?? "").join(" ");
-		log.push(`[${m.params.type}] ${text}`);
+		logLine(`[${m.params.type}] ${text}`);
 		if ((m.params.type === "error" || /SCRIPT ERROR|^ERROR:/.test(text)) && !KNOWN.test(text)) problems.push(text);
 	} else if (m.method === "Runtime.exceptionThrown") {
 		const d = m.params.exceptionDetails;
 		const text = (d.exception && d.exception.description) || d.text;
-		log.push(`[exception] ${text}`);
+		logLine(`[exception] ${text}`);
 		if (!KNOWN.test(text)) problems.push(text);
 	}
 });
@@ -76,7 +77,8 @@ const shot = async (name) => {
 // from the browser's storage; then each game, played by its autopilot (mounted from storage at start)
 // (WEB_TEST_SURVEY=1: only each game, downloaded on the way, to try games not yet listed for the browser)
 const survey = !!process.env.WEB_TEST_SURVEY;
-const pages = [{ name: "launcher", query: "", wait: [8, 8] }].concat(survey ? [] : [
+// WEB_TEST_PAGES='[{"name":..,"query":..,"until":..,"wait":[a,b]}]' replaces the pages (to look at one case)
+const pages = process.env.WEB_TEST_PAGES ? JSON.parse(process.env.WEB_TEST_PAGES) : [{ name: "launcher", query: "", wait: [8, 8] }].concat(survey ? [] : [
 	{ name: "fetch", query: "?library-selftest=fetch", until: "SELFTEST fetch:", wait: [1, 1] },
 	{ name: "mounted", query: "?library-selftest=mounted", until: "SELFTEST mounted:", wait: [1, 1] }],
 	games.map((g) => ({ name: g, query: `?game=${g}&demo`, wait: [120, 30],  // SwiftShader compiles the shaders slowly
@@ -134,7 +136,6 @@ for (const p of pages) {
 		console.log(`  ${problems.length - before} problem(s)`);
 	}
 }
-writeFileSync(join(outDir, "console.log"), log.join("\n") + "\n");
 console.log(problems.length ? "PROBLEMS:\n" + [...new Set(problems)].slice(0, 30).join("\n") : "no console errors");
 ws.close();
 chrome.kill();

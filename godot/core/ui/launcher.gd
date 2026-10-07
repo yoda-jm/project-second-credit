@@ -971,7 +971,7 @@ func _launch() -> void:
 			_play("ui_select")
 			_library.ask_update(id)
 		LibraryCatalog.MISSING:
-			_download_then_play(id)
+			_download(id)  # the card shows the progress, then "press enter to play"
 		LibraryCatalog.NEEDS_LAUNCHER:
 			_library.open_panel()
 		_:  # in development, downloading, offline, not offered here: the card shakes
@@ -1000,10 +1000,12 @@ func _play_game(id: String) -> void:
 		_start(GameRegistry.find(id))
 
 
-## Downloads the game (first install or update) and starts it when it's ready, if its card is still selected.
-func _download_then_play(id: String) -> void:
+## Downloads the game (first install or update); with then_play (a ?game= link) it starts when ready, if its card is
+## still selected.
+func _download(id: String, then_play := false) -> void:
 	_play("ui_select")
-	_play_when_ready = id
+	if then_play:
+		_play_when_ready = id
 	Library.download(id)
 	_refresh_cards()
 
@@ -1037,7 +1039,7 @@ func _web_pick() -> void:
 func _follow_link(id: String) -> void:
 	match Library.state_of(id):
 		LibraryCatalog.MISSING, LibraryCatalog.UPDATE:
-			_download_then_play(id)
+			_download(id, true)
 		LibraryCatalog.OFFLINE:
 			Library.changed.connect(_follow_link.bind(id), CONNECT_ONE_SHOT)
 		LibraryCatalog.READY:

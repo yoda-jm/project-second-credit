@@ -6,11 +6,12 @@ Status: in place (desktop and web). Android: not started (see the end).
 
 - The download is the launcher alone (about 20 MB of core plus the Godot runtime). Every game is on the shelf.
 - A game that isn't on the computer says **NOT DOWNLOADED** with its size; floppy disks, clouds and download arrows
-  float behind it. Enter downloads it (a progress bar on the card), then starts it.
+  float behind it, and its card picture is dimmed under a big download badge. Enter downloads it (a filling ring on
+  the card); Enter again plays it. A `?game=<id>` link (the site) downloads then plays.
 - At start the launcher checks the update channel in the background, never waiting for it. It **never installs
   anything by itself**: when something is new, a notice slides in ("NEW: new versions of Fuseflight, Biosurge...
   Press U"), the status pill in the corner says "LATEST · 3 UPDATES · PRESS U", and the cards say **NEW VERSION**.
-- Enter on a game with a new version asks: **UPDATE, THEN PLAY** or **PLAY THIS VERSION**, with what changed.
+- Enter on a game with a new version asks: **UPDATE** or **PLAY THIS VERSION**, with what changed.
 - **LIBRARY** (menu, or U) lists every game: its state, size and what changed, and DOWNLOAD / UPDATE / CANCEL /
   REMOVE / PLAY per game, **UPDATE ALL**, **DOWNLOAD ALL**, CHECK NOW, and the launcher's own update (UPDATE AND
   RESTART). A game updated since it was last played says UPDATED until then.
@@ -25,7 +26,9 @@ Status: in place (desktop and web). Android: not started (see the end).
 | Web launcher (`tools/build-web.sh`) | the same core for the browser (Compatibility renderer, single-threaded template) | 19 MB pack |
 
 - `Library` (autoload, `core/library/library.gd`) keeps the downloaded packs in `user://library/` with
-  `installed.json`, mounts them at start (`ProjectSettings.load_resource_pack`), fetches the manifest, downloads,
+  `installed.json`, mounts them at start (`ProjectSettings.load_resource_pack`), fetches the manifest, downloads
+  (in the browser through its own `fetch()`, `core/library/web_fetch.gd`: GitHub Pages gzips everything and Godot's
+  HTTPRequest there reads bodies by their compressed length),
   checks size and SHA-256, mounts. The rules are pure functions in `core/library/library_catalog.gd` (tested in
   `core/tests/test_library.gd`); the screens are `core/ui/library_ui.gd`.
 - Godot 4.7 mounts a pack with its own `class_name` scripts and UIDs at run time: no restart. A game already played

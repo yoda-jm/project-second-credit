@@ -428,7 +428,7 @@ func _build_prompt() -> void:
 	v.add_child(_prompt_text)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
-	_prompt_update = _button("UPDATE, THEN PLAY", 26)
+	_prompt_update = _button("UPDATE", 26)
 	_prompt_update.pressed.connect(_prompt_main)
 	_prompt_play = _button("PLAY THIS VERSION", 26)
 	_prompt_play.pressed.connect(func():
@@ -445,7 +445,7 @@ func ask_update(id: String) -> void:
 	var g := GameRegistry.find(id)
 	_prompt_id = id
 	_prompt_restart = false
-	_prompt_update.text = "UPDATE, THEN PLAY"
+	_prompt_update.text = "UPDATE"
 	_prompt_play.text = "PLAY THIS VERSION"
 	_prompt_title.text = "NEW: %s" % String(g["title"]).to_upper()
 	var ch: Array = Library.changes(id)
@@ -475,4 +475,4 @@ func _prompt_main() -> void:
 	if _prompt_restart:
 		Library.restart()
 	else:
-		launcher._download_then_play(_prompt_id)
+		launcher._download(_prompt_id)
