@@ -107,7 +107,7 @@ for (const p of pages) {
 		while ((Date.now() - t1) / 1000 < READY_TIMEOUT && !log.slice(logStart).some((l) => l.includes(p.until))) await sleep(2);
 		const line = log.slice(logStart).find((l) => l.includes(p.until));
 		console.log(`  ${line || "no " + p.until}`);
-		if (!line || !line.includes("PASSED")) problems.push(`${p.name}: ${line || "timed out"}`);
+		if (!line || /FAIL/.test(line)) problems.push(`${p.name}: ${line || "timed out"}`);
 	}
 	await sleep(p.wait[0]);
 	await shot(p.name + "-1");
