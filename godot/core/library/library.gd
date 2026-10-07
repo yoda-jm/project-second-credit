@@ -29,6 +29,8 @@ var launcher_ready := false  ## the new launcher is downloaded and in place: a r
 var _queue: Array[String] = []  ## ids waiting to download, the first one downloading
 var _http: HTTPRequest
 var _check_http: HTTPRequest
+var _web_check: WebFetch  ## in the browser, the browser's own fetch() (see WebFetch)
+var _web_pack: WebFetch
 var _progress := {}  ## id -> [bytes, total]
 var _stall := 0.0
 var _last_bytes := 0
@@ -75,6 +77,13 @@ func _ready() -> void:
 	_check_http = _request(not web)
 	_check_http.timeout = 15.0
 	_check_http.request_completed.connect(_on_check_done)
+	if web:
+		_web_check = WebFetch.new()
+		_web_pack = WebFetch.new()
+		add_child(_web_check)
+		add_child(_web_pack)
+		_web_check.done.connect(func(ok, code, bytes, error): _on_web_done(ok, code, bytes, error, _on_check_done))
+		_web_pack.done.connect(func(ok, code, bytes, error): _on_web_done(ok, code, bytes, error, _on_pack_done))
 	SelfUpdate.tidy()
 	for a in args:
 		if a.begins_with("--library-selftest="):  # tools/test-library.sh
@@ -186,6 +195,9 @@ func check() -> void:
 		return
 	checking = true
 	changed.emit()
+	if web:
+		_web_check.start(_manifest_url(), true)
+		return
 	var err := _check_http.request(_manifest_url(), ["Cache-Control: no-cache"])
 	if err != OK:
 		checking = false
@@ -269,6 +281,8 @@ func cancel(id: String) -> void:
 		return
 	if _queue[0] == id and _http:
 		_http.cancel_request()
+		if web:
+			_web_pack.cancel()
 		if not web:
 			DirAccess.remove_absolute(DIR + _part(id))
 		_queue.pop_front()
@@ -296,8 +310,12 @@ func _start_next() -> void:
 	if _preview:
 		return  # the preview's progress is driven by _process
 	var g: Dictionary = manifest["games"][id]
-	# in the browser the body comes in memory (download_file writes nothing there); the file is written at the end
-	_http.download_file = "" if web else DIR + _part(id)
+	_stall = 0.0
+	_last_bytes = 0
+	if web:  # in memory; the file is written once checked (_on_pack_done)
+		_web_pack.start(LibraryCatalog.url_beside(_manifest_url(), g["file"]))
+		return
+	_http.download_file = DIR + _part(id)
 	_http.body_size_limit = int(g["size"]) + 1_000_000
 	_stall = 0.0
 	_last_bytes = 0
@@ -320,8 +338,8 @@ func _process(delta: float) -> void:
 			finished.emit(id)
 			_start_next()
 		return
-	var bytes := _http.get_downloaded_bytes()
-	_progress[id] = [bytes, maxi(_http.get_body_size(), int(manifest["games"][id]["size"]))]
+	var bytes := _web_pack.loaded if web else _http.get_downloaded_bytes()
+	_progress[id] = [bytes, int(manifest["games"][id]["size"]) if web else maxi(_http.get_body_size(), int(manifest["games"][id]["size"]))]
 	if bytes != _last_bytes:
 		_last_bytes = bytes
 		_stall = 0.0
@@ -329,7 +347,16 @@ func _process(delta: float) -> void:
 		_stall += delta
 		if _stall > STALL_SECONDS:
 			_http.cancel_request()
+			if web:
+				_web_pack.cancel()
 			_fail(id, "the download stalled")
+
+
+## A browser download finished: handed on as HTTPRequest would.
+func _on_web_done(ok: bool, code: int, bytes: PackedByteArray, error: String, then: Callable) -> void:
+	if not ok and error != "":
+		push_warning("library: the browser couldn't download it: %s" % error)
+	then.call(HTTPRequest.RESULT_SUCCESS if code != 0 else HTTPRequest.RESULT_CANT_CONNECT, code, PackedStringArray(), bytes)
 
 
 func _on_pack_done(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
