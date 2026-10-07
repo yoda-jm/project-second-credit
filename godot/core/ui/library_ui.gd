@@ -328,7 +328,7 @@ static func status_text(id: String) -> Array:
 		LibraryCatalog.OFFLINE:
 			return ["CONNECT TO THE INTERNET TO DOWNLOAD IT", MUTED]
 		LibraryCatalog.UNAVAILABLE:
-			return ["NOT IN THE BROWSER: DESKTOP APP ONLY" if Library.web else "NOT IN THIS CHANNEL", MUTED]
+			return ["DOESN'T WORK IN BROWSERS: ONLY ON DESKTOP" if Library.web else "NOT IN THIS CHANNEL", MUTED]
 	return ["IN DEVELOPMENT", MUTED]
 
 

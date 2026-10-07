@@ -609,7 +609,7 @@ func _draw_veil(c: Control, i: int) -> void:
 		LibraryCatalog.UNAVAILABLE:
 			ring = LibraryUI.MUTED
 			dark = 0.72
-			words = "DESKTOP APP ONLY" if OS.has_feature("web") else "NOT IN THIS CHANNEL"
+			words = "ONLY AVAILABLE ON DESKTOP" if OS.has_feature("web") else "NOT IN THIS CHANNEL"
 	var sz := c.size
 	c.draw_rect(Rect2(Vector2.ZERO, sz), Color(0.01, 0.01, 0.03, dark))
 	var center := Vector2(sz.x * 0.5, sz.y * 0.5 - 16.0)
