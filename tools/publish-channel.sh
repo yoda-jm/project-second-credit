@@ -7,6 +7,7 @@
 # nor in the previous one are removed (a player may be downloading one of the previous ones right now).
 # Usage: tools/publish-channel.sh <latest|tag> [previous-manifest.json]
 set -euo pipefail
+shopt -s nullglob  # a build that changed no game has no new pack to upload
 cd "$(dirname "$0")/.."
 tag=$1
 prev=${2:-}
